@@ -1,7 +1,7 @@
 # http://module-build.sourceforge.net/META-spec.html
 #XXXXXXX This is a prototype!!!  It will change in the future!!! XXXXX#
 name:         SystemPerl
-version:      1.161
+version:      1.162
 version_from: Netlist.pm
 installdirs:  site
 requires:

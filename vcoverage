@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-#$Revision: #6 $$Date: 2004/08/26 $$Author: ws150726 $
+#$Revision: #7 $$Date: 2004/09/14 $$Author: ws150726 $
 ######################################################################
 #
 # Copyright 2001-2004 by Wilson Snyder.  This program is free software;
@@ -92,7 +92,7 @@ line_report($cov, $opt_out_dir);
 #----------------------------------------------------------------------
 
 sub usage {
-    print '$Revision: #6 $$Date: 2004/08/26 $$Author: ws150726 $ ', "\n";
+    print '$Revision: #7 $$Date: 2004/09/14 $$Author: ws150726 $ ', "\n";
     $SIG{__WARN__} = sub{};	#pod2text isn't clean.
     pod2text($0);
     exit (1);
@@ -105,11 +105,7 @@ sub debug {
 
 sub parameter {
     my $param = shift;
-    if ($param =~ /coverage/) {
-	push @Opt_Datas, $param;
-    } else {
-	die "%Error: Unknown parameter: $param\n";
-    }
+    push @Opt_Datas, $param;
 }
  
 #######################################################################

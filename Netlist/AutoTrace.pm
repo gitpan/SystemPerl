@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Revision: #56 $$Date: 2004/08/26 $$Author: ws150726 $
+# $Revision: #57 $$Date: 2004/10/26 $$Author: ws150726 $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -18,7 +18,7 @@ package SystemC::Netlist::AutoTrace;
 use File::Basename;
 
 use SystemC::Netlist::Module;
-$VERSION = '1.161';
+$VERSION = '1.162';
 use strict;
 
 use vars qw ($Setup_Ident_Code);	# Local use for recursion only

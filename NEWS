@@ -5,6 +5,10 @@ The contributors that suggested a given feature is shown in [].
 This uses outline mode in Emacs.  See C-h m [M-x describe-mode].
 
 
+* Changes in SystemC 1.162 10/26/2004
+
+****	Allow any filename to be a coverage file.  [Dawn Campanelli]
+
 * Changes in SystemC 1.161 8/26/2004
 
 ***	Support macro calls in enumeration values.
@@ -235,7 +239,7 @@ This uses outline mode in Emacs.  See C-h m [M-x describe-mode].
 
 
 ----------------------------------------------------------------------
-$Revision: #82 $$Date: 2004/08/26 $$Author: ws150726 $
+$Revision: #83 $$Date: 2004/10/26 $$Author: ws150726 $
 ----------------------------------------------------------------------
 Copyright information:
 

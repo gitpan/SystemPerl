@@ -1,4 +1,4 @@
-# $Revision: #24 $$Date: 2004/08/20 $$Author: ws150726 $ -*- Makefile -*-
+# $Revision: #25 $$Date: 2004/10/01 $$Author: ws150726 $ -*- Makefile -*-
 # DESCRIPTION: SystemPerl: Example makefile
 #
 # This is executed in the "test_dir", not in this directory
@@ -33,7 +33,7 @@ SP_SP = $(wildcard ../example/*.sp)
 CFLAGS += -DWAVES
 
 ifeq ($(VERILATOR_AUTHOR_SITE),1)	# Local... Else don't burden users
-CPPFLAGS += -Wall -Wno-implicit-int -Wno-char-subscripts -Werror
+CPPFLAGS += -Wall -Wno-char-subscripts -Werror
 endif
 
 # List Objects in bottom-up order, that way lower modules get errors first
