@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Revision: #42 $$Date: 2003/08/12 $$Author: wsnyder $
+# $Revision: #47 $$Date: 2003/08/19 $$Author: wsnyder $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -23,7 +23,7 @@ package SystemC::Netlist::AutoTrace;
 use File::Basename;
 
 use SystemC::Netlist::Module;
-$VERSION = '1.144';
+$VERSION = '1.145';
 use strict;
 
 use vars qw ($Setup_Ident_Code);	# Local use for recursion only
@@ -62,17 +62,20 @@ sub _write_autotrace {
 		  );
 
     # Output the data
-    $fileref->print
-	("${prefix}// Beginning of SystemPerl automatic trace file routine\n",
-	 "#if WAVES\n",
-	 "# include \"SpTraceVcd.h\"\n",);
+    $fileref->print ("${prefix}// Beginning of SystemPerl automatic trace file routine\n");
 
-    _tracer_include_recurse($self,$fileref,$tracesref);
-
-    _write_tracer_trace($self, $fileref, $tracesref);
-    _write_tracer_init ($self, $fileref, $tracesref);
-    _write_tracer_change($self, $fileref, $tracesref);
-    $fileref->print ("#endif\n");
+    if ($self->_autotrace('exists')) {
+	$fileref->print ("${prefix}// Exists switch: predeclared tracing routine\n");
+    } else {
+	$fileref->print ("#if WAVES\n",
+			 "# include \"SpTraceVcd.h\"\n",);
+	_tracer_include_recurse($self,$fileref,$tracesref);
+	_write_tracer_trace($self, $fileref, $tracesref);
+	_write_tracer_init ($self, $fileref, $tracesref);
+	_write_tracer_change($self, $fileref, $tracesref, "full");
+	_write_tracer_change($self, $fileref, $tracesref, "chg");
+	$fileref->print ("#endif // WAVES\n");
+    }
     $fileref->print ("${prefix}// End of SystemPerl automatic trace file routine\n"),
 }
 
@@ -138,7 +141,7 @@ sub _net_ignore {
     my $modref = shift;
     # Return a reason for ignoring this signal, or undef
     return "Leading _" if ($netref->name =~ /^_/ 	# Skip leading _ signals
-			   && $netref->name !~ /^__PVT__/);
+			   && $netref->name !~ /^__PVT__[^_]/);
     return "Unknown width of type ".$netref->type() if !$netref->width();
     return "Wide Memory Signal"  if (($netref->width()||0)>256);
     return "Wide Memory Vector"  if ($netref->array()
@@ -197,6 +200,7 @@ sub _tracer_setup {
 		if (!$modref->netlist->{sp_allow_output_tracing}) {
 		    $ignore or die "%Error: Should have ignored, Can't read output ports,";
 		} elsif ($modref->netlist->{sp_allow_output_tracing} eq 'hack') {
+		    # SystemC 1.0.1a
 		    $accessor .= ".const_signal()->get_cur_value()";
 		} else {
 		    $accessor .= ".read()";
@@ -292,10 +296,11 @@ sub _write_tracer_trace {
     #my $tracesref = shift;
     
     my $mod = $self->name;
+
     $fileref->print
 	("void ${mod}::trace (SpTraceFile* tfp, int levels, int options) {\n",
 	 "    if(0 && options) {}  // Prevent unused\n",
-	 "    tfp->spTrace()->addCallback (&${mod}::traceInit, &${mod}::traceChange, this);\n",);
+	 "    tfp->spTrace()->addCallback (&${mod}::traceInit, &${mod}::traceFull,  &${mod}::traceChg, this);\n",);
     my $cmt = "";
     if ($self->_autotrace('recurse')) {
 	$fileref->print ("    // Inline child recursion, so don't need:\n");
@@ -360,13 +365,10 @@ sub _write_tracer_init_recurse {
 	$fileref->printf("${indent}\{\n");
 	$fileref->printf("${indent} vcdp->module(prefix+\"%s\");  // Is-a %s\n"
 			 , $tracesref->{modhier}, $modref->name);
-	$fileref->printf("${indent} register %s* ts = %s;\n"
-			 , $modref->name, $tracesref->{nethier});
     }
 
     foreach my $tref (@{$tracesref->{vars}}) {
 	my $netref = $tref->{netref};
-	my $accessor = $tref->{accessor};
 	my $aindent = $indent;
 	# Scope to correct parent module
 	# Now do the signal
@@ -406,11 +408,6 @@ sub _write_tracer_init_recurse {
 	}
 	$ket .= "}";
 
-	if ($netref->cast_type && !$doident) {
-	    $fileref->printf("const ".$netref->cast_type."& tempVal=%s;\n", $accessor);
-	    $fileref->printf("${aindent}   ");
-	    $accessor = "tempVal";
-	}
 	my $width = $netref->width || 1;
 	my $arraynum = ($netref->array ? " i":"-1");
 	$fileref->printf("");
@@ -418,14 +415,14 @@ sub _write_tracer_init_recurse {
 	$name =~ s/__PVT__//g;
 	if (!$doident) {
 	    if ($width == 1) {
-		$fileref->printf("vcdp->declBit  (${c},\"%s\",%s,&(%s)"
-				 ,$name, $arraynum, ${accessor});
+		$fileref->printf("vcdp->declBit  (${c},\"%s\",%s"
+				 ,$name, $arraynum);
 	    } elsif ($width <= 32) {
-		$fileref->printf("vcdp->declBus  (${c},\"%s\",%s,&(%s),%d,%d"
-				 ,$name, $arraynum, ${accessor},$netref->msb, $netref->lsb);
+		$fileref->printf("vcdp->declBus  (${c},\"%s\",%s,%d,%d"
+				 ,$name, $arraynum,$netref->msb, $netref->lsb);
 	    } else {
-		$fileref->printf("vcdp->declArray(${c},\"%s\",%s,&(%s),%d,%d",
-				 ,$name, $arraynum, ${accessor},$netref->msb, $netref->lsb);
+		$fileref->printf("vcdp->declArray(${c},\"%s\",%s,%d,%d",
+				 ,$name, $arraynum,$netref->msb, $netref->lsb);
 	    }
 	    $fileref->printf("); ");
 	}
@@ -447,17 +444,18 @@ sub _write_tracer_change {
     my $self = shift;
     my $fileref = shift;
     my $tracesref = shift;
+    my $mode = shift;   # full or chg
 
     my $mod = $self->name;
     $fileref->print("//","="x70,"\n");
-    $fileref->print("void ${mod}::traceChange (SpTraceVcd* vcdp, void* userthis, uint32_t code) {\n");
+    $fileref->print("void ${mod}::trace".ucfirst($mode)." (SpTraceVcd* vcdp, void* userthis, uint32_t code) {\n");
     $fileref->print("  // Callback from vcd->dump()\n");
     $fileref->print("  if (0 && vcdp && userthis && code) {}  // Prevent unused\n");
     if ($#{$tracesref->{vars}} >= 0) {
 	$fileref->print("  int c=code;\n");
 	$fileref->print("  ${mod}* t=(${mod}*)userthis;\n");
     }
-    _write_tracer_change_recurse($self,$fileref,$tracesref);
+    _write_tracer_change_recurse($self,$fileref,$tracesref,$mode);
 
     $fileref->print("}\n");
 }
@@ -466,6 +464,7 @@ sub _write_tracer_change_recurse {
     my $self = shift;
     my $fileref = shift;
     my $tracesref = shift;
+    my $mode = shift;   # full or chg
     my $level = shift||1;
 
     my $indent = "  "x$level;
@@ -508,7 +507,7 @@ sub _write_tracer_change_recurse {
 	    $code_inc += $tref->{code_inc};
 	}
 	if ($netref->cast_type) {
-	    $fileref->printf("${aindent}  {const ".$netref->cast_type."& tempVal=%s;\n",
+	    $fileref->printf("${aindent}  {const ".$netref->cast_type." tempVal=%s;\n",
 			     $accessor);
 	    $fileref->printf("${aindent}   ");
 	    $accessor = "tempVal";
@@ -516,13 +515,13 @@ sub _write_tracer_change_recurse {
 	    $fileref->printf("${aindent}  {");
 	}
 	if ($netref->width == 1) {
-	    $fileref->printf("vcdp->dumpBit  (c,  %s"
+	    $fileref->printf("vcdp->${mode}Bit  (c,  %s"
 			     ,${accessor});
 	} elsif ($netref->width <= 32) {
-	    $fileref->printf("vcdp->dumpBus  (c,  %s,%d"
+	    $fileref->printf("vcdp->${mode}Bus  (c,  %s,%d"
 			     ,${accessor}, $netref->width);
 	} else {
-	    $fileref->printf("vcdp->dumpArray(c,&(%s),%d",
+	    $fileref->printf("vcdp->${mode}Array(c,&(%s),%d",
 			     ,${accessor}, $netref->width);
 	}
 	$fileref->printf("); c+=%s;}\n",$tref->{code_inc});
@@ -533,7 +532,7 @@ sub _write_tracer_change_recurse {
     }
     foreach my $tref (@{$tracesref->{cells}}) {
 	my ($subcode_inc, $subcode_math) 
-	    = _write_tracer_change_recurse($self, $fileref, $tref, $level+1);
+	    = _write_tracer_change_recurse($self, $fileref, $tref, $mode, $level+1);
 	$code_inc += $subcode_inc;
 	$code_math .= $subcode_math;
     }

@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Revision: #113 $$Date: 2003/08/12 $$Author: wsnyder $
+# $Revision: #115 $$Date: 2003/08/19 $$Author: wsnyder $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -28,7 +28,7 @@ use SystemC::Template;
 use Verilog::Netlist::Subclass;
 @ISA = qw(SystemC::Netlist::File::Struct
 	Verilog::Netlist::Subclass);
-$VERSION = '1.144';
+$VERSION = '1.145';
 use strict;
 
 structs('new',
@@ -188,7 +188,7 @@ sub auto {
 		      \&SystemC::Netlist::Module::_write_autodecls,
 		      $modref, $self->{fileref}, $prefix];
     }
-    elsif ($line =~ /^(\s*)\/\*AUTOTRACE\(([a-zA-Z0-9_]+)((,manual)?(,recurse)?(,activity)?)\)\*\//) {
+    elsif ($line =~ /^(\s*)\/\*AUTOTRACE\(([a-zA-Z0-9_]+)((,manual)?(,recurse)?(,activity)?(,exists)?)\)\*\//) {
 	my $prefix = $1; my $modname = $2; my $manual = $3;
 	$modname = $self->{fileref}->basename if $modname eq "__MODULE__";
 	my $mod = $self->{netlist}->find_module ($modname);
@@ -197,6 +197,7 @@ sub auto {
 	$mod->_autotrace('manual',1) if $manual =~ /manual/;
 	$mod->_autotrace('recurse',1) if $manual =~ /recurse/;
 	$mod->_autotrace('activity',1) if $manual =~ /activity/;
+	$mod->_autotrace('exists',1) if $manual =~ /exists/;
 	push @Text, [ 1, $self->filename, $self->lineno,
 		      \&SystemC::Netlist::AutoTrace::_write_autotrace,
 		      $mod, $self->{fileref}, $prefix,];

@@ -1,5 +1,5 @@
 #!/usr/local/bin/perl -w
-# $Revision: #5 $$Date: 2003/07/16 $$Author: wsnyder $
+# $Revision: #6 $$Date: 2003/08/13 $$Author: wsnyder $
 # DESCRIPTION: Perl ExtUtils: Type 'make test' to test this package
 
 use strict;
@@ -17,7 +17,7 @@ if ($Config{archname} !~ /linux/
     skip("skip Not linux or missing SystemC",1);
 } else {
     run_system ("cd test_dir "
-		."&& g++ -DSPTRACEVCD_TEST ../src/SpTraceVcd.cpp -o SpTraceVcd "
+		."&& g++ -ggdb -DSPTRACEVCD_TEST ../src/SpTraceVcd.cpp -o SpTraceVcd "
 		."&& ./SpTraceVcd");
     ok(1);
     ok(-r "test_dir/test.dump")

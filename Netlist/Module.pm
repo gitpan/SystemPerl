@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Revision: #55 $$Date: 2003/08/12 $$Author: wsnyder $
+# $Revision: #57 $$Date: 2003/08/19 $$Author: wsnyder $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -32,7 +32,7 @@ use SystemC::Netlist::AutoCover;
 use SystemC::Netlist::AutoTrace;
 
 @ISA = qw(Verilog::Netlist::Module);
-$VERSION = '1.144';
+$VERSION = '1.145';
 use strict;
 
 sub new_net {
@@ -224,7 +224,9 @@ sub _write_autodecls {
 	     "${prefix}void trace (SpTraceFile *tfp, int levels, int options=0);\n",
 	     "${prefix}static void\ttraceInit",
 	     " (SpTraceVcd* vcdp, void* userthis, uint32_t code);\n",
-	     "${prefix}static void\ttraceChange",
+	     "${prefix}static void\ttraceFull",
+	     " (SpTraceVcd* vcdp, void* userthis, uint32_t code);\n",
+	     "${prefix}static void\ttraceChg",
 	     " (SpTraceVcd* vcdp, void* userthis, uint32_t code);\n",
 	     "#endif\n");
     }

@@ -1,4 +1,4 @@
-// $Revision: #17 $$Date: 2003/07/16 $$Author: wsnyder $ -*- SystemC -*-
+// $Revision: #22 $$Date: 2003/08/14 $$Author: wsnyder $ -*- SystemC -*-
 //=============================================================================
 //
 // THIS MODULE IS PUBLICLY LICENSED
@@ -35,6 +35,7 @@
 #include <string>
 #include <algorithm>
 #include <vector>
+#include <map>
 using namespace std;
 #ifndef SPTRACEVCD_TEST
 # include <systemperl.h>
@@ -47,11 +48,9 @@ class SpTraceVcdSig {
 protected:
     friend class SpTraceVcd;
     uint32_t		m_code;		// Code number
-    const void*		m_valp;		// Pointer to where value comes from
     int			m_bits;		// Size of value
-    int			m_storage;	// Storage size of value
-    SpTraceVcdSig (uint32_t code, const void* valp, int bits, int storage)
-	: m_code(code), m_valp(valp), m_bits(bits), m_storage(storage) {}
+    SpTraceVcdSig (uint32_t code, int bits)
+	: m_code(code), m_bits(bits) {}
 };
 
 //=============================================================================
@@ -76,6 +75,8 @@ private:
     vector<SpTraceVcdSig>	m_sigs;		// Pointer to signal information
     vector<uint32_t>		m_sigs_oldval;	// Pointer to old signal values
     vector<SpTraceCallInfo*>	m_callbacks;	// Routines to perform dumping
+    typedef map<string,string>	NameMap;
+    NameMap*			m_namemapp;	// List of names for the header
     static vector<SpTraceVcd*>	s_vcdVecp;	// List of all created traces
 
     size_t	bufferSize() { return 256*1024; }  // See below for slack calculation
@@ -87,15 +88,15 @@ private:
 	    bufferFlush();
 	}
     }
-    static const char* genId ();
     void openNext();
     void printIndent (int levelchange);
     void printStr (const char* str);
     void printInt (int n);
-    void declare (uint32_t code, const char* name, int arraynum,
-		  const void* valp,
-		  int msb, int lsb, bool isBit, int storage);
+    void declare (uint32_t code, const char* name, int arraynum, int msb, int lsb);
+
+    void dumpHeader();
     void dumpPrep (double timestamp);
+    void dumpFull (double timestamp);
     void dumpDone ();
     inline void printCode (uint32_t code) {
 	if (code>=(94*94*94)) *m_writep++ = ((char)((code/94/94/94)%94+33));
@@ -103,12 +104,20 @@ private:
 	if (code>=(94))       *m_writep++ = ((char)((code/94)%94+33));
 	*m_writep++ = ((char)((code)%94+33));
     }
+    string stringCode (uint32_t code) {
+	string out;
+	if (code>=(94*94*94)) out += ((char)((code/94/94/94)%94+33));
+	if (code>=(94*94))    out += ((char)((code/94/94)%94+33));
+	if (code>=(94))       out += ((char)((code/94)%94+33));
+	return out + ((char)((code)%94+33));
+    }
 
 public:
     // CREATORS
     SpTraceVcd () : m_isOpen(false), m_rolloverMB(0), m_modDepth(0), m_nextCode(1) {
 	m_wrBufp = new char [bufferSize()];
 	m_writep = m_wrBufp;
+	m_namemapp = NULL;
     }
     ~SpTraceVcd();
 
@@ -123,42 +132,26 @@ public:
     static void flush_all();		// Flush any remaining data from all files
     void close ();			// Close the file
 
-    void addCallback (SpTraceCallback_t init, SpTraceCallback_t dump,
+    void addCallback (SpTraceCallback_t init, SpTraceCallback_t full, SpTraceCallback_t change,
 		      void* userthis);
 
     void init ();
-    void definitions ();
     void module (const string name);
-    void declBit   (uint32_t code, const char* name, int arraynum, const bool* valp);
-    void declBit   (uint32_t code, const char* name, int arraynum, const uint8_t* valp);
-    void declBit   (uint32_t code, const char* name, int arraynum, const uint32_t* valp);
-    void declBus   (uint32_t code, const char* name, int arraynum, const uint8_t* valp, int msb, int lsb);
-    void declBus   (uint32_t code, const char* name, int arraynum, const uint32_t* valp, int msb, int lsb);
-    void declArray (uint32_t code, const char* name, int arraynum, const uint32_t* valp, int msb, int lsb);
+    void declBit   (uint32_t code, const char* name, int arraynum);
+    void declBus   (uint32_t code, const char* name, int arraynum, int msb, int lsb);
+    void declArray (uint32_t code, const char* name, int arraynum, int msb, int lsb);
     //	... other module_start for submodules (based on cell name)
-    void enddefinitions ();
 
     // Regular dumping
     void dump     (double timestamp);
-    void dumpFull (double timestamp);
 
-    // Quick dumping
-    inline void dumpValueBit (uint32_t code, const bool& newval) {
+    // Full dumping
+    inline void fullBit (uint32_t code, const uint32_t newval) {
 	m_sigs_oldval[code] = newval;
 	*m_writep++=(newval?'1':'0'); printCode(code); *m_writep++='\n';
 	bufferCheck();
     }
-    inline void dumpValueBit (uint32_t code, const uint8_t& newval) {
-	m_sigs_oldval[code] = newval;
-	*m_writep++=(newval?'1':'0'); printCode(code); *m_writep++='\n';
-	bufferCheck();
-    }
-    inline void dumpValueBit (uint32_t code, const uint32_t& newval) {
-	m_sigs_oldval[code] = newval;
-	*m_writep++=(newval?'1':'0'); printCode(code); *m_writep++='\n';
-	bufferCheck();
-    }
-    inline void dumpValueBus (uint32_t code, const uint8_t& newval, int bits) {
+    inline void fullBus (uint32_t code, const uint32_t newval, int bits) {
 	m_sigs_oldval[code] = newval;
 	*m_writep++='b';
 	for (int bit=bits-1; bit>=0; --bit) {
@@ -167,16 +160,7 @@ public:
 	*m_writep++=' '; printCode(code); *m_writep++='\n';
 	bufferCheck();
     }
-    inline void dumpValueBus (uint32_t code, const uint32_t& newval, int bits) {
-	m_sigs_oldval[code] = newval;
-	*m_writep++='b';
-	for (int bit=bits-1; bit>=0; --bit) {
-	    *m_writep++=((newval&(1L<<bit))?'1':'0');
-	}
-	*m_writep++=' '; printCode(code); *m_writep++='\n';
-	bufferCheck();
-    }
-    inline void dumpValueArray (uint32_t code, const uint32_t* newval, int bits) {
+    inline void fullArray (uint32_t code, const uint32_t* newval, int bits) {
 	for (int word=0; word<((bits/32)+1); ++word) {
 	    m_sigs_oldval[code+word] = newval[word];
 	}
@@ -188,25 +172,17 @@ public:
 	bufferCheck();
     }
 
-    inline void dumpBit (uint32_t code, const bool& newval) {
-	if (m_sigs_oldval[code] != newval) { dumpValueBit (code, newval); }
+    // Incremental dumpings
+    inline void chgBit (uint32_t code, const uint32_t newval) {
+	if (m_sigs_oldval[code] != newval) { fullBit (code, newval); }
     }
-    inline void dumpBit (uint32_t code, const uint8_t& newval) {
-	if (m_sigs_oldval[code] != newval) { dumpValueBit (code, newval); }
+    inline void chgBus (uint32_t code, const uint32_t newval, int bits) {
+	if (m_sigs_oldval[code] != newval) { fullBus (code, newval, bits); }
     }
-    inline void dumpBit (uint32_t code, const uint32_t& newval) {
-	if (m_sigs_oldval[code] != newval) { dumpValueBit (code, newval); }
-    }
-    inline void dumpBus (uint32_t code, const uint8_t& newval, int bits) {
-	if (m_sigs_oldval[code] != newval) { dumpValueBus (code, newval, bits); }
-    }
-    inline void dumpBus (uint32_t code, const uint32_t& newval, int bits) {
-	if (m_sigs_oldval[code] != newval) { dumpValueBus (code, newval, bits); }
-    }
-    inline void dumpArray (uint32_t code, const uint32_t* newval, int bits) {
+    inline void chgArray (uint32_t code, const uint32_t* newval, int bits) {
 	for (int word=0; word<((bits/32)+1); ++word) {
 	    if (m_sigs_oldval[code+word] != newval[word]) {
-		dumpValueArray (code,newval,bits);
+		fullArray (code,newval,bits);
 		return;
 	    }
 	}
@@ -229,6 +205,7 @@ public:
     void openNext (bool incFilename=true) { m_sptrace.openNext(incFilename); }
     void rolloverMB(size_t rolloverMB) { m_sptrace.rolloverMB(rolloverMB); };
     void close () { m_sptrace.close(); }
+    void flush () { m_sptrace.flush(); }
     // Called by SystemC simulate()
 #if (SYSTEMC_VERSION>20011000)
     virtual void cycle (bool) { m_sptrace.dump(sc_time_stamp().to_double()); }

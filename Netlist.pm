@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Revision: #42 $$Date: 2003/08/12 $$Author: wsnyder $
+# $Revision: #43 $$Date: 2003/08/19 $$Author: wsnyder $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -31,7 +31,7 @@ use Verilog::Netlist::Subclass;
 use strict;
 use vars qw($Debug $Verbose $VERSION);
 
-$VERSION = '1.144';
+$VERSION = '1.145';
 
 ######################################################################
 #### Error Handling

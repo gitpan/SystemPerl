@@ -6,6 +6,12 @@ The contributors that suggested a given feature is shown in [].
 This uses outline mode in Emacs.  See C-h m [M-x describe-mode].
 
 
+* Changes in SystemC 1.145 8/19/2003
+
+****	Fix rare array-out-of-bounds crash with tracing array signal
+
+****	More Redhat 9 and GCC 3.2.2 fixes
+
 * Changes in SystemC 1.144 8/12/2003
 
 ****	Redhat 9 and GCC 3.2.2 fixes
@@ -193,7 +199,7 @@ This uses outline mode in Emacs.  See C-h m [M-x describe-mode].
 
 
 ----------------------------------------------------------------------
-$Revision: #66 $$Date: 2003/08/12 $$Author: wsnyder $
+$Revision: #68 $$Date: 2003/08/19 $$Author: wsnyder $
 ----------------------------------------------------------------------
 Copyright information:
 
