@@ -1,8 +1,8 @@
-// $Revision: #4 $$Date: 2003/03/11 $$Author: wsnyder $
+// $Revision: #5 $$Date: 2003/08/12 $$Author: wsnyder $
 // DESCRIPTION: SystemPerl: Example source module
 
 #sp interface
-#include <ostream.h>
+#include <fstream>
 
 class MyENumClass {
 public:

@@ -143,25 +143,32 @@ Installation
      (Note this package will probably run slower if you are still using
      perl 5.005.)
 
-  3. If you wish to trace sc_bv's, and you got a informational message
+  3. Type `patch <patch-2-0-1.diff' if you are using SystemC 2.0.1.
+
+  4. Type `patch <patch-2-0-1-redhat9.diff' to fix the warnings in
+     SystemC 2.0.1 if you are using Redhat 9.  (SystemC.org still needs
+     to cleanup the libraries for Redhat 9; this mearly disables the
+     warning message.)
+
+  5. If you wish to trace sc_bv's, and you got a informational message
      when you did the above step, you must patch the SystemC library.
      Type `make sc_patch' and this will be done for you.  What this
      does is add an accessor function for getting at the raw data in
      the sc_bv class.  (Using the preexisting public functions would
      require too much computational overhead.)
 
-  4. Type `make' to compile SystemPerl.
+  6. Type `make' to compile SystemPerl.
 
-  5. Type `make test' to check the compilation.
+  7. Type `make test' to check the compilation.
 
-  6. You can see examples under the test_dir directory.  The *.sp files
+  8. You can see examples under the test_dir directory.  The *.sp files
      are "inline" converted, while the *.h and *.cpp files are expanded
      from the .sp files.
 
-  7. Type `make install' to install the programs and any data files and
+  9. Type `make install' to install the programs and any data files and
      documentation.
 
-  8. Install `src/systemperl.h' somewhere in your project's build path.
+ 10. Install `src/systemperl.h' somewhere in your project's build path.
      The best place is probably the $SYSTEMC/include directory.
 
 

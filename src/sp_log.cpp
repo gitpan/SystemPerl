@@ -1,4 +1,4 @@
-/* $Revision: #12 $$Date: 2002/11/06 $$Author: wsnyder $
+/* $Revision: #13 $$Date: 2003/08/12 $$Author: wsnyder $
  ************************************************************************
  *
  * THIS MODULE IS PUBLICLY LICENSED
@@ -27,20 +27,28 @@
 #include "sp_log.h"
 
 //**********************************************************************
+// Static
+
+#if defined(__GNUC__) && __GNUC__ >= 3
+list<sp_log_file*> sp_log_file::s_fileps;
+#endif
+
+//**********************************************************************
 // Opening
 
-void sp_log_file::open (const char *filename, int append) {
+void sp_log_file::open (const char *filename, open_mode_t append) {
     // Open main logfile
     m_filename = filename;
     m_splitNum = 0;
     open_int(filename, append);
 }
 
-void sp_log_file::open_int (string filename, int append) {
+void sp_log_file::open_int (string filename, open_mode_t append) {
     // Internal open, used also for split
     this->close();
     std::ofstream::open (filename.c_str(), append);
     m_isOpen = true;
+    add_file();
 }
 
 //**********************************************************************
@@ -55,6 +63,7 @@ void sp_log_file::close_int() {
     if (m_isOpen) {
 	std::ofstream::close();
 	m_isOpen = false;
+	remove_file();
     }
 }
 
@@ -126,12 +135,48 @@ void sp_log_file::end_redirect() {
 }
 
 //**********************************************************************
+// Flushing
+
+void sp_log_file::add_file() {
+#if defined(__GNUC__) && __GNUC__ >= 3
+    s_fileps.push_back(this);
+#endif
+}
+void sp_log_file::remove_file() {
+#if defined(__GNUC__) && __GNUC__ >= 3
+    s_fileps.remove(this);
+#endif
+}
+void sp_log_file::flush_all() {
+    // Flush every open file, or on more recent library, those we know about
+#if defined(__GNUC__) && __GNUC__ >= 3
+    // And they call this progress? :(
+    for (list<sp_log_file*>::iterator it = s_fileps.begin(); it != s_fileps.end(); ++it) {
+	(*it)->flush();
+    }
+#else
+    std::streambuf::flush_all();
+#endif
+}
+
+//**********************************************************************
 // C compatibility
 
 extern "C" void sp_log_printf(const char *format, ...) {
+#if defined(__GNUC__) && __GNUC__ >= 3
+    // And they call this progress? :(
+    static const size_t BUFSIZE = 64*1024;
+    char buffer[BUFSIZE];
+    va_list ap;
+    va_start (ap, format);
+    vsnprintf(buffer, BUFSIZE, format, ap);
+    buffer[BUFSIZE-1] = '\0';
+    std::cout<<buffer;
+#else
     va_list ap;
     va_start (ap, format);
     std::cout.vform (format, ap);
+#endif
 }
 
 //**********************************************************************

@@ -1,7 +1,8 @@
-// $Revision: #12 $$Date: 2003/03/27 $$Author: wsnyder $
+// $Revision: #13 $$Date: 2003/08/12 $$Author: wsnyder $
 // DESCRIPTION: SystemPerl: Example main()
 
 #include <systemperl.h>
+#include "sp_log.h"
 #include "ExBench.h"
 #include "SpTraceVcd.h"
 #include "SpCoverage.h"
@@ -25,6 +26,12 @@ void sp_coverage_data (const char *hier, const char *what, const char *file, int
 }
 
 int sc_main (int argc, char *argv[]) {
+    // Simulation logfile
+    sp_log_file splog;
+    splog.open ("sim.log");
+    splog.redirect_cout();
+
+    // Pins
     sc_clock clk("clk",10);
 
     ExBench* bench;

@@ -1,5 +1,5 @@
 \input texinfo @c -*-texinfo-*-
-@c $Revision: #21 $$Date: 2003/03/28 $$Author: wsnyder $
+@c $Revision: #22 $$Date: 2003/08/12 $$Author: wsnyder $
 @c %**start of header
 @setfilename readme.info
 @settitle Perl SystemC Installation
@@ -178,6 +178,15 @@ versions should work without tracing.
 Type @samp{perl Makefile.PL} to configure SystemPerl for your system.
 (Note this package will probably run slower if you are still using perl
 5.005.)
+
+@item
+Type @samp{patch <patch-2-0-1.diff} if you are using SystemC 2.0.1.
+
+@item
+Type @samp{patch <patch-2-0-1-redhat9.diff} to fix the warnings in
+SystemC 2.0.1 if you are using Redhat 9.  (SystemC.org still needs to
+cleanup the libraries for Redhat 9; this mearly disables the warning
+message.)
 
 @item
 If you wish to trace sc_bv's, and you got a informational message when

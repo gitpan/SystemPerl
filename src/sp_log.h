@@ -1,4 +1,4 @@
-/* $Revision: #17 $$Date: 2003/07/15 $$Author: wsnyder $
+/* $Revision: #18 $$Date: 2003/08/12 $$Author: wsnyder $
  ************************************************************************
  *
  * THIS MODULE IS PUBLICLY LICENSED
@@ -56,6 +56,9 @@ extern "C" {
 #include <fstream>
 #include <string>
 #include <sys/types.h>
+#if defined(__GNUC__) && __GNUC__ >= 3
+# include <list>
+#endif
 using namespace std;
 
 //**********************************************************************
@@ -86,7 +89,7 @@ private:
 //	foo.open ("sim.log");
 // or	sp_log_file foo ("sim.log");
 //
-//	foo.redirect();
+//	foo.redirect_cout();
 //	cout << "this goes to screen and sim.log";
 //
 //    Eventually this will do logfile split also
@@ -109,16 +112,27 @@ public:
     }
     ~sp_log_file () { close(); }
     
+    // TYPES
+#if defined(__GNUC__) && __GNUC__ >= 3
+    typedef ios_base::openmode open_mode_t;
+# define DEFAULT_OPEN_MODE (ios_base::out|ios_base::trunc)
+#else
+    typedef int open_mode_t;
+# define DEFAULT_OPEN_MODE 0
+#endif
+
     // METHODS
-    void	open (const char* filename, int append=0);	// Open the file
-    void	open (const string filename, int append=0) { open(filename.c_str(), append); };
+    void	open (const char* filename, open_mode_t append=DEFAULT_OPEN_MODE);	// Open the file
+    void	open (const string filename, open_mode_t append=DEFAULT_OPEN_MODE) {
+	open(filename.c_str(), append);
+    }
     void	close ();		// Close the file
     void	redirect_cout ();	// Redirect cout and cerr to logfile
     void	end_redirect ();	// End redirection
     void	split_check ();	// Split if needed
     void	split_now ();	// Do a split
 
-    static void	flush_all() { streambuf::flush_all(); }
+    static void	flush_all();
 
     // ACCESSORS
     bool	isOpen() { return(m_isOpen); }	// Is the log file open?
@@ -128,11 +142,14 @@ public:
 
   private:
     // METHODS
-    void	open_int (string filename, int append=0);
+    void	open_int (string filename, open_mode_t append=DEFAULT_OPEN_MODE);
     void	close_int ();
     string	split_name (unsigned suffixNum);
+    void	add_file();
+    void	remove_file();
 
   private:
+    // STATE
     streambuf*	m_strmOldCout;		// Old cout value
     streambuf*	m_strmOldCerr;		// Old cerr value
     bool	m_isOpen;		// File has been opened
@@ -140,7 +157,12 @@ public:
     string	m_filename;		// Original Filename that was opened
     streampos	m_splitSize;		// Bytes to split at
     unsigned	m_splitNum;		// Number of splits done
+#if defined(__GNUC__) && __GNUC__ >= 3
+    static list<sp_log_file*> s_fileps;	// List of current files open
+#endif
 };
+
+#undef DEFAULT_OPEN_MODE
 
 #endif /*__cplusplus*/
 #endif /*_SP_LOG_H_*/
