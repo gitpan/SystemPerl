@@ -1,4 +1,4 @@
-// $Revision: 1.20 $$Date: 2005-03-01 17:59:56 -0500 (Tue, 01 Mar 2005) $$Author: wsnyder $
+// $Revision: 1.20 $$Date: 2005-03-02 10:35:46 -0500 (Wed, 02 Mar 2005) $$Author: wsnyder $
 // DESCRIPTION: SystemPerl: Example main()
 //
 // Copyright 2001-2005 by Wilson Snyder.  This program is free software;
@@ -26,9 +26,10 @@ SC_MODULE (__MODULE__) {
     SP_TRACED uint32_t  m_cyclenum;
     SP_TRACED uint32_t  m_array[ARRAYSIZE];
     SP_TRACED MyENumClass m_enumVal;
+    // Note verilator now emits it's own tracing; this is just for back compatibility
     VL_SIG(m_unusedok1,  5,1);		// From Verilator: reg [5:1]  m_unusedok1
-    VL_SIGW(m_unusedok2, 35,1,2);	// From Verilator: reg [35:1] m_unusedok2
-    VL_SIGW(m_unusedok3[10], 35,1,2);	// From Verilator: reg [35:1] m_unusedok3[10]
+    VL_SIGW(m_unusedok2, 73,1,2);	// From Verilator: reg [74:1] m_unusedok2
+    VL_SIGW(m_unusedok3[10], 73,1,2);	// From Verilator: reg [74:1] m_unusedok3[10]
 
     /*AUTOSUBCELL_DECL*/
     /*AUTOSIGNAL*/

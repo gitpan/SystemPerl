@@ -1,4 +1,4 @@
-// $Revision: 1.5 $$Date: 2005-03-01 17:59:56 -0500 (Tue, 01 Mar 2005) $$Author: wsnyder $ -*- SystemC -*-
+// $Revision: 1.5 $$Date: 2005-03-02 11:03:12 -0500 (Wed, 02 Mar 2005) $$Author: wsnyder $ -*- SystemC -*-
 //=============================================================================
 //
 // THIS MODULE IS PUBLICLY LICENSED
@@ -66,6 +66,9 @@ private:
     bool		m_fullDump;	///< True indicates dump ignoring if changed
     uint32_t		m_nextCode;	///< Next code number to assign
     string		m_modName;	///< Module name being traced now
+    string		m_timeRes;	///< Time resolution (ns/ms etc)
+    string		m_timeUnit;	///< Time units (ns/ms etc)
+
     char*		m_wrBufp;	///< Output buffer
     char*		m_writep;	///< Write pointer into output buffer
 
@@ -115,6 +118,7 @@ public:
 	m_wrBufp = new char [bufferSize()];
 	m_writep = m_wrBufp;
 	m_namemapp = NULL;
+	m_timeRes = m_timeUnit = "ns";
     }
     ~SpTraceVcd();
 
@@ -131,6 +135,12 @@ public:
     static void flush_all();		///< Flush any remaining data from all files
     void close ();			///< Close the file
 
+    void set_time_unit (const char* unit); ///< Set time units (s/ms, defaults to ns)
+    void set_time_resolution (const char* unit); ///< Set time resolution (s/ms, defaults to ns)
+
+    /// Inside dumping routines, called each cycle to make the dump
+    void dump     (double timestamp);
+
     /// Inside dumping routines, declare callbacks for tracings
     void addCallback (SpTraceCallback_t init, SpTraceCallback_t full, SpTraceCallback_t change,
 		      void* userthis);
@@ -143,9 +153,6 @@ public:
     void declQuad  (uint32_t code, const char* name, int arraynum, int msb, int lsb);
     void declArray (uint32_t code, const char* name, int arraynum, int msb, int lsb);
     //	... other module_start for submodules (based on cell name)
-
-    // Regular dumping
-    void dump     (double timestamp);
 
     /// Inside dumping routines, dump one signal
     inline void fullBit (uint32_t code, const uint32_t newval) {

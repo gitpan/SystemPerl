@@ -1,4 +1,4 @@
-// $Revision: 1.31 $$Date: 2005-03-01 17:59:56 -0500 (Tue, 01 Mar 2005) $$Author: wsnyder $ -*- SystemC -*-
+// $Revision: 1.31 $$Date: 2005-03-02 11:20:22 -0500 (Wed, 02 Mar 2005) $$Author: wsnyder $ -*- SystemC -*-
 //=============================================================================
 //
 // THIS MODULE IS PUBLICLY LICENSED
@@ -42,12 +42,16 @@ class SpTraceFile
 public:
     SpTraceFile() {
 	sc_get_curr_simcontext()->add_trace_file(this);
+# if (SYSTEMC_VERSION>20011000)
+	spTrace()->set_time_resolution(sc_get_default_time_unit().to_string());
+	spTrace()->set_time_unit(sc_get_default_time_unit().to_string());
+# endif
     }
     ~SpTraceFile() {}
     /// Called by SystemC simulate()
     virtual void cycle (bool delta_cycle) {
 # if (SYSTEMC_VERSION>20011000)
-	if (!delta_cycle) { spTrace()->dump(sc_time_stamp().to_double()); }
+	if (!delta_cycle) { spTrace()->dump(sc_time_stamp().to_default_time_units()); }
 # else
 	if (!delta_cycle) { spTrace()->dump(sc_time_stamp()); }
 # endif
