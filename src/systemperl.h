@@ -1,4 +1,4 @@
-// $Revision: 1.34 $$Date: 2005-03-01 17:59:56 -0500 (Tue, 01 Mar 2005) $$Author: wsnyder $ -*- SystemC -*-
+// $Revision: 1.34 $$Date: 2005-03-03 11:33:15 -0500 (Thu, 03 Mar 2005) $$Author: wsnyder $ -*- SystemC -*-
 //********************************************************************
 //
 // THIS MODULE IS PUBLICLY LICENSED
@@ -151,6 +151,7 @@ extern "C" {
 // SystemC Automatics
 
 #define SP_AUTO_CTOR
+#define SP_TEMPLATE(cellregexp, pinregexp, netregexp)
 
 // Multiple flavors as all compilers don't support variable define arguments
 #define SP_AUTO_COVER()

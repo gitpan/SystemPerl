@@ -1,4 +1,4 @@
-# $Revision: 1.14 $$Date: 2005-03-01 17:59:56 -0500 (Tue, 01 Mar 2005) $$Author: wsnyder $
+# $Revision: 1.14 $$Date: 2005-03-14 11:19:09 -0500 (Mon, 14 Mar 2005) $$Author: wsnyder $
 # DESCRIPTION: Perl ExtUtils: Common routines required by package tests
 #
 # Copyright 2001-2005 by Wilson Snyder.  This program is free software;
@@ -56,6 +56,13 @@ sub write_file {
     my $fh = IO::File->new ($filename,"w") or die "%Error: $! writing $filename,";
     print $fh $text;
     $fh->close;
+}
+
+sub ncsc_ok {
+    return ($Config{archname} =~ /linux/
+	    && $ENV{NC_ROOT}
+	    && -d "$ENV{NC_ROOT}/tools/systemc/include"
+	    );
 }
 
 1;

@@ -1,5 +1,5 @@
 %{
-/* $Revision: 1.51 $$Date: 2005-03-01 17:59:56 -0500 (Tue, 01 Mar 2005) $$Author: wsnyder $
+/* $Revision: 1.51 $$Date: 2005-03-03 11:33:15 -0500 (Thu, 03 Mar 2005) $$Author: wsnyder $
  ******************************************************************************
  * DESCRIPTION: SystemC bison parser
  *
@@ -117,6 +117,7 @@ int scgrammerlex() {
 %token		SP_CELL
 %token		SP_CELL_DECL
 %token		SP_PIN
+%token		SP_TEMPLATE
 %token		SP_TRACED
 %token		VL_SIG
 %token		VL_SIGW
@@ -128,6 +129,7 @@ int scgrammerlex() {
 %token		VL_OUTW
 
 %type<string>	cellname
+%type<string>	string_or_cellname
 %type<string>	vectors_bra
 %type<string>	vector_bra
 %type<string>	vector
@@ -177,6 +179,7 @@ exp:		auto
 		| cell
 		| cell_decl
 		| pin
+		| pin_template
 		| decl
 		| traceable
 		| inout
@@ -260,6 +263,14 @@ pin:		SP_PIN '(' cellname ',' SYMBOL vector ',' SYMBOL vector ')' ';'
 		;
 decl:		SC_SIGNAL '<' declType '>' SYMBOL vector ';'
 			{ scparser_call(-4,"signal",$1,$3,$5,$6); }
+		;
+
+pin_template:	SP_TEMPLATE '(' string_or_cellname ',' STRING ',' STRING ')' ';'
+			{ scparser_call(-3,"pin_template",$3,$5,$7); }
+		;
+
+string_or_cellname: STRING		{ $$ = $1; }
+		| cellname		{ $$ = $1; }
 		;
 
 //		FOO or FOO::BAR*

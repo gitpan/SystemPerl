@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Revision: 1.46 $$Date: 2005-03-02 11:34:26 -0500 (Wed, 02 Mar 2005) $$Author: wsnyder $
+# $Revision: 1.46 $$Date: 2005-03-14 12:12:29 -0500 (Mon, 14 Mar 2005) $$Author: wsnyder $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -20,7 +20,7 @@ use Class::Struct;
 use Verilog::Netlist;
 use SystemC::Netlist;
 @ISA = qw(Verilog::Netlist::Cell);
-$VERSION = '1.171';
+$VERSION = '1.180';
 use strict;
 
 ######################################################################
@@ -38,6 +38,47 @@ sub new_pin {
 ######################################################################
 #### Automatics (Preprocessing)
 
+sub _autos_connect_port {
+    my $self = shift;
+    my $portref = shift;
+
+    my $netname = $portref->name;
+    # Search for a template for this
+    my $cellname = $self->name;
+    my $comment;
+    foreach my $templref (@{$self->module->_pintemplates}) {
+	my $cellre = $templref->cellre;
+	if ($cellname =~ /$cellre/) {
+	    my $pinre = $templref->pinre;
+	    if ($netname =~ /$pinre/) {
+		my $cellpin_regexp = "^".$templref->cellregexp . "####" . $templref->pinregexp.'$';
+		my $cellpin = $cellname . "####" . $netname;
+		my $replace = $templref->netregexp;
+		# You can't use s/$compile/$compile/ directly.  We could make a eval{}, but
+		# we'll do it the way some C code might eventually have to...
+		if ($cellpin =~ m/$cellpin_regexp/) {
+		    my $a=$1; my $b=$2; my $c=$3; my $d=$4; my $e=$5; my $f=$6; my $g=$7; my $h=$8; my $i=$9;
+		    $replace =~ s/\$1/$a/; $replace =~ s/\$2/$b/;  $replace =~ s/\$3/$c/; $replace =~ s/\$4/$d/;
+		    $replace =~ s/\$5/$e/; $replace =~ s/\$6/$f/;  $replace =~ s/\$g/$c/; $replace =~ s/\$8/$h/;
+		    $replace =~ s/\$9/$i/;
+		    $netname = $replace;
+		    $comment = "Templated on ".$templref->filename.":".$templref->lineno;
+		} else {
+		    $self->error("Bad regexp in expanding AUTO_TEMPLATE, Cellpin='$cellpin_regexp', Cellpin='$cellpin', Replace='$replace'\n");
+		}
+	    }
+	}
+    }
+
+    print "  AUTOINST connect ",$self->module->name,"."
+	,$self->name," (",$self->submod->name,") port ",$portref->name
+	," to ",$netname,"\n" if $SystemC::Netlist::Debug;
+    $self->new_pin (name=>$portref->name, portname=>$portref->name,
+		    filename=>'AUTOINST('.$self->module->name.')', lineno=>$self->lineno,
+		    netname=>$netname, sp_autocreated=>($comment||1),)
+	->_link();
+}
+
 sub _autos {
     my $self = shift;
     if ($self->_autoinst) {
@@ -48,13 +89,7 @@ sub _autos {
 	    }
 	    foreach my $portref ($self->submod->ports) {
 		if (!$conn_ports{$portref->name}) {
-		    print "  AUTOINST connect ",$self->module->name,"."
-			,$self->name," (",$self->submod->name,") port ",$portref->name
-			    ,"\n" if $SystemC::Netlist::Debug;
-		    $self->new_pin (name=>$portref->name, portname=>$portref->name,
-				    filename=>'AUTOINST('.$self->module->name.')', lineno=>$self->lineno,
-				    netname=>$portref->name, sp_autocreated=>1,)
-			->_link();
+		    $self->_autos_connect_port($portref);
 		}
 	    }
 	}
@@ -72,9 +107,11 @@ sub _write_autoinst {
     $fileref->print ("${prefix}// Beginning of SystemPerl automatic instantiation pins\n");
     foreach my $pinref ($self->pins_sorted) {
 	if ($pinref->sp_autocreated) {
-	    $fileref->printf ("%sSP_PIN(%s, %-20s %-20s // %s\n"
-		,$prefix,$self->name,$pinref->name.",",$pinref->port->name.");"
-				     ,$pinref->port->direction);
+	    $fileref->printf ("%sSP_PIN(%s, %-20s %-20s // %s%s\n"
+			      ,$prefix,$self->name,$pinref->name.",",$pinref->port->name.");"
+			      ,$pinref->port->direction
+			      ,(($pinref->sp_autocreated ne '1')?" ".$pinref->sp_autocreated:"")
+			      );
 	}
     }
     $fileref->print ("${prefix}// End of SystemPerl automatic instantiation pins\n");

@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Revision: 1.45 $$Date: 2005-03-02 11:34:26 -0500 (Wed, 02 Mar 2005) $$Author: wsnyder $
+# $Revision: 1.45 $$Date: 2005-03-14 12:12:29 -0500 (Mon, 14 Mar 2005) $$Author: wsnyder $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -24,7 +24,7 @@ use SystemC::Netlist::Net;
 use SystemC::Netlist::Cell;
 use SystemC::Netlist::Module;
 @ISA = qw(Verilog::Netlist::Pin);
-$VERSION = '1.171';
+$VERSION = '1.180';
 use strict;
 
 ######################################################################
@@ -46,6 +46,28 @@ sub _autos {
 	}
     }
 }
+
+######################################################################
+
+package SystemC::Netlist::PinTemplate;
+use Class::Struct;
+use Verilog::Netlist::Subclass;
+use vars qw(@ISA);
+@ISA = qw(SystemC::Netlist::PinTemplate::Struct
+	  Verilog::Netlist::Subclass);
+use strict;
+
+structs('new',
+	'SystemC::Netlist::PinTemplate::Struct'
+	=>[filename 	=> '$', #'	# Filename this came from
+	   lineno	=> '$', #'	# Linenumber this came from
+	   #
+	   cellregexp	=> '$', #'	# Cell regular expression as string
+	   cellre	=> '$', #'	# Cell regular expression compiled
+	   pinregexp	=> '$', #'	# Pin regular expression as string
+	   pinre	=> '$', #'	# Pin regular expression compiled
+	   netregexp	=> '$', #'	# Net regular expression as string
+	   ]);
 
 ######################################################################
 #### Package return

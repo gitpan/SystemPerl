@@ -9,6 +9,7 @@ example/ExMod.sp
 example/ExModNull.sp
 example/ExModSub.sp
 example/ExParse.sp
+example/Makefile_ncsc
 example/Makefile_obj
 Makefile.PL
 MANIFEST
@@ -73,8 +74,9 @@ t/40_coverage.t
 t/50_spp_inline.t
 t/60_spp_pre.t
 t/70_trace.t
-t/90_gcc.t
-t/95_scl.t
+t/80_gcc.t
+t/85_scl.t
+t/90_ncsc_run.t
 t/9x_common_build.pl
 t/test_utils.pl
 Template.pm

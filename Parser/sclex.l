@@ -1,6 +1,6 @@
 %option noyywrap align never-interactive prefix="sclex"
 %{
-/* $Revision: 1.42 $$Date: 2005-03-01 17:59:56 -0500 (Tue, 01 Mar 2005) $$Author: wsnyder $
+/* $Revision: 1.42 $$Date: 2005-03-03 11:33:15 -0500 (Thu, 03 Mar 2005) $$Author: wsnyder $
  ******************************************************************************
  * DESCRIPTION: SystemC lexer
  * 
@@ -85,6 +85,7 @@ FLOATNUM	[0-9]+"."*[0-9]*[eE][0-9]+
 [S][PC]"_CELL_DECL"	{ return(SP_CELL_DECL); }
 [S][PC]"_PIN"		{ return(SP_PIN); }
 [S][PC]"_TRACED"	{ return(SP_TRACED); }
+"SP_TEMPLATE"	{ return(SP_TEMPLATE); }
 "SC_CTOR"	{ return(SC_CTOR); }
 "VL_CTOR"	{ return(SC_CTOR); }
 "VL_CELL"	{ return(SP_CELL); }

@@ -1,4 +1,4 @@
-// $Revision: 1.12 $$Date: 2005-03-01 17:59:56 -0500 (Tue, 01 Mar 2005) $$Author: wsnyder $
+// $Revision: 1.12 $$Date: 2005-03-03 11:33:15 -0500 (Thu, 03 Mar 2005) $$Author: wsnyder $
 // DESCRIPTION: SystemPerl: Example source module
 //
 // Copyright 2001-2005 by Wilson Snyder.  This program is free software;
@@ -21,6 +21,8 @@ SC_MODULE (__MODULE__) {
 
   private:
     sc_signal<bool>	out_array[MOD_CELLS];
+    sc_signal<bool>	outb_from0;
+    sc_signal<bool>	outb_from1;
 
     SP_CELL_DECL (ExModSub, sub[MOD_CELLS]);
 
@@ -41,6 +43,14 @@ SC_MODULE (__MODULE__) {
 SP_CTOR_IMP(__MODULE__)
 {
     //====
+
+    // Example template rule:
+    SP_TEMPLATE("sub\[(\d+)\]", "(outb)x", "$2_from$1");
+    SP_TEMPLATE(subwontmatch, "(baraz)", "floish");
+    // Expands to:
+    //SP_PIN  (sub[0], outbx, outb_from0);
+    //SP_PIN  (sub[1], outbx, outb_from1);
+
     SP_CELL (sub[0], ExModSub);
     SP_PIN  (sub[0], out, out_array[0]);
     /*AUTOINST*/	

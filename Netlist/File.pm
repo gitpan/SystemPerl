@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Revision: 1.130 $$Date: 2005-03-02 11:34:26 -0500 (Wed, 02 Mar 2005) $$Author: wsnyder $
+# $Revision: 1.130 $$Date: 2005-03-14 12:12:29 -0500 (Mon, 14 Mar 2005) $$Author: wsnyder $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -23,7 +23,7 @@ use SystemC::Template;
 use Verilog::Netlist::Subclass;
 @ISA = qw(SystemC::Netlist::File::Struct
 	Verilog::Netlist::Subclass);
-$VERSION = '1.171';
+$VERSION = '1.180';
 use strict;
 
 structs('new',
@@ -341,6 +341,53 @@ sub pin {
 		       netname=>$net, );
 }
 
+sub _pin_template_check_regexp {
+    my $self = shift;
+    my $regexp = shift;
+    # Take regexp and test for correctness
+    # Return new regexp string, and compiled regexp
+
+    $regexp =~ s/^\"//;
+    $regexp =~ s/\"$//;
+    if ($regexp =~ /^\^/ || $regexp =~ /\$$/) {
+	$self->error ("SP_TEMPLATE does not need ^/\$ anchoring",$regexp);
+    }
+
+    my $compiled;
+    eval {
+	$compiled = qr/^$regexp$/;
+    };
+    if (my $err = $@) {
+	$err =~ s/ at .*$//;
+	$self->{fileref}->error ("SP_TEMPLATE compile error: ",$err);
+    }
+
+    return ($regexp,$compiled);
+}
+
+sub pin_template {
+    my $self = shift;
+    my $cellregexp = shift;
+    my $pinregexp = shift;
+    my $netregexp = shift;
+
+    my $modref = $self->{modref};
+    if (!$modref) {
+	return $self->error ("SP_TEMPLATE outside of module definition");
+    }
+
+    my ($cellre, $pinre, $netre);
+
+    ($cellregexp,$cellre) = $self->_pin_template_check_regexp($cellregexp);
+    ($pinregexp,$pinre) = $self->_pin_template_check_regexp($pinregexp);
+    ($netregexp,$netre) = $self->_pin_template_check_regexp($netregexp);
+
+    $modref->new_pin_template (filename=>$self->filename, lineno=>$self->lineno,
+			       cellregexp => $cellregexp, cellre => $cellre,
+			       pinregexp => $pinregexp, pinre => $pinre,
+			       netregexp => $netregexp,);
+}
+
 sub signal {
     my $self = shift;
     my $inout = shift;
@@ -350,7 +397,8 @@ sub signal {
     my $msb = shift;
     my $lsb = shift;
 
-    if ($type eq "sc_clock" && ($self->{netlist}->sc_version||0) > 20020000) {
+    if ($type eq "sc_clock" && (($self->{netlist}->sc_version||0) > 20020000
+				|| $self->{netlist}{ncsc})) {
 	# 2.0.1 changed the basic type of sc_in_clk to a bool
 	$type = "bool";
     }

@@ -1,4 +1,4 @@
-#$Revision: 1.33 $$Date: 2005-03-01 17:59:56 -0500 (Tue, 01 Mar 2005) $$Author: wsnyder $
+#$Revision: 1.33 $$Date: 2005-03-03 11:33:15 -0500 (Thu, 03 Mar 2005) $$Author: wsnyder $
 ######################################################################
 #
 # Copyright 2001-2005 by Wilson Snyder.  This program is free software;
@@ -90,6 +90,40 @@ public sc_module" must instead be coded as "SC_MODULE(mod1)".
 =item SP_PIN (I<instname>, I<portname>, I<netname>)
 
 SP_PIN declares a connection of a instantiation's port to the specified net.
+
+=item SP_TEMPLATE ("<instregexp>", "<portregexp>", "<netregexp>");
+
+SP_TEMPLATE defines a rule for connecting pins with AUTOINST that can apply
+to a regular expression of instance names and port names.  This is useful
+for connecting signals to arrayed instances, or other mass-renaming tasks.
+
+The first parameter is a unquoted instance name, or a double-quoted Perl
+regular expression which must match against the instance name for the
+template to apply.  Regular expressions must conform to those described in
+L<pcrepattern>, and are anchored to the instance name - in that SystemPerl
+implies a leading "^" and trailing "$" in the regular expression, and the
+^/$ must not be included by the user.  Be careful with brackets, as they
+specify regular expression character classes; if a literal bracket is
+wanted such as for matching array references, quote it with a backslash.
+
+The second parameter is a regular expression which must match against the
+port name for the template to apply.  As with the instance regexp, it is
+anchored for you.
+
+The third parameter is the net to connect when the template matches.  The
+regular expression may contain $1, $2 etc, which correspond to the
+parenthesis in both the instance and port regular expressions concatenated.
+
+For example, 
+
+    SP_TEMPLATE("sub(\d+)", "arrayed_(.*)", "$2_array$1");
+
+    Where there	is a sub1 instance with a pin "arrayed_foo".
+
+When a instance name matches /^sub\d+$/ which "sub1" does, and a port name
+matches /^arrayed_.*$/, which "arrayed_foo" does, then the pin will be
+named based on the port name and sub number, in this case $2 has "foo" and
+$1 has "1", so the resulting connection will be to "foo_array1".
 
 =item SP_TRACED
 

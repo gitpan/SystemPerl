@@ -1,4 +1,4 @@
-# $Revision: 1.26 $$Date: 2005-03-01 17:59:56 -0500 (Tue, 01 Mar 2005) $$Author: wsnyder $ -*- Makefile -*-
+# $Revision: 1.26 $$Date: 2005-03-04 10:13:14 -0500 (Fri, 04 Mar 2005) $$Author: wsnyder $ -*- Makefile -*-
 # DESCRIPTION: SystemPerl: Example makefile
 #
 # This is executed in the "test_dir", not in this directory
@@ -50,11 +50,13 @@ SP_OBJS   := $(addsuffix .o,$(SP_SP_BASE))
 
 build:	preproc ex_main
 
+SPPREPROC_FLAGS = -M sp_preproc.d --tree ex.tree --preproc
+
 # Setup as a "always" rule; we don't check for enough sp_preproc dependencies
 # In a user example where you weren't editing sp_preproc, you could have:
 #preproc $(SP_CPP) $(SP_H): $(SP_SP)
 preproc $(SP_CPP) $(SP_H):
-	perl ../sp_preproc $(INCDIR) -M sp_preproc.d --tree ex.tree --preproc $(SP_SP)
+	perl ../sp_preproc $(INCDIR) $(SPPREPROC_FLAGS) $(SP_SP)
 
 ex_main:	$(OBJS)
 	$(CC) $(CFLAGS) $(INCDIR) $(LIBDIR) -o $@ $^ $(LIBS) 2>&1 | c++filt

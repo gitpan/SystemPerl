@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Revision: 1.71 $$Date: 2005-03-02 11:34:26 -0500 (Wed, 02 Mar 2005) $$Author: wsnyder $
+# $Revision: 1.71 $$Date: 2005-03-14 12:12:29 -0500 (Mon, 14 Mar 2005) $$Author: wsnyder $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -27,14 +27,14 @@ use SystemC::Netlist::AutoCover;
 use SystemC::Netlist::AutoTrace;
 
 @ISA = qw(Verilog::Netlist::Module);
-$VERSION = '1.171';
+$VERSION = '1.180';
 use strict;
 
 sub new_net {
     my $self = shift;
     # @_ params
     # Create a new net under this module
-    my $netref = new SystemC::Netlist::Net (direction=>'net', @_, module=>$self, );
+    my $netref = new SystemC::Netlist::Net (direction=>'net', array=>'', @_, module=>$self, );
     $self->_nets ($netref->name(), $netref);
     return $netref;
 }
@@ -55,6 +55,15 @@ sub new_cell {
     my $cellref = new SystemC::Netlist::Cell (@_, module=>$self,);
     $self->_cells ($cellref->name(), $cellref);
     return $cellref;
+}
+
+sub new_pin_template {
+    my $self = shift;
+    # @_ params
+    # Create a new pin template under this module
+    my $templref = new SystemC::Netlist::PinTemplate (@_,);
+    push @{$self->_pintemplates}, $templref;
+    return $templref;
 }
 
 ######################################################################
