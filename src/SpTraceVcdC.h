@@ -1,4 +1,4 @@
-// $Revision: #2 $$Date: 2004/06/21 $$Author: ws150726 $ -*- SystemC -*-
+// $Revision: #4 $$Date: 2004/08/12 $$Author: ws150726 $ -*- SystemC -*-
 //=============================================================================
 //
 // THIS MODULE IS PUBLICLY LICENSED
@@ -20,8 +20,8 @@
 //
 //=============================================================================
 
-#ifndef _VLTRACEVCDC_H_
-#define _VLTRACEVCDC_H_ 1
+#ifndef _SPTRACEVCDC_H_
+#define _SPTRACEVCDC_H_ 1
 
 #include <sys/types.h>	// uint32_t
 #include <stdint.h>	// uint32_t
@@ -131,6 +131,7 @@ public:
     void module (const string name);
     void declBit   (uint32_t code, const char* name, int arraynum);
     void declBus   (uint32_t code, const char* name, int arraynum, int msb, int lsb);
+    void declQuad  (uint32_t code, const char* name, int arraynum, int msb, int lsb);
     void declArray (uint32_t code, const char* name, int arraynum, int msb, int lsb);
     //	... other module_start for submodules (based on cell name)
 
@@ -153,6 +154,15 @@ public:
 	*m_writep++=' '; printCode(code); *m_writep++='\n';
 	bufferCheck();
     }
+    inline void fullQuad (uint32_t code, const uint64_t newval, int bits) {
+	(*((uint64_t*)&m_sigs_oldval[code])) = newval;
+	*m_writep++='b';
+	for (int bit=bits-1; bit>=0; --bit) {
+	    *m_writep++=((newval&(1ULL<<bit))?'1':'0');
+	}
+	*m_writep++=' '; printCode(code); *m_writep++='\n';
+	bufferCheck();
+    }
     inline void fullArray (uint32_t code, const uint32_t* newval, int bits) {
 	for (int word=0; word<(((bits-1)/32)+1); ++word) {
 	    m_sigs_oldval[code+word] = newval[word];
@@ -171,6 +181,9 @@ public:
     }
     inline void chgBus (uint32_t code, const uint32_t newval, int bits) {
 	if (m_sigs_oldval[code] != newval) { fullBus (code, newval, bits); }
+    }
+    inline void chgQuad (uint32_t code, const uint64_t newval, int bits) {
+	if ((*((uint64_t*)&m_sigs_oldval[code])) != newval) { fullQuad(code, newval, bits); }
     }
     inline void chgArray (uint32_t code, const uint32_t* newval, int bits) {
 	for (int word=0; word<(((bits-1)/32)+1); ++word) {

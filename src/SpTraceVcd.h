@@ -1,4 +1,4 @@
-// $Revision: #29 $$Date: 2004/06/21 $$Author: ws150726 $ -*- SystemC -*-
+// $Revision: #30 $$Date: 2004/07/19 $$Author: ws150726 $ -*- SystemC -*-
 //=============================================================================
 //
 // THIS MODULE IS PUBLICLY LICENSED
@@ -20,8 +20,8 @@
 //
 //=============================================================================
 
-#ifndef _VLTRACEVCD_H_
-#define _VLTRACEVCD_H_ 1
+#ifndef _SPTRACEVCD_H_
+#define _SPTRACEVCD_H_ 1
 
 #include "SpTraceVcdC.h"
 

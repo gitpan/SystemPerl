@@ -1,4 +1,4 @@
-// $Revision: #6 $$Date: 2004/07/19 $$Author: ws150726 $ -*- SystemC -*-
+// $Revision: #1 $$Date: 2004/07/19 $$Author: ws150726 $ -*- SystemC -*-
 //=============================================================================
 //
 // THIS MODULE IS PUBLICLY LICENSED
@@ -16,28 +16,22 @@
 //
 // AUTHOR:  Wilson Snyder
 //
-// DESCRIPTION: Coverage analysis
+// DESCRIPTION: SystemC common simple utilities, not requiring SystemC
 //
 //=============================================================================
 
-#ifndef _VLCOVERAGE_H_
-#define _VLCOVERAGE_H_ 1
+#ifndef _SPCOMMON_H_
+#define _SPCOMMON_H_ 1
 
-#include <sys/types.h>	// uint32_t
-#include <stdint.h>	// uint32_t
+// Utilities here must NOT require SystemC headers!
+//=============================================================================
 
-#include "SpFunctor.h"
+#if defined(UERROR) && defined(UERROR_NLN)
+# define SP_ABORT(msg) { UERROR(msg); }
+#else
+# define SP_ABORT(msg) { cerr<<msg; abort(); }
+#endif
 
 //=============================================================================
-// SpCoverage
-
-class SpCoverage {
-public:
-    // GLOBAL METHODS
-    // Write all coverage data to a file
-    static void write (const char* filename = "logs/coverage.pl");
-    // Called by write lower-level routines to log a single coverage statistic
-    static void data (const char* hier, const char* what, const char* file, int lineno, const char* cmt, uint32_t data);
-};
 
 #endif // guard

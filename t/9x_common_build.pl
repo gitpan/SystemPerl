@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# $Revision: #11 $$Date: 2004/06/21 $$Author: ws150726 $
+# $Revision: #12 $$Date: 2004/07/19 $$Author: ws150726 $
 # DESCRIPTION: Perl ExtUtils: Type 'make test' to test this package
 #
 # Copyright 2001-2004 by Wilson Snyder.  This program is free software;
@@ -34,4 +34,11 @@ if (! -x "$dir/ex_main"
     ok(1);
     ok(-r "$dir/sim_sc.vcd");
     ok(-r "$dir/sim_sp.dump");
+}
+
+if (!-r "$dir/logs/coverage.pl") {
+    skip("skip Harmless; Missing coverage input",1);
+} else {
+    run_system ("cd $dir && ../vcoverage -y ../");
+    ok(-r "$dir/logs/coverage_source/ExModSub.sp");
 }

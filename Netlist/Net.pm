@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Revision: #45 $$Date: 2004/06/18 $$Author: ws150726 $
+# $Revision: #46 $$Date: 2004/08/12 $$Author: ws150726 $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -20,7 +20,7 @@ use Class::Struct;
 use Verilog::Netlist;
 use SystemC::Netlist;
 @ISA = qw(Verilog::Netlist::Net);
-$VERSION = '1.150';
+$VERSION = '1.160';
 use strict;
 
 # List of basic C++ types and their sizes

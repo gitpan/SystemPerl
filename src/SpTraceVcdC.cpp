@@ -1,4 +1,4 @@
-// $Revision: #1 $$Date: 2004/06/18 $$Author: ws150726 $ -*- SystemC -*-
+// $Revision: #3 $$Date: 2004/08/12 $$Author: ws150726 $ -*- SystemC -*-
 //=============================================================================
 //
 // THIS MODULE IS PUBLICLY LICENSED
@@ -31,6 +31,8 @@
 #include <errno.h>
 #include <stdio.h>
 
+// Note cannot include systemperl.h, or we won't work with non-SystemC compiles
+#include "SpCommon.h"
 #include "SpTraceVcdC.h"
 
 //=============================================================================
@@ -65,8 +67,7 @@ void SpTraceVcd::open (const char* filename) {
     // Assertions, as we cast enum to uint32_t pointers in AutoTrace.pm
     enum SpTraceVcd_enumtest { FOO = 1 };
     if (sizeof(SpTraceVcd_enumtest) != sizeof(uint32_t)) {
-	cerr << "%Error: SpTraceVcd::"<<__LINE__<<" cast assumption violated\n";
-	abort();
+	SP_ABORT("%Error: SpTraceVcd::open cast assumption violated\n");
     }
 
     // Set member variables
@@ -272,7 +273,7 @@ void SpTraceVcd::module (string name) {
 
 void SpTraceVcd::declare (uint32_t code, const char* name, int arraynum,
 			  int msb, int lsb) {	// -1 = is boolean
-    if (!code) { cerr<<"%Error: internal trace problem, code 0 is illegal\n"; abort(); }
+    if (!code) { SP_ABORT("%Error: internal trace problem, code 0 is illegal\n"); }
 
     // Make sure array is large enough
     m_nextCode = max(nextCode(), code+1+int((msb-lsb+1)/32));
@@ -321,6 +322,8 @@ void SpTraceVcd::declBit (uint32_t code, const char* name, int arraynum)
 {  declare (code, name, arraynum, -1, -1); }
 void SpTraceVcd::declBus (uint32_t code, const char* name, int arraynum, int msb, int lsb)
 {  declare (code, name, arraynum, msb, lsb); }
+void SpTraceVcd::declQuad  (uint32_t code, const char* name, int arraynum, int msb, int lsb)
+{  declare (code, name, arraynum, msb, lsb); }
 void SpTraceVcd::declArray (uint32_t code, const char* name, int arraynum, int msb, int lsb)
 {  declare (code, name, arraynum, msb, lsb); }
 
@@ -332,8 +335,7 @@ void SpTraceVcd::addCallback (
     void* userthis)
 {
     if (m_isOpen) {
-	cerr << "%Error: SpTraceVcd::"<<__FUNCTION__<<" called with already open file\n";
-	abort();
+	SP_ABORT("%Error: SpTraceVcd::"<<__FUNCTION__<<" called with already open file\n");
     }
     SpTraceCallInfo* vci = new SpTraceCallInfo(initcb, fullcb, changecb, userthis, nextCode());
     m_callbacks.push_back(vci);

@@ -1,0 +1,374 @@
+#!/usr/bin/perl -w
+#$Revision: #2 $$Date: 2004/07/22 $$Author: ws150726 $
+######################################################################
+#
+# Copyright 2001-2004 by Wilson Snyder.  This program is free software;
+# you can redistribute it and/or modify it under the terms of either the GNU
+# General Public License or the Perl Artistic License.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#                                                                           
+######################################################################
+
+require 5.005;
+
+use Getopt::Long;
+use IO::File;
+use Pod::Text;
+
+use FindBin qw($RealBin);
+use lib "$RealBin/lib";
+use lib "$RealBin/blib/lib";
+use lib "$RealBin/blib/arch";
+use lib "$RealBin/..";
+use lib "$RealBin/../Verilog/blib/lib";
+use lib "$RealBin/../Verilog/blib/arch";
+use Verilog::Getopt;
+use SystemC::Coverage;
+
+use strict;
+use vars qw ($Debug
+	     $Opt
+	     $Opt_Min_Count
+	     $Opt_All_Files
+	     $Opt_Linenums
+	     @Opt_Datas
+	     %LineData
+	     );
+
+#######################################################################
+# main
+
+autoflush STDOUT 1;
+autoflush STDERR 1;
+
+$Debug = 0;
+$Opt_Min_Count = 10;
+my $opt_write;
+my $opt_out_dir = 'logs/coverage_source';
+
+# Option parsing
+$Opt = new Verilog::Getopt() if !$Opt;   # Opt preloaded in internal bootstrap test
+@ARGV = $Opt->parameter(@ARGV);
+Getopt::Long::config ("no_auto_abbrev");
+if (! GetOptions (
+		  # Major operating modes
+		  "help"	=> \&usage,
+		  "debug"	=> \&debug,
+		  # Switches
+		  "all-files!"	=> \$Opt_All_Files,
+		  "min=i"	=> \$Opt_Min_Count,
+		  "write=s"	=> \$opt_write,
+		  "o=s"		=> \$opt_out_dir,
+		  # Debugging
+		  "linenums!"	=> \$Opt_Linenums,	# Undocumented developer-check line# annotations
+		  # Additional parameters
+		  "<>"		=> \&parameter,
+		  )) {
+    usage();
+}
+
+our $cov = new SystemC::Coverage();
+
+if ($Opt_Linenums) {
+    linenums($cov);
+}
+
+@Opt_Datas = (SystemC::Coverage::DEFAULT_FILENAME) if $#Opt_Datas == -1;
+foreach my $data (@Opt_Datas) {
+    next if !defined $data;
+    -r $data or die "%Error: No such file $data\n";
+    $cov->read(filename=>$data);
+}
+if ($opt_write) {
+    $cov->write(filename=>$opt_write);
+}
+
+line_report($cov, $opt_out_dir);
+
+#----------------------------------------------------------------------
+
+sub usage {
+    print '$Revision: #2 $$Date: 2004/07/22 $$Author: ws150726 $ ', "\n";
+    $SIG{__WARN__} = sub{};	#pod2text isn't clean.
+    pod2text($0);
+    exit (1);
+}
+
+sub debug {
+    $Debug = 9;
+    $SystemC::Coverage::Debug = 1;
+}
+
+sub parameter {
+    my $param = shift;
+    if ($param =~ /coverage/) {
+	push @Opt_Datas, $param;
+    } else {
+	die "%Error: Unknown parameter: $param\n";
+    }
+}
+ 
+#######################################################################
+#######################################################################
+# Data analysis
+
+sub line_calc {
+    my $cov = shift;
+    # Calculate per-line information into filedata structure
+    $cov->{filedata} = {};
+    foreach my $key (keys %{$cov->{coverage}}) {
+	my ($what,$hier,$filename,$lineno,$cmt) = SystemC::Coverage::split_line($key);
+	my $cnt = $cov->{coverage}{$key};
+	next if ($what ne "case" && $what ne "else" && $what ne "if" && $what ne "line");
+	my $cntref = $cov->{filedata}{$filename}{counts}{$lineno};
+	if ($cntref) {
+	    $cntref->{count} += $cnt;
+	} else {
+	    $cov->{filedata}{$filename}{filename} = $filename;
+	    $cov->{filedata}{$filename}{counts}{$lineno} = {
+		what => $what,
+		filename => $filename,
+		lineno => $lineno,
+		count => $cnt,
+		comment => $cmt,
+	    }
+	}
+    }
+    #use Data::Dumper; print Dumper($cov) if $Debug;
+}
+
+sub line_set_file_needed {
+    my $cov = shift;
+    # Compute which files are needed.  A file isn't needed if it has appropriate
+    # coverage in all categories
+    my $tot_cases = 0;
+    my $tot_ok = 0;
+    foreach my $fileref (values %{$cov->{filedata}}) {
+	my $needed = 0;
+	foreach my $cntref (values %{$fileref->{counts}}) {
+	    $tot_cases ++;
+	    if (!$cntref->{ok} && $cntref->{count}<$Opt_Min_Count) {
+		$needed = 1;
+	    } else {
+		$cntref->{ok} = 1;
+		$tot_ok ++;
+	    }
+	    $needed = 1 if $Opt_All_Files;
+	}
+	$fileref->{needed} = $needed;
+    }
+    return ($tot_ok,$tot_cases,($tot_ok/($tot_cases||1)));  # % ok.
+}
+
+sub line_sprint_one_line {
+    my $fileref = shift;
+    my $cntref = shift;
+
+    my $line = $fileref->{text}->[$cntref->{lineno}];
+    my $ok = $cntref->{ok}?" ":"%";
+    if ($Opt_Linenums
+	&& $line !~ /\b(if|else|default)\b/
+	&& $line !~ /^\s*[][:\`\'A-Za-z_0-9, ]+:/ ) {
+	$ok = "^";
+    }
+    return sprintf ("%s%06s\t%s"
+		    ,$ok
+		    ,$cntref->{count}
+		    ,$line);
+}
+
+sub line_output_file {
+    my $cov = shift;
+    my $dirname = shift;
+    mkdir $dirname, 0777;
+    foreach my $fileref (values %{$cov->{filedata}}) {
+	next if !$fileref->{needed};
+	my $filename = $fileref->{filename};
+	$filename =~ s/.*\///;
+	my $outfile = $dirname."/".$filename;
+	my $fh = IO::File->new($outfile,"w") or die "%Error: $! writing $outfile\n";
+	my $lineno=-1;  # Yes, there is a line 0, we added it as a comment when we read
+	foreach my $line (@{$fileref->{text}}) {
+	    $lineno++;
+	    my $cntref = $fileref->{counts}{$lineno};
+	    if ($cntref) {
+		print $fh line_sprint_one_line($fileref,$cntref);
+	    } else {
+		print $fh "\t",$line;
+	    }
+	}
+	$fh->close;
+    }
+}
+
+sub line_report {
+    my $cov = shift;
+    my $dirname = shift;
+    line_calc($cov);
+    line_set_file_needed($cov);
+    src_read_files($cov);
+    src_kill_ascii_defaults($cov);
+    my ($ok,$t,$pct) = line_set_file_needed($cov);
+    line_output_file($cov,$dirname);
+    printf "Total coverage ($ok/$t) %3.2f%%\n", $pct*100;
+    print "See lines with '%00' in $dirname\n";
+}
+
+#######################################################################
+# File reading
+
+sub src_read_files {
+    my $cov = shift;
+    foreach my $fileref (values %{$cov->{filedata}}) {
+	next if !$fileref->{needed};
+	my $filename = $fileref->{filename};
+	print "src_read_file $filename:\n" if $Debug;
+	$filename = $Opt->file_path($filename);
+	my $fh = IO::File->new($filename) or die "%Error: $! $filename\n";
+	my @text = <$fh>;
+	# Make line 0 a comment so [lineno] works (arrays start at 0)
+	unshift @text, "// Coverage analysis on ".(scalar(localtime))."\n";
+	$fileref->{text} = \@text;
+	$fh->close();
+    }
+}
+
+sub src_kill_ascii_defaults {
+    my $cov = shift;
+    # 0 coverage on AUTOASCII default statements is OK.
+    foreach my $fileref (values %{$cov->{filedata}}) {
+	next if !$fileref->{needed};
+	foreach my $cntref (values %{$fileref->{counts}}) {
+	    if (($fileref->{text}->[$cntref->{lineno}]) =~ /(_ascii|\$error)/) {
+		# $errors are suppressed by verilator, but the user might
+		# have manually added one, so make it OK.
+		$cntref->{ok} = 1;
+	    }
+	}
+    }
+}
+
+
+#######################################################################
+#######################################################################
+# Debugging
+
+sub linenums {
+    my $cov = shift;
+    foreach my $filename (glob "obj_x86-linux/v/*.sp") {
+	my $fh = IO::File->new($filename) or die "%Error: $! $filename\n";
+	while (defined (my $line=$fh->getline)) {
+	    if ($line =~ /SP_AUTO_COVER3\(\"([^\"]+)\",\"([^\"]+)\",([0-9]+)/) {
+		$cov->covline('line','ln',$filename,$.,'ln',0);
+	    }
+	}
+	$fh->close();
+    }
+    push @Opt_Datas, undef;
+}
+
+#######################################################################
+#######################################################################
+__END__
+
+=pod
+
+=head1 NAME
+
+vcoverage - Verilog/SystemC coverage analyzer
+
+=head1 SYNOPSIS
+
+C<vcoverage>  I<datafile>  I<datafile...>
+
+=head1 DESCRIPTION
+
+Vcoverage reads the specified data file and generates annotated source
+code with coverage metrics annotated.  By default logs/coverage.pl is read.
+
+Additional Verilog-standard arguments specify the search paths necessary to
+find the source code that the coverage analysis was performed on.
+
+To get correct coverage percentages, you may wish to read logs/coverage.pl
+into Emacs and do a M-x keep-lines to include only those statistics of
+interest.
+
+For Verilog conditions that should never occur, you should add a $stop
+statement.  This will remove the coverage during the next build.
+
+=head1 ARGUMENTS
+
+=over 4
+
+=item --all-files
+
+Specifies all files should be shown.  By default, only those source files
+which have low coverage are written to the output directory.
+
+=item --help
+
+Displays this message and program version and exits.
+
+=item --min I<count>
+
+Specifies the minimum occurrence count that should be flagged.  Defaults to 10.
+
+=item --o I<output_directory>
+
+Sprcifies the directory name that source files with annotated coverage data
+should be written to.
+
+=item --write I<filename>
+
+Specifies the aggregate coverage results, summed across all the files,
+should be written to the given filename.  This is useful in scripts to
+combine many sequential runs into one master coverage file.
+
+=back 
+
+=head1 VERILOG ARGUMENTS
+
+The following arguments are compatible with GCC, VCS and most Verilog
+programs.
+
+=over 4
+
+=item +libext+I<ext>+I<ext>...
+
+Defines the extensions for Verilog files.
+
+=item +define+I<var>+I<value>
+=item -DI<var>=I<value>
+
+Defines the given variable.
+
+=item +incdir+I<dir>
+=item -II<dir>
+
+Specifies a directory for finding include files.
+
+=item -f I<file>
+
+Specifies a file containing additional command line arguments.
+
+=item -y I<dir>
+
+Specifies a module search directory.
+
+=back
+
+=head1 SEE ALSO
+
+C<Verilog::Getopt>, C<SystemC::Coverage>
+
+=head1 AUTHORS
+
+Wilson Snyder <wsnyder@wsnyder.org>
+
+=cut
+
+######################################################################

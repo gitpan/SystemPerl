@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Revision: #122 $$Date: 2004/06/18 $$Author: ws150726 $
+# $Revision: #124 $$Date: 2004/08/12 $$Author: ws150726 $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -23,7 +23,7 @@ use SystemC::Template;
 use Verilog::Netlist::Subclass;
 @ISA = qw(SystemC::Netlist::File::Struct
 	Verilog::Netlist::Subclass);
-$VERSION = '1.150';
+$VERSION = '1.160';
 use strict;
 
 structs('new',
@@ -239,15 +239,22 @@ sub auto {
 		      \&SystemC::Netlist::Module::_write_autoinout,
 		      $modref, $self->{fileref}, $1];
     }
-    elsif ($line    =~ /^(\s*)SP_AUTO_COVER(\d*)[_0-9]*\s*\( \s* \)/x
-	   || $line =~ /^(\s*)SP_AUTO_COVER(\d*)[_0-9]*\s*\( (\d+\s*,|) \s* \"([^\"]+)\" (\s*,\s* \"([^\"]+)\" \s*,\s* (\d+) |) \s*\)/x) {
-	my ($prefix,$fields,$_ignore_old_id,$cmt,$file,$line) = ($1,$2,$3,$4,$6,$7);
-	$cmt = 'line' if !defined $cmt;
-	if (!$file || $fields =~ /1/) {
+    elsif ($line    =~ /^(\s*)SP_AUTO_COVER	  # $1 prefix
+	   		 (?:  inc \s* \( \s* \d+, # SP_AUTO_COVERinc(id, 
+			  |   \d* \s* \( )	  # SP_AUTO_COVER1(
+	   		 (?:     \s* \"([^\"]+)\" |) # What
+	                 (?: \s*,\s* \"([^\"]+)\" |) # File
+			 (?: \s*,\s*   (\d+)      |) # Line
+	                 (?: \s*,\s* \"([^\"]+)\" |) # Comment
+	   		 \s* \)/x) {		# )	
+	my ($prefix,$what,$file,$line,$cmt) = ($1,$2,$3,$4,$5);
+	$what = 'line' if !defined $what;
+	if (!$file) {
 	    $file = $self->filename; $line = $self->lineno;
 	}
+	$cmt ||= '';
 	$modref or return $self->error ("SP_AUTO_COVER outside of module definition", $line);
-	my $coverref = $modref->new_cover (filename=>$file, lineno=>$line, comment=>$cmt,);
+	my $coverref = $modref->new_cover (filename=>$file, lineno=>$line, what=>$what, comment=>$cmt,);
 	# We simply replace the existing SP_AUTO instead of adding the comments.
 	my $last = pop @Text;
 	($last->[3] =~ /SP_AUTO/) or die "Internal %Error,"; # should have poped SP_AUTO we're replacing

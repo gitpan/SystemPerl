@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Revision: #22 $$Date: 2004/06/18 $$Author: ws150726 $
+# $Revision: #24 $$Date: 2004/08/12 $$Author: ws150726 $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -21,12 +21,13 @@ use Verilog::Netlist;
 use Verilog::Netlist::Subclass;
 @ISA = qw(SystemC::Netlist::AutoCover::Struct
 	Verilog::Netlist::Subclass);
-$VERSION = '1.150';
+$VERSION = '1.160';
 use strict;
 
 structs('new',
 	'SystemC::Netlist::AutoCover::Struct'
 	=>[name     	=> '$', #'	# Instantiation number
+	   what		=> '$', #'	# Type of coverage (line/expr)
 	   filename 	=> '$', #'	# Filename this came from
 	   lineno	=> '$', #'	# Linenumber this came from
 	   comment	=> '$', #'	# Info on the coverage item
@@ -67,10 +68,11 @@ sub call_text {
     my $coverref = shift;
     my $prefix = shift;
     # We simply replace the existing SP_AUTO instead of adding the comments.
-    return sprintf ("%sSP_AUTO_COVER4(%d,\"%s\",\"%s\",%d);"
+    return sprintf ("%sSP_AUTO_COVERinc(%d,\"%s\",\"%s\",%d,\"%s\");"
 		    ,$prefix
-		    ,$coverref->name, $coverref->comment
-		    ,$coverref->filename, $coverref->lineno);
+		    ,$coverref->name, $coverref->what
+		    ,$coverref->filename, $coverref->lineno,
+		    ,$coverref->comment);
 }
 
 sub _write_autocover_decl {
@@ -80,7 +82,7 @@ sub _write_autocover_decl {
     return if !$SystemC::Netlist::File::outputting;
     my $maxId = $modref->autocover_max_id;
     return if !$maxId;
-    $fileref->printf ("%sUInt32Zeroed\t_sp_coverage[%d];\t// SP_AUTO_COVER declaration\n"
+    $fileref->printf ("%sSpUInt32Zeroed\t_sp_coverage[%d];\t// SP_AUTO_COVER declaration\n"
 		      ,$prefix, $maxId);
     $fileref->print ("${prefix}void\t\tcoverageWrite(void*);\n");
 }
@@ -117,8 +119,8 @@ sub _write_autocover_impl {
     foreach my $cref (sort {$a->name cmp $b->name
 			    || $a->lineno <=> $b->lineno}
 		      (values %{$modref->_autocovers})) {
-	$fileref->printf("    sp_coverage_data (name(),\"%s\",\"%s\",%d,_sp_coverage[%d]);\n"
-			 ,$cref->comment, $cref->filename, $cref->lineno
+	$fileref->printf("    SpCoverage::data (name(),\"%s\",\"%s\",%d,\"%s\",_sp_coverage[%d]);\n"
+			 ,$cref->what, $cref->filename, $cref->lineno, $cref->comment
 			 ,$cref->name);
     }
     $fileref->print("}\n\n");

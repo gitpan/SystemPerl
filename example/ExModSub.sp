@@ -1,4 +1,4 @@
-// $Revision: #11 $$Date: 2004/01/27 $$Author: wsnyder $
+// $Revision: #12 $$Date: 2004/07/19 $$Author: ws150726 $
 // DESCRIPTION: SystemPerl: Example source module
 //
 // Copyright 2001-2004 by Wilson Snyder.  This program is free software;
@@ -32,10 +32,12 @@ SP_CTOR_IMP(__MODULE__) {
 
     SC_METHOD(clock);
     sensitive_pos(clk);
+
+    SP_AUTO_COVER(); // only once
 }
 
 void __MODULE__::clock (void) {
-    SP_AUTO_COVER1("clocking");
+    SP_AUTO_COVER1("clocking");  // not in line report
     out.write(in.read());
     SP_AUTO_COVER();
 }

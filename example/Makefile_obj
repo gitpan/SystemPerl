@@ -1,4 +1,4 @@
-# $Revision: #22 $$Date: 2004/01/27 $$Author: wsnyder $ -*- Makefile -*-
+# $Revision: #23 $$Date: 2004/07/19 $$Author: ws150726 $ -*- Makefile -*-
 # DESCRIPTION: SystemPerl: Example makefile
 #
 # This is executed in the "test_dir", not in this directory
@@ -57,8 +57,11 @@ preproc $(SP_CPP) $(SP_H):
 ex_main:	$(OBJS)
 	$(CC) $(CFLAGS) $(INCDIR) $(LIBDIR) -o $@ $^ $(LIBS) 2>&1 | c++filt
 
+run:	ex_main
+	./ex_main
+
+# Generic wildcard rules
+
 .cpp.o:
 	$(CC) $(CFLAGS) $(INCDIR) -c $<
 
-run:	ex_main
-	./ex_main

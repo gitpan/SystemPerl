@@ -1,4 +1,4 @@
-// $Revision: #31 $$Date: 2004/06/18 $$Author: ws150726 $ -*- SystemC -*-
+// $Revision: #33 $$Date: 2004/08/12 $$Author: ws150726 $ -*- SystemC -*-
 //********************************************************************
 //
 // THIS MODULE IS PUBLICLY LICENSED
@@ -29,6 +29,8 @@ using namespace std;
 #endif
 #include <stdint.h>      // uint32_t
 #include <stdarg.h>      // ... vaargs
+
+#include "SpCommon.h"
 
 //********************************************************************
 // Switches
@@ -64,15 +66,23 @@ using namespace std;
 #define SP_TRACED	// Just a NOP; it simply marks a declaration
 #ifndef VL_SIG
 # define VL_SIG8(name, msb,lsb)		uint8_t  name
+# define VL_SIG16(name, msb,lsb)	uint16_t  name
+# define VL_SIG64(name, msb,lsb)	uint64_t  name
 # define VL_SIG(name, msb,lsb)		uint32_t name
 # define VL_SIGW(name, msb,lsb, words)	uint32_t name[words]
 # define VL_IN8(name, msb,lsb)		uint8_t  name
+# define VL_IN16(name, msb,lsb)		uint16_t  name
+# define VL_IN64(name, msb,lsb)		uint64_t  name
 # define VL_IN(name, msb,lsb)		uint32_t name
 # define VL_INW(name, msb,lsb, words)	uint32_t name[words]
 # define VL_INOUT8(name, msb,lsb)	uint8_t  name
+# define VL_INOUT16(name, msb,lsb)	uint16_t  name
+# define VL_INOUT64(name, msb,lsb)	uint64_t  name
 # define VL_INOUT(name, msb,lsb)	uint32_t name
 # define VL_INOUTW(name, msb,lsb, words) uint32_t name[words]
 # define VL_OUT8(name, msb,lsb)		uint8_t  name
+# define VL_OUT16(name, msb,lsb)	uint16_t  name
+# define VL_OUT64(name, msb,lsb)	uint64_t  name
 # define VL_OUT(name, msb,lsb)		uint32_t name
 # define VL_OUTW(name, msb,lsb, words)	uint32_t name[words]
 # define VL_PORT(name, msb,lsb)		uint32_t name		// Depreciated
@@ -86,6 +96,7 @@ using namespace std;
 
 //********************************************************************
 // Functions
+
 // We'll ask systemC to have a sc_string creator to avoid this:
 // Note there is a mem leak here.  As only used for instance names, we'll live.
 inline const char *sp_cell_sprintf(const char *fmt...) {
@@ -104,9 +115,9 @@ class SpTraceFile;
 //********************************************************************
 // Simple classes.  If get bigger, move to optional include
 
-class UInt32Zeroed { public:
+class SpUInt32Zeroed { public:
     uint32_t m_l; 
-    UInt32Zeroed(): m_l(0) {};
+    SpUInt32Zeroed(): m_l(0) {};
     inline operator const uint32_t () const { return m_l; };
 };
 
@@ -133,10 +144,11 @@ extern "C" {
 
 // Multiple flavors as all compilers don't support variable define arguments
 #define SP_AUTO_COVER()
-#define SP_AUTO_COVER1(cmt)
-#define SP_AUTO_COVER3(cmt,file,line)
-#define SP_AUTO_COVER1_4(id,cmt,file,line) {this->_sp_coverage[(id)].m_l++;}
-#define SP_AUTO_COVER4(id,cmt,file,line) {this->_sp_coverage[(id)].m_l++;}
+#define SP_AUTO_COVER1(what)
+#define SP_AUTO_COVER3(what,file,line)
+#define SP_AUTO_COVER4(what,file,line,cmt)
+// Below inserted by preprocessor, not for internal use
+#define SP_AUTO_COVERinc(id,what,file,line,cmt) {this->_sp_coverage[(id)].m_l++;}
 
 //********************************************************************
 
