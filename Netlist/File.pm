@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Revision: #95 $$Date: 2002/08/29 $$Author: wsnyder $
+# $Revision: #97 $$Date: 2002/11/03 $$Author: wsnyder $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -28,7 +28,7 @@ use SystemC::Template;
 use Verilog::Netlist::Subclass;
 @ISA = qw(SystemC::Netlist::File::Struct
 	Verilog::Netlist::Subclass);
-$VERSION = '1.122';
+$VERSION = '1.130';
 use strict;
 
 structs('new',
@@ -238,8 +238,10 @@ sub auto {
 		      \&SystemC::Netlist::Module::_write_autoinout,
 		      $modref, $self->{fileref}, $1];
     }
-    elsif ($line =~ /^(\s*)SP_AUTO_COVER(\d*)[_0-9]*\s*\( (\d+\s*,|) \s* \"([^\"]+)\" (\s*,\s* \"([^\"]+)\" \s*,\s* (\d+) |) \s*\)/x) {
+    elsif ($line    =~ /^(\s*)SP_AUTO_COVER(\d*)[_0-9]*\s*\( \s* \)/x
+	   || $line =~ /^(\s*)SP_AUTO_COVER(\d*)[_0-9]*\s*\( (\d+\s*,|) \s* \"([^\"]+)\" (\s*,\s* \"([^\"]+)\" \s*,\s* (\d+) |) \s*\)/x) {
 	my ($prefix,$fields,$_ignore_old_id,$cmt,$file,$line) = ($1,$2,$3,$4,$6,$7);
+	$cmt = 'line' if !defined $cmt;
 	if (!$file || $fields =~ /1/) {
 	    $file = $self->filename; $line = $self->lineno;
 	}

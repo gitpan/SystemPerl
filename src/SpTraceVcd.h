@@ -1,4 +1,4 @@
-// $Revision: #10 $$Date: 2002/08/07 $$Author: wsnyder $ -*- SystemC -*-
+// $Revision: #12 $$Date: 2002/11/03 $$Author: wsnyder $ -*- SystemC -*-
 //=============================================================================
 //
 // THIS MODULE IS PUBLICLY LICENSED
@@ -35,6 +35,9 @@
 #include <string>
 #include <algorithm>
 #include <vector>
+#ifndef SPTRACEVCD_TEST
+# include <systemperl.h>
+#endif
 
 //=============================================================================
 // SpTraceVcdSig
@@ -161,7 +164,6 @@ public:
 // a sc_trace_file
 
 #ifndef SPTRACEVCD_TEST
-#include <systemc.h>
 class SpTraceFile : sc_trace_file {
     SpTraceVcd		m_sptrace;
 public:
@@ -173,40 +175,87 @@ public:
     void rolloverMB(size_t rolloverMB) { m_sptrace.rolloverMB(rolloverMB); };
     void close () { m_sptrace.close(); }
     // Called by SystemC simulate()
+#if (SYSTEMC_VERSION>20011000)
+    virtual void cycle (bool) { m_sptrace.dump(sc_time_stamp().to_double()); }
+#else
     virtual void cycle (bool) { m_sptrace.dump(sc_time_stamp()); }
+#endif
     inline SpTraceVcd* spTrace () { return &m_sptrace; };
 
 private:
     // Fake outs for linker
     virtual void write_comment (const sc_string &);
-    virtual void trace (const bool &, const sc_string &);
-    virtual void trace (const unsigned char &, const sc_string &, int);
-    virtual void trace (const short unsigned int &, const sc_string &, int);
-    virtual void trace (const unsigned int &, const sc_string &, int);
-    virtual void trace (const long unsigned int &, const sc_string &, int);
-    virtual void trace (const char &, const sc_string &, int);
-    virtual void trace (const short int &, const sc_string &, int);
-    virtual void trace (const int &, const sc_string &, int);
-    virtual void trace (const long int &, const sc_string &, int);
-    virtual void trace (const float &, const sc_string &);
-    virtual void trace (const double &, const sc_string &);
     virtual void trace (const unsigned int &, const sc_string &, const char **);
-#ifndef _SC_LITE_
-    virtual void trace (const sc_bit &, const sc_string &);
-    virtual void trace (const sc_logic &, const sc_string &);
-    virtual void trace (const sc_bool_vector &, const sc_string &);
-    virtual void trace (const sc_logic_vector &, const sc_string &);
-    virtual void trace (const sc_signal_bool_vector &, const sc_string &);
-    virtual void trace (const sc_signal_logic_vector &, const sc_string &);
-    virtual void trace (const sc_uint_base &, const sc_string &);
-    virtual void trace (const sc_int_base &, const sc_string &);
-    virtual void trace (const sc_unsigned &, const sc_string &);
-    virtual void trace (const sc_signed &, const sc_string &);
-    virtual void trace (const sc_signal_resolved &, const sc_string &);
-    virtual void trace (const sc_signal_resolved_vector &, const sc_string &);
-    virtual void trace (const sc_bv_ns::sc_bv_base &, const sc_string &);
-    virtual void trace (const sc_bv_ns::sc_lv_base &, const sc_string &);
+
+#define DECL_TRACE_METHOD_A(tp) \
+    virtual void trace( const tp& object, const sc_string& name );
+#define DECL_TRACE_METHOD_B(tp) \
+    virtual void trace( const tp& object, const sc_string& name, int width );
+
+#if (SYSTEMC_VERSION>20011000)
+    // SystemC 2.0.1
+    virtual void delta_cycles (bool) {}
+    virtual void space( int n ) {}
+    
+    DECL_TRACE_METHOD_A( bool )
+    DECL_TRACE_METHOD_A( sc_bit )
+    DECL_TRACE_METHOD_A( sc_logic )
+    DECL_TRACE_METHOD_B( unsigned char )
+    DECL_TRACE_METHOD_B( unsigned short )
+    DECL_TRACE_METHOD_B( unsigned int )
+    DECL_TRACE_METHOD_B( unsigned long )
+    DECL_TRACE_METHOD_B( char )
+    DECL_TRACE_METHOD_B( short )
+    DECL_TRACE_METHOD_B( int )
+    DECL_TRACE_METHOD_B( long )
+    DECL_TRACE_METHOD_A( float )
+    DECL_TRACE_METHOD_A( double )
+    DECL_TRACE_METHOD_A( sc_int_base )
+    DECL_TRACE_METHOD_A( sc_uint_base )
+    DECL_TRACE_METHOD_A( sc_signed )
+    DECL_TRACE_METHOD_A( sc_unsigned )
+    DECL_TRACE_METHOD_A( sc_fxval )
+    DECL_TRACE_METHOD_A( sc_fxval_fast )
+    DECL_TRACE_METHOD_A( sc_fxnum )
+    DECL_TRACE_METHOD_A( sc_fxnum_fast )
+    DECL_TRACE_METHOD_A( sc_bv_base )
+    DECL_TRACE_METHOD_A( sc_lv_base )
+
+#else
+
+    // SystemC 1.2.1beta
+    DECL_TRACE_METHOD_A( bool )
+    DECL_TRACE_METHOD_B( unsigned char )
+    DECL_TRACE_METHOD_B( short unsigned int )
+    DECL_TRACE_METHOD_B( unsigned int )
+    DECL_TRACE_METHOD_B( long unsigned int )
+    DECL_TRACE_METHOD_B( char )
+    DECL_TRACE_METHOD_B( short int )
+    DECL_TRACE_METHOD_B( int )
+    DECL_TRACE_METHOD_B( long int )
+    DECL_TRACE_METHOD_A( float )
+    DECL_TRACE_METHOD_A( double )
+# ifndef _SC_LITE_
+    DECL_TRACE_METHOD_A( sc_bit )
+    DECL_TRACE_METHOD_A( sc_logic )
+    DECL_TRACE_METHOD_A( sc_bool_vector )
+    DECL_TRACE_METHOD_A( sc_logic_vector )
+    DECL_TRACE_METHOD_A( sc_signal_bool_vector )
+    DECL_TRACE_METHOD_A( sc_signal_logic_vector )
+    DECL_TRACE_METHOD_A( sc_uint_base )
+    DECL_TRACE_METHOD_A( sc_int_base )
+    DECL_TRACE_METHOD_A( sc_unsigned )
+    DECL_TRACE_METHOD_A( sc_signed )
+    DECL_TRACE_METHOD_A( sc_signal_resolved )
+    DECL_TRACE_METHOD_A( sc_signal_resolved_vector )
+    DECL_TRACE_METHOD_A( sc_bv_ns::sc_bv_base )
+    DECL_TRACE_METHOD_A( sc_bv_ns::sc_lv_base )
+# endif
 #endif
+
+#undef DECL_TRACE_METHOD_A
+#undef DECL_TRACE_METHOD_B
+
 };
 #endif
 

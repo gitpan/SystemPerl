@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Revision: #27 $$Date: 2002/08/29 $$Author: wsnyder $
+# $Revision: #32 $$Date: 2002/11/03 $$Author: wsnyder $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -23,10 +23,12 @@ package SystemC::Netlist::AutoTrace;
 use File::Basename;
 
 use SystemC::Netlist::Module;
-$VERSION = '1.122';
+$VERSION = '1.130';
 use strict;
 
 use vars qw ($Setup_Ident_Code);	# Local use for recursion only
+use vars qw ($Debug_Check_Code);
+#$Debug_Check_Code=1;	# Compile in debugging check of sig identifiers
 
 ######################################################################
 #### Automatics (Preprocessing)
@@ -109,15 +111,19 @@ sub _tracer_setup {
 		# This is nasty, and might even result in bad data
 		# It also requires a library patch
 		if (!$modref->netlist->{sp_allow_output_tracing}) {
-		    $ignore ||= "Can't read output ports";
-		} else {
+		    $ignore ||= "Can't read output ports -- need patch";
+		} elsif ($modref->netlist->{sp_allow_output_tracing} eq 'hack') {
 		    $accessor .= ".const_signal()->get_cur_value()";
+		} else {
+		    $accessor .= ".read()";
 		}
 	    } else {
 		$accessor .= ".read()";
 	    }
 	    if ($scbv) {
-		$accessor .= ".data)[0])";
+		$accessor .= ".get_datap())[0])";
+		$ignore = "Memory Vector - need patch" 
+		    if (!$ignore && !$modref->netlist->{sp_allow_bv_tracing});
 	    }
 	}
 	my $code_inc = 0;
@@ -137,6 +143,7 @@ sub _tracer_setup {
 	};
 	push @{$tracesref->{vars}}, $tref;
 	$our_codes{$netref->name} = $tref if $recurse;
+	$tref->{check_code} = $Debug_Check_Code++ if $Debug_Check_Code;
     }
     if ($recurse) {
 	foreach my $cellref ($modref->cells_sorted()) {
@@ -208,8 +215,8 @@ sub _write_tracer_trace {
 	my $name = $cellref->name;
 	(my $namenobra = $name) =~ tr/\[\]/()/;
 	if ($cellref->submod->_autotrace('on')) {
-	    $fileref->printf ("    ${cmt}    this->${name}->trace (tfp, levels-1, options);  // Is-a %s\n",
-				     $cellref->submod->name);
+	    $fileref->printf ("    ${cmt}    if (this->${name}) this->${name}->trace (tfp, levels-1, options);  // Is-a %s\n",
+			      $cellref->submod->name);
 	}
     }
     $fileref->print ("    ${cmt}}\n",
@@ -222,6 +229,8 @@ sub _write_tracer_init {
     my $tracesref = shift;
     
     my $mod = $self->name;
+    $fileref->printf("static int ${mod}_checkcode[%d];\n\n", $Debug_Check_Code+1) if $Debug_Check_Code;
+
     $fileref->print("void ${mod}::traceInit (SpTraceVcd* vcdp, void* userthis, uint32_t code) {\n");
     $fileref->printf("  int _identcode[%d];\n", $Setup_Ident_Code+1) if $Setup_Ident_Code;
     $fileref->print("  // Callback from vcd->open()\n");
@@ -243,6 +252,7 @@ sub _write_tracer_init_recurse {
 
     my $indent = "  "x$level;
 
+    my $mod = $self->name;
     my $modref = $tracesref->{modref};
     $fileref->printf("${indent}\{\n");
     $fileref->printf("${indent} vcdp->module(prefix+\"%s\");  // Is-a %s\n"
@@ -258,6 +268,7 @@ sub _write_tracer_init_recurse {
 	if ($tref->{identical_child} && !$tref->{identical}) {   # This code is reused by a child module.
 	    $fileref->printf("${indent}  _identcode[".$tref->{identical_child}."] = c;\n");
 	}
+	$fileref->printf("${indent}  ${mod}_checkcode[".$tref->{check_code}."] = c-code;\n") if $Debug_Check_Code;
 	my $c = "c";
 	my $ket = "";
 	if ($tref->{identical} && !$tref->{ignore}) {
@@ -288,15 +299,16 @@ sub _write_tracer_init_recurse {
 	my $width = $netref->width || 1;
 	my $arraynum = ($netref->array ? " i":"-1");
 	$fileref->printf("");
+	(my $name = $netref->name()) =~ s/__DOT__/./g;
 	if ($width == 1) {
 	    $fileref->printf("vcdp->declBit  (${c},\"%s\",%s,&(%s)"
-			     ,$netref->name, $arraynum, ${accessor});
+			     ,$name, $arraynum, ${accessor});
 	} elsif ($width <= 32) {
 	    $fileref->printf("vcdp->declBus  (${c},\"%s\",%s,&(%s),%d,%d"
-			     ,$netref->name, $arraynum, ${accessor},$netref->msb, $netref->lsb);
+			     ,$name, $arraynum, ${accessor},$netref->msb, $netref->lsb);
 	} else {
 	    $fileref->printf("vcdp->declArray(${c},\"%s\",%s,&(%s),%d,%d",
-			     ,$netref->name, $arraynum, ${accessor},$netref->msb, $netref->lsb);
+			     ,$name, $arraynum, ${accessor},$netref->msb, $netref->lsb);
 	}
 	$fileref->printf("); ${c}+=%s;$ket",$tref->{code_inc});
 	$fileref->printf(" // Is-a: %s\n", $netref->type);
@@ -335,6 +347,7 @@ sub _write_tracer_change_recurse {
 
     my $indent = "  "x$level;
 
+    my $mod = $self->name;
     my $modref = $tracesref->{modref};
     $fileref->printf("${indent}\{\n");
     $fileref->printf("${indent} register %s* ts = %s;\n"
@@ -356,15 +369,17 @@ sub _write_tracer_change_recurse {
 	next if $tref->{identical};
 	my $accessor = $tref->{accessor};
 
+	$fileref->printf("${indent}  if (${mod}_checkcode[".$tref->{check_code}."] != c-code) abort();\n") if $Debug_Check_Code;
+
 	my $aindent = $indent;
 	if ($netref->array) {
 	    $fileref->printf("${indent}  for (int i=0; i<%s; ++i) {\n"
 			     ,$netref->array);
 	    $aindent .= "  ";
-	    if ($netref->array =~ /^\d/) {
-		$code_inc += $netref->array;
+	    if ($netref->array =~ /^\d+$/) {
+		$code_inc += ($netref->array * $tref->{code_inc});
 	    } else {
-		$code_math .= "+".$netref->array;   # Let compiler sort it out
+		$code_math .= "+((".$netref->array.")*".$tref->{code_inc}.")";   # Let compiler sort it out
 	    }
 	} else {
 	    $code_inc += $tref->{code_inc};

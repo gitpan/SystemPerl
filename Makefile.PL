@@ -1,4 +1,4 @@
-# $Revision: #27 $$Date: 2002/08/19 $$Author: wsnyder $
+# $Revision: #28 $$Date: 2002/11/03 $$Author: wsnyder $
 # DESCRIPTION: Perl ExtUtils: Type 'perl Makefile.PL' to create a Makefile for this package
 
 require 5.005;
@@ -18,6 +18,9 @@ install-local: manifypods
 	cp -R sp_makecheck /usr/local/common/bin/sp_makecheck__notfound
 	cp systemc-mode.el /usr/local/common/site-lisp
 
+sc_patch:
+	\$(PERL) patch.pl
+
 ## Maintainer use:
 tag:
 	p4 label -d     \$(DISTNAME)_\$(VERSION_SYM) || true
@@ -34,6 +37,7 @@ maintainer-clean: distclean
 
 clean::
 	-rm -rf test_dir test_scl
+
 ";
 }
 
@@ -58,3 +62,8 @@ WriteMakefile(
 			},
 	      );
 
+if (!-r "$ENV{SYSTEMC}/systemperl_patched") {
+    warn "-Info: Your SystemC disctribution has NOT been patched to allow sc_bv\n";
+    warn "       tracing.  Type 'make sc_patch' to attempt the edits.\n";
+    warn "       See the README file for details.\n"
+}

@@ -6,6 +6,14 @@ The contributors that suggested a given feature is shown in [].
 This uses outline mode in Emacs.  See C-h m [M-x describe-mode].
 
 
+* Changes in SystemC 1.130 11/3/2002
+
+**	Support SystemC version 2.0.1.  A patch is required for tracing
+	input signals and sc_bv types, see the the README file.
+
+***	Add example of SP_COVER statement.
+
+
 * Changes in SystemC 1.122 8/29/2002
 
 ***	Put AUTOINOUT signals under that label, so they can be public
@@ -146,7 +154,7 @@ This uses outline mode in Emacs.  See C-h m [M-x describe-mode].
 
 
 ----------------------------------------------------------------------
-$Revision: #50 $$Date: 2002/08/29 $$Author: wsnyder $
+$Revision: #53 $$Date: 2002/11/03 $$Author: wsnyder $
 ----------------------------------------------------------------------
 Copyright information:
 

@@ -1,4 +1,4 @@
-/* $Revision: #10 $$Date: 2002/08/07 $$Author: wsnyder $
+/* $Revision: #11 $$Date: 2002/09/18 $$Author: wsnyder $
  ************************************************************************
  *
  * THIS MODULE IS PUBLICLY LICENSED
@@ -35,7 +35,7 @@ void sp_log_file::open (const char *filename)
     this->close();
     std::ofstream::open (filename);
     if (0/*FIX*/) {
-	//UFATAL("Can't write "<<filename<<endl);
+	//UERROR("Can't write "<<filename<<endl);
 	printf ("Can't write %s\n", filename);
 	return;
     }

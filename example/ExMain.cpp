@@ -1,16 +1,30 @@
-// $Revision: #10 $$Date: 2002/07/16 $$Author: wsnyder $
+// $Revision: #11 $$Date: 2002/10/25 $$Author: wsnyder $
 // DESCRIPTION: SystemPerl: Example main()
 
 #include <systemperl.h>
 #include "ExBench.h"
 #include "SpTraceVcd.h"
+#include "SpCoverage.h"
+
+static FILE* sp_Coverage_Fp = NULL;
+
+static void sp_coverage_write (const char* filename) {
+    // Write the coverage file
+    sp_Coverage_Fp = fopen(filename,"w");
+    if (!sp_Coverage_Fp) { cerr<<"Can't Write "<<filename<<endl; abort(); }
+    SpFunctorNamed::call("coverageWrite");   // Will invoke above sp_coverage_data's
+    fprintf(sp_Coverage_Fp,"\n1;\n");	// OK exit status for perl
+    fclose(sp_Coverage_Fp);
+    sp_Coverage_Fp = NULL;
+}
 
 void sp_coverage_data (const char *hier, const char *what, const char *file, int lineno, uint32_t data) {
     // Needed if any SP_COVERAGE statements in the model
+    fprintf(sp_Coverage_Fp,"Coverage::line('%s','%s','%s',%d,%6d);\n",
+	    what,hier,file,lineno,data);
 }
 
-int sc_main (int argc, char *argv[])
-{
+int sc_main (int argc, char *argv[]) {
     sc_clock clk("clk",10);
 
     ExBench* bench;
@@ -47,5 +61,9 @@ int sc_main (int argc, char *argv[])
     cout << "Done\n";
 
     sc_close_vcd_trace_file(tf);
+
+    // Coverage
+    sp_coverage_write("coverage.pl");
+
     return (0);
 }

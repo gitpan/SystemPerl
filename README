@@ -7,10 +7,7 @@ Copyright
 <wsnyder@wsnyder.org>.
 
    You may distribute under the terms of either the GNU General Public
-License or the Artistic License, as specified in the Perl README file,
-with the exception that it cannot be placed on a CD-ROM or similar
-media for commercial distribution without the prior approval of the
-author.
+License or the Artistic License, as specified in the Perl README file.
 
    This code is provided with no warranty of any kind, and is used
 entirely at your own risk.
@@ -127,43 +124,44 @@ SystemPerl_version.tar.gz ; tar xvf SystemPerl_version.tar'
 Supported Systems
 =================
 
-   This version of SystemC has been built and tested on:
+   This version of SystemPerl has been built and tested on:
 
    * i386-linux
 
    It should run on any system with Perl, a C compiler, bison, and flex.
 
    SystemC must be installed to get the complete function.  Currently
-1.2.1beta is the version supported for tracing, other versions should
-work without tracing.
+1.2.1beta and 2.0.1 are the versions supported for tracing, other
+versions should work without tracing.
 
 Installation
 ============
 
   1. `cd' to the directory containing this README notice.
 
-  2. Type `perl Makefile.PL' to configure SystemC for your system.
+  2. Type `perl Makefile.PL' to configure SystemPerl for your system.
      (Note this package will probably run slower if you are still using
      perl 5.005.)
 
-  3. Type `make' to compile SystemC.
+  3. If you wish to trace sc_bv's, and you got a informational message
+     when you did the above step, you must patch the SystemC library.
+     Type `make sc_patch' and this will be done for you.  What this
+     does is add an accessor function for getting at the raw data in
+     the sc_bv class.  (Using the preexisting public functions would
+     require too much computational overhead.)
 
-  4. Type `make test' to check the compilation.
+  4. Type `make' to compile SystemPerl.
 
-  5. You can see examples under the test_dir directory.  The *.sp files
+  5. Type `make test' to check the compilation.
+
+  6. You can see examples under the test_dir directory.  The *.sp files
      are "inline" converted, while the *.h and *.cpp files are expanded
      from the .sp files.
 
-  6. Type `make install' to install the programs and any data files and
+  7. Type `make install' to install the programs and any data files and
      documentation.
 
-  7. Install `src/systemperl.h' somewhere in your project's build path.
+  8. Install `src/systemperl.h' somewhere in your project's build path.
      The best place is probably the $SYSTEMC/include directory.
-
-  8. If you wish to trace ports, you must edit the SystemC library.
-     Search the header files for "get_cur_value", and add a public:
-     declaration before it.  After doing so, create a
-     $SYSTEMC/systemperl_patched file.  (SystemPerl will see this file
-     and allow port tracing.)
 
 

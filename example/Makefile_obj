@@ -1,4 +1,4 @@
-# $Revision: #16 $$Date: 2002/07/16 $$Author: wsnyder $ -*- Makefile -*-
+# $Revision: #17 $$Date: 2002/11/03 $$Author: wsnyder $ -*- Makefile -*-
 # DESCRIPTION: SystemPerl: Example makefile
 #
 # This is executed in the "test_dir", not in this directory
@@ -13,7 +13,14 @@ INCDIR += -I. -I$(SYSTEMPERL)/src -I$(SYSTEMC)/include -I../example
 LIBDIR += -L. -L$(SYSTEMPERL)/src -L$(SYSTEMC)/lib-$(TARGET_ARCH)
 VPATH += ../example $(SYSTEMPERL)/src
 MAKEFILES += ../example/Makefile_obj
-LIBS   =  -lsystemc -lnumeric_bit -lqt -lm $(EXTRA_LIBS)
+
+SC_LIBS = -lsystemc
+ifneq ($(wildcard $(SYSTEMC)/lib-$(TARGET_ARCH)/*numeric_bit*),)
+  # Systemc 1.2.1beta
+  SC_LIBS   += -lnumeric_bit -lqt
+endif
+
+LIBS   =  $(SC_LIBS) -lm $(EXTRA_LIBS)
 
 SP_SP = $(wildcard ../example/*.sp)
 # /*AUTOTRACE*/ Looks for this

@@ -1,4 +1,4 @@
-// $Revision: #21 $$Date: 2002/08/07 $$Author: wsnyder $ -*- SystemC -*-
+// $Revision: #22 $$Date: 2002/10/25 $$Author: wsnyder $ -*- SystemC -*-
 //********************************************************************
 //
 // THIS MODULE IS PUBLICLY LICENSED
@@ -36,6 +36,9 @@
 
 //********************************************************************
 // Macros
+
+// Like SC_MODULE but not managed as a module (for coverage, etc)
+#define SP_CLASS(name) class name
 
 // Allows constructor to be in implementation rather then the header
 #define SP_CTOR_IMP(name) name::name(sc_module_name)
@@ -111,7 +114,8 @@ extern "C" {
 #define SP_AUTO_CTOR
 
 // Multiple flavors as all compilers don't support variable define arguments
-#define SP_AUTO_COVER(cmt)
+#define SP_AUTO_COVER()
+#define SP_AUTO_COVER1(cmt)
 #define SP_AUTO_COVER3(cmt,file,line)
 #define SP_AUTO_COVER1_4(id,cmt,file,line) {this->_sp_coverage[(id)].m_l++;}
 #define SP_AUTO_COVER4(id,cmt,file,line) {this->_sp_coverage[(id)].m_l++;}

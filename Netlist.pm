@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Revision: #33 $$Date: 2002/08/29 $$Author: wsnyder $
+# $Revision: #35 $$Date: 2002/11/03 $$Author: wsnyder $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -31,7 +31,7 @@ use Verilog::Netlist::Subclass;
 use strict;
 use vars qw($Debug $Verbose $VERSION);
 
-$VERSION = '1.122';
+$VERSION = '1.130';
 
 ######################################################################
 #### Error Handling
@@ -46,11 +46,59 @@ sub lineno { return ''; }
 sub new {
     my $class = shift;
     my $self = $class->SUPER::new
-	(sp_allow_output_tracing => 0,
+	(sp_allow_output_tracing => undef,	# undef = set it automatically
+	 sp_allow_bv_tracing => undef,		# undef = set it automatically
 	 sp_trace_duplicates => 0,
+	 sc_version => undef,
 	 @_);
     bless $self, $class;
+    $self->_set_features();
     return $self;
+}
+
+######################################################################
+#### Utilities
+
+sub sc_version {
+    my $self = shift;
+    # Return version of SystemC in use
+    if (!$self->{sc_version}) {
+	my $fh;
+	foreach my $fn ("$ENV{SYSTEMC}/include/systemc/kernel/sc_ver.h",
+			"$ENV{SYSTEMC}/include/sc_ver.h") {
+	    $fh = IO::File->new($fn);
+	    last if $fh;
+	}
+	if ($fh) {
+	    while (defined (my $line = $fh->getline)) {
+		if ($line =~ /^\s*#\s*define\s+SYSTEMC_VERSION\s+(\S+)/) {
+		    $self->{sc_version} = $1;
+		    print "SC_VERSION = $1\n" if $Debug;
+		    last;
+		}
+	    }
+	}
+    }
+    return $self->{sc_version};
+}
+
+sub _set_features {
+    my $self = shift;
+    # Determine what features are in this SystemC version
+    my $ver = $self->sc_version;
+    my $patched = (-r "$ENV{SYSTEMC}/systemperl_patched");
+    if (!defined $self->{sp_allow_bv_tracing}) {
+	$self->{sp_allow_bv_tracing} = $patched;
+    }
+    if (!defined $self->{sp_allow_output_tracing}) {
+	if ($ver && $ver>20011000) {
+	    $self->{sp_allow_output_tracing} = 1;
+	} elsif ($patched) {
+	    $self->{sp_allow_output_tracing} = 'hack';
+	} else {
+	    $self->{sp_allow_output_tracing} = 0;
+	}
+    }
 }
 
 ######################################################################
@@ -165,6 +213,10 @@ See Verilog::Netlist for all common functions.
 
 Updates /*AUTO*/ comments in the internal database.  Normally called before
 lint.
+
+=item $netlist->sc_version
+
+Return the version number of SystemC.
 
 =back
 

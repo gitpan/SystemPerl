@@ -1,4 +1,4 @@
-// $Revision: #7 $$Date: 2002/07/16 $$Author: wsnyder $
+// $Revision: #9 $$Date: 2002/10/25 $$Author: wsnyder $
 // DESCRIPTION: SystemPerl: Example source module
 
 #sp interface
@@ -23,15 +23,17 @@ SC_MODULE (__MODULE__) {
 #sp implementation
 /*AUTOSUBCELL_INCLUDE*/
 
-SP_CTOR_IMP(__MODULE__)
-{
+SP_CTOR_IMP(__MODULE__) {
+    SP_AUTO_CTOR;
+
     SC_METHOD(clock);
     sensitive_pos(clk);
 }
 
 void __MODULE__::clock (void) {
-    SP_AUTO_COVER("clocking");
+    SP_AUTO_COVER1("clocking");
     out.write(in.read());
+    SP_AUTO_COVER();
 }
 
 /*AUTOTRACE(__MODULE__)*/

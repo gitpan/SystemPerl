@@ -30,6 +30,8 @@ example/ExModNull.sp
 example/ExModSub.sp
 example/ExParse.sp
 example/Makefile_obj
+patch-2-0-1.diff
+patch.pl
 readme.texi
 sclite/include/sc_lite.h
 sclite/include/systemc.h

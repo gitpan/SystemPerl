@@ -1,4 +1,4 @@
-// $Revision: #6 $$Date: 2002/08/07 $$Author: wsnyder $
+// $Revision: #8 $$Date: 2002/11/03 $$Author: wsnyder $
 //********************************************************************
 //
 // This program is Copyright 2001 by Wilson Snyder.
@@ -45,8 +45,10 @@ inline void sc_stop(void) { exit(0); }
 struct sc_trace_file {
     virtual void cycle (bool) {};
 };
-inline sc_trace_file* sc_create_vcd_trace_file(const char*) {};
-inline void sc_close_vcd_trace_file(sc_trace_file*) {};
+inline sc_trace_file* sc_create_vcd_trace_file(const char*) {
+    return new sc_trace_file();
+}
+inline void sc_close_vcd_trace_file(sc_trace_file*) {}
 
 //=== Simulation info
 struct sc_simcontext {
@@ -62,8 +64,9 @@ extern int sc_main(int argc, char* argv[]);
 template <int T>
 class sc_bv {
     const static int SIZE = T;
+    unsigned long m_data[(SIZE+31)/32];
   public:
-    unsigned long data[(SIZE+31)/32];
+    unsigned long* get_datap() const { return m_data; }
     inline sc_bv<T>& operator= (const char* val) {return *this;};
 };
 
