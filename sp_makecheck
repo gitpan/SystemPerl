@@ -1,5 +1,5 @@
 #!/usr/local/bin/perl -w
-#$Revision: #7 $$Date: 2002/08/07 $$Author: wsnyder $
+#$Revision: #8 $$Date: 2003/03/28 $$Author: wsnyder $
 ######################################################################
 #
 # This program is Copyright 2001 by Wilson Snyder.
@@ -62,7 +62,7 @@ Dependancy::unlink_out_of_date();
 #----------------------------------------------------------------------
 
 sub usage {
-    print '$Revision: #7 $$Date: 2002/08/07 $$Author: wsnyder $ ', "\n";
+    print '$Revision: #8 $$Date: 2003/03/28 $$Author: wsnyder $ ', "\n";
     $SIG{__WARN__} = sub{};	#pod2text isn't clean.
     pod2text($0);
     exit (1);
@@ -153,14 +153,14 @@ sub _depend_levels_recurse {
     my $depref = shift;
     my $level = shift;
     $depref->{level} = $level if ($level>$depref->{level});
-    ($level<100) or die "%Error: Recursive dependancy chain involving: ",$depref->{name},"\n";
+    ($level<100) or die "%Error: Recursive dependency chain involving: ",$depref->{name},"\n";
     foreach my $tgt (keys %{$depref->{depends}}) {
 	_depend_levels_recurse($Depend{$tgt},$level+1);
     }
 }
 
 sub dump {
-    # Static: Dump the dependancy information
+    # Static: Dump the dependency information
     foreach my $depref (values %Depend) {
 	if ($depref->{level}==0) {
 	    print "-"x70,"\n";
@@ -208,7 +208,7 @@ __END__
 
 =head1 NAME
 
-sp_makecheck - Read dependency files and check for missing dependancies
+sp_makecheck - Read dependency files and check for missing dependencies
 
 =head1 SYNOPSIS
 
@@ -226,7 +226,7 @@ there is no rule to build foo.h.  Adding a fake target is one way around
 this, but that requires additional .d's, and leaves old objects around.
 
 sp_makecheck reads the specified dependency files, and checks for the
-existance of all dependancies in the file.  If a file does not exist, it
+existance of all dependencies in the file.  If a file does not exist, it
 simply removes all of the targets.
 
 =head1 ARGUMENTS
@@ -239,7 +239,7 @@ Displays this message and program version and exits.
 
 =item --show
 
-Show each target and the tree of required dependancies.
+Show each target and the tree of required dependencies.
 
 =item --mtime
 

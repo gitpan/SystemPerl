@@ -1,4 +1,4 @@
-#$Revision: #24 $$Date: 2002/09/30 $$Author: wsnyder $
+#$Revision: #25 $$Date: 2002/12/13 $$Author: lab $
 ######################################################################
 #
 # This program is Copyright 2001 by Wilson Snyder.
@@ -376,6 +376,10 @@ the file is a .sp file, which must be preprocessed by sp_preproc, and added
 to the link list.  Thus using #sp use automatically finds the objects
 required for linking against the includer.  (Just like perl's package and
 use statements.)
+
+In addition to specifing an exact string like with #include, you may also
+specify a define symbol.  The value of the definition will be used as the
+file to be included.
 
 =back
 

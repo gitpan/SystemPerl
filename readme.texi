@@ -1,5 +1,5 @@
 \input texinfo @c -*-texinfo-*-
-@c $Revision: #20 $$Date: 2002/11/03 $$Author: wsnyder $
+@c $Revision: #21 $$Date: 2003/03/28 $$Author: wsnyder $
 @c %**start of header
 @setfilename readme.info
 @settitle Perl SystemC Installation
@@ -61,7 +61,7 @@ SystemC coding, just as the author's /*AUTO*/ comments did for the
 Verilog language.  See @samp{man SystemPerl} after installation.
 
 sp_include shows a technique for speeding up SystemC compiles using GCC.
-sp_makecheck allows for cleaning up dependency files when dependancies
+sp_makecheck allows for cleaning up dependency files when dependencies
 have been removed or changed.
 
 Finally, the src directory contains useful C++ utilities for simulation,

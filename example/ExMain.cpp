@@ -1,4 +1,4 @@
-// $Revision: #11 $$Date: 2002/10/25 $$Author: wsnyder $
+// $Revision: #12 $$Date: 2003/03/27 $$Author: wsnyder $
 // DESCRIPTION: SystemPerl: Example main()
 
 #include <systemperl.h>
@@ -61,6 +61,7 @@ int sc_main (int argc, char *argv[]) {
     cout << "Done\n";
 
     sc_close_vcd_trace_file(tf);
+    SpTraceVcd::flush_all();
 
     // Coverage
     sp_coverage_write("coverage.pl");

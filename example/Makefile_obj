@@ -1,4 +1,4 @@
-# $Revision: #17 $$Date: 2002/11/03 $$Author: wsnyder $ -*- Makefile -*-
+# $Revision: #18 $$Date: 2003/03/28 $$Author: wsnyder $ -*- Makefile -*-
 # DESCRIPTION: SystemPerl: Example makefile
 #
 # This is executed in the "test_dir", not in this directory
@@ -40,7 +40,7 @@ SP_OBJS   := $(addsuffix .o,$(SP_SP_BASE))
 
 build:	preproc ex_main
 
-# Setup as a "always" rule; we don't check for enough sp_preproc dependancies
+# Setup as a "always" rule; we don't check for enough sp_preproc dependencies
 # In a user example where you weren't editing sp_preproc, you could have:
 #preproc $(SP_CPP) $(SP_H): $(SP_SP)
 preproc $(SP_CPP) $(SP_H):

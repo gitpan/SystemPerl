@@ -1,5 +1,5 @@
 %{
-/* $Revision: #42 $$Date: 2002/08/29 $$Author: wsnyder $
+/* $Revision: #46 $$Date: 2003/03/14 $$Author: wsnyder $
  ******************************************************************************
  * DESCRIPTION: SystemC bison parser
  *
@@ -126,8 +126,12 @@ int scgrammerlex() {
 %token		SP_TRACED
 %token		VL_SIG
 %token		VL_SIGW
-%token		VL_PORT
-%token		VL_PORTW
+%token		VL_INOUT
+%token		VL_INOUTW
+%token		VL_IN
+%token		VL_INW
+%token		VL_OUT
+%token		VL_OUTW
 
 %type<string>	cellname
 %type<string>	vectors_bra
@@ -157,7 +161,7 @@ sourceText:	expList
 // Aliases and such
 
 symbol:		  '!' | '"' | '#' | '$' | '%' | '&'
-		| ''' | '(' | ')' | '*' | '+' | ','
+		| '\'' | '(' | ')' | '*' | '+' | ','
 		| '-' | '.' | '/' | ':' | ';' | '<'
 		| '=' | '>' | '?' | '@'	| '\\' | '['
 		| ']' | '^' | '`' | '|' | '{' | '}'
@@ -315,16 +319,28 @@ traceable:	SP_TRACED SYMBOL SYMBOL vector ';'
  			{ scparser_call(4,"signal","sp_traced",$2,$3,$4);
  			  SCFree($2); SCFree($3); SCFree($4)}
 		| VL_SIG '(' SYMBOL vector ',' NUMBER ',' NUMBER ')' ';'
- 			{ scparser_call(6,"signal","sp_traced","uint32_t",$3,$4,$6,$8);
+ 			{ scparser_call(6,"signal","sp_traced_vl","uint32_t",$3,$4,$6,$8);
  			  SCFree($3); SCFree($4); SCFree($6); SCFree($8);}
 		| VL_SIGW '(' SYMBOL vector ',' NUMBER ',' NUMBER ',' vectorNum ')' ';'
- 			{ scparser_call(6,"signal","sp_traced","uint32_t",$3,$4,$6,$8);
+ 			{ scparser_call(6,"signal","sp_traced_vl","uint32_t",$3,$4,$6,$8);
  			  SCFree($3); SCFree($4); SCFree($6); SCFree($8); SCFree($10);}
-		| VL_PORT '(' SYMBOL vector ',' NUMBER ',' NUMBER ')' ';'
- 			{ scparser_call(6,"signal","vl_port","uint32_t",$3,$4,$6,$8);
+		| VL_INOUT '(' SYMBOL vector ',' NUMBER ',' NUMBER ')' ';'
+ 			{ scparser_call(6,"signal","vl_inout","uint32_t",$3,$4,$6,$8);
  			  SCFree($3); SCFree($4); SCFree($6); SCFree($8);}
-		| VL_PORTW '(' SYMBOL vector ',' NUMBER ',' NUMBER ',' vectorNum ')' ';'
- 			{ scparser_call(6,"signal","vl_port","uint32_t",$3,$4,$6,$8);
+		| VL_INOUTW '(' SYMBOL vector ',' NUMBER ',' NUMBER ',' vectorNum ')' ';'
+ 			{ scparser_call(6,"signal","vl_inout","uint32_t",$3,$4,$6,$8);
+ 			  SCFree($3); SCFree($4); SCFree($6); SCFree($8); SCFree($10);}
+		| VL_IN '(' SYMBOL vector ',' NUMBER ',' NUMBER ')' ';'
+ 			{ scparser_call(6,"signal","vl_in","uint32_t",$3,$4,$6,$8);
+ 			  SCFree($3); SCFree($4); SCFree($6); SCFree($8);}
+		| VL_INW '(' SYMBOL vector ',' NUMBER ',' NUMBER ',' vectorNum ')' ';'
+ 			{ scparser_call(6,"signal","vl_in","uint32_t",$3,$4,$6,$8);
+ 			  SCFree($3); SCFree($4); SCFree($6); SCFree($8); SCFree($10);}
+		| VL_OUT '(' SYMBOL vector ',' NUMBER ',' NUMBER ')' ';'
+ 			{ scparser_call(6,"signal","vl_out","uint32_t",$3,$4,$6,$8);
+ 			  SCFree($3); SCFree($4); SCFree($6); SCFree($8);}
+		| VL_OUTW '(' SYMBOL vector ',' NUMBER ',' NUMBER ',' vectorNum ')' ';'
+ 			{ scparser_call(6,"signal","vl_out","uint32_t",$3,$4,$6,$8);
  			  SCFree($3); SCFree($4); SCFree($6); SCFree($8); SCFree($10);}
 		;
 
@@ -346,6 +362,7 @@ enumVal:	SYMBOL	enumAssign  {
 			SCFree ($1); }
 		;
 enumAssign:	'=' NUMBER	{ SCFree ($2); }
+		| '=' SYMBOL	{ SCFree ($2); }
  		| ;
 
 //************************************

@@ -1,4 +1,4 @@
-// $Revision: #12 $$Date: 2002/11/03 $$Author: wsnyder $ -*- SystemC -*-
+// $Revision: #15 $$Date: 2003/03/27 $$Author: wsnyder $ -*- SystemC -*-
 //=============================================================================
 //
 // THIS MODULE IS PUBLICLY LICENSED
@@ -61,36 +61,54 @@ class SpTraceCallInfo;
 class SpTraceVcd {
 private:
     bool 		m_isOpen;	// True indicates open file
-    std::ofstream	m_fp;		// File we're writing to
+    int			m_fd;		// File descriptor we're writing to
     string		m_filename;	// Filename we're writing to (if open)
     size_t		m_rolloverMB;	// MB of file size to rollover at
     int			m_modDepth;	// Depth of module hiearchy
     bool		m_fullDump;	// True indicates dump ignoring if changed
     uint32_t		m_nextCode;	// Next code number to assign
     string		m_modName;	// Module name being traced now
+    char*		m_wrBufp;	// Output buffer
+    char*		m_writep;	// Write pointer into output buffer
 
     vector<SpTraceVcdSig>	m_sigs;		// Pointer to signal information
     vector<uint32_t>		m_sigs_oldval;	// Pointer to old signal values
     vector<SpTraceCallInfo*>	m_callbacks;	// Routines to perform dumping
+    static vector<SpTraceVcd*>	s_vcdVecp;	// List of all created traces
 
+    size_t	bufferSize() { return 256*1024; }  // See below for slack calculation
+    void bufferFlush();
+    void bufferCheck() {
+	// Flush the write buffer if there's not enough space left for new information
+	// We only call this once per vector, so we need enough slop for a very wide "b###" line
+	if (m_writep > (m_wrBufp+(bufferSize()-16*1024))) {
+	    bufferFlush();
+	}
+    }
     static const char* genId ();
     void openNext();
     void printIndent (int levelchange);
+    void printStr (const char* str);
+    void printInt (int n);
     void declare (uint32_t code, const char* name, int arraynum,
 		  const uint32_t* valp,
 		  int msb, int lsb, bool isBit);
     void dumpPrep (double timestamp);
     void dumpDone ();
     inline void printCode (uint32_t code) {
-	if (code>=(94*94*94)) m_fp.put((char)((code/94/94/94)%94+33));
-	if (code>=(94*94)) m_fp.put((char)((code/94/94)%94+33));
-	if (code>=(94)) m_fp.put((char)((code/94)%94+33));
-	m_fp.put((char)((code)%94+33));
+	if (code>=(94*94*94)) *m_writep++ = ((char)((code/94/94/94)%94+33));
+	if (code>=(94*94))    *m_writep++ = ((char)((code/94/94)%94+33));
+	if (code>=(94))       *m_writep++ = ((char)((code/94)%94+33));
+	*m_writep++ = ((char)((code)%94+33));
     }
 
 public:
     // CREATORS
-    SpTraceVcd () : m_isOpen(false), m_rolloverMB(0), m_modDepth(0), m_nextCode(0) {}
+    SpTraceVcd () : m_isOpen(false), m_rolloverMB(0), m_modDepth(0), m_nextCode(1) {
+	m_wrBufp = new char [bufferSize()];
+	m_writep = m_wrBufp;
+    }
+    ~SpTraceVcd();
 
     // ACCESSORS
     uint32_t nextCode() const {return m_nextCode;}
@@ -99,6 +117,8 @@ public:
     // METHODS
     void open (const char* filename);	// Open the file
     void openNext (bool incFilename);	// Open next data-only file
+    void flush() { bufferFlush(); }	// Flush any remaining data
+    static void flush_all();		// Flush any remaining data from all files
     void close ();			// Close the file
 
     void addCallback (SpTraceCallback_t init, SpTraceCallback_t dump,
@@ -121,25 +141,28 @@ public:
     // Quick dumping
     inline void dumpValueBit (uint32_t code, const uint32_t& newval) {
 	m_sigs_oldval[code] = newval;
-	m_fp.put(newval?'1':'0'); printCode(code); m_fp.put('\n');
+	*m_writep++=(newval?'1':'0'); printCode(code); *m_writep++='\n';
+	bufferCheck();
     }
     inline void dumpValueBus (uint32_t code, const uint32_t& newval, int bits) {
 	m_sigs_oldval[code] = newval;
-	m_fp.put('b');
+	*m_writep++='b';
 	for (int bit=bits-1; bit>=0; --bit) {
-	    m_fp.put((newval&(1L<<bit))?'1':'0');
+	    *m_writep++=((newval&(1L<<bit))?'1':'0');
 	}
-	m_fp.put(' '); printCode(code); m_fp.put('\n');
+	*m_writep++=' '; printCode(code); *m_writep++='\n';
+	bufferCheck();
     }
     inline void dumpValueArray (uint32_t code, const uint32_t* newval, int bits) {
 	for (int word=0; word<((bits/32)+1); ++word) {
 	    m_sigs_oldval[code+word] = newval[word];
 	}
-	m_fp.put('b');
+	*m_writep++='b';
 	for (int bit=bits-1; bit>=0; --bit) {
-	    m_fp.put((newval[(bit/32)]&(1L<<(bit&0x1f)))?'1':'0');
+	    *m_writep++=((newval[(bit/32)]&(1L<<(bit&0x1f)))?'1':'0');
 	}
-	m_fp.put(' '); printCode(code); m_fp.put('\n');
+	*m_writep++=' '; printCode(code); *m_writep++='\n';
+	bufferCheck();
     }
 
     inline void dumpBit (uint32_t code, const uint32_t& newval) {

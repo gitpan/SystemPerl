@@ -1,6 +1,6 @@
 ;; systemc-mode.el --- major mode for editing SystemC files
 ;;
-;; $Revision: #8 $$Date: 2002/07/16 $$Author: wsnyder $
+;; $Revision: #9 $$Date: 2003/03/11 $$Author: wsnyder $
 
 ;; Author          : Wilson Snyder <wsnyder@wsnyder.org>
 ;; Keywords        : languages
@@ -92,7 +92,10 @@
 	     nil nil (1 font-lock-builtin-face) (2 font-lock-string-face))
 	   ;; Fontify preprocessor directive names.
 	   '("^#\\s *\\(sp\\s +[^\n]*\\)" 1 'font-lock-builtin-face)
-	   '("^\\s *AUTO[A-Z0-9_]+" 0 'font-lock-builtin-face t))))
+	   '("^\\s *AUTO[A-Z0-9_]+" 0 'font-lock-builtin-face t)
+	   '("\\bsc_bv\\b" 0 'font-lock-type-face t)
+	   '("\\bS[PC]_\\(TRACED\\|CELL\\|PIN\\|METHOD\\)\\b" 0 'font-lock-keyword-face t)
+	   )))
 
 ;;;;
 ;;;; Mode stuff

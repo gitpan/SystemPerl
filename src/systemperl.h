@@ -1,4 +1,4 @@
-// $Revision: #22 $$Date: 2002/10/25 $$Author: wsnyder $ -*- SystemC -*-
+// $Revision: #23 $$Date: 2003/03/14 $$Author: wsnyder $ -*- SystemC -*-
 //********************************************************************
 //
 // THIS MODULE IS PUBLICLY LICENSED
@@ -56,15 +56,21 @@
 
 // Connection of a pin to a SC_CELL
 #define SP_PIN(instname,port,net) (instname->port(net))
-#define VL_PIN_NOP(instname,port,net) 
 
 // Tracing types
 #define SP_TRACED	// Just a NOP; it simply marks a declaration
 #ifndef VL_SIG
-# define VL_SIG(name, msb,lsb)	         uint32_t name
-# define VL_SIGW(name, msb,lsb, words)   uint32_t name[words]
-# define VL_PORT(name, msb,lsb)	         uint32_t name
-# define VL_PORTW(name, msb,lsb, words)  uint32_t name[words]
+# define VL_SIG(name, msb,lsb)		uint32_t name
+# define VL_SIGW(name, msb,lsb, words)	uint32_t name[words]
+# define VL_IN(name, msb,lsb)		uint32_t name
+# define VL_INW(name, msb,lsb, words)	uint32_t name[words]
+# define VL_INOUT(name, msb,lsb)	uint32_t name
+# define VL_INOUTW(name, msb,lsb, words) uint32_t name[words]
+# define VL_OUT(name, msb,lsb)		uint32_t name
+# define VL_OUTW(name, msb,lsb, words)	uint32_t name[words]
+# define VL_PORT(name, msb,lsb)		uint32_t name		// Depreciated
+# define VL_PORTW(name, msb,lsb, words)	uint32_t name[words]	// Depreciated
+# define VL_PIN_NOP(instname,pin,port)
 #endif
 
 //********************************************************************

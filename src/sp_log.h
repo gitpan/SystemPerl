@@ -1,4 +1,4 @@
-/* $Revision: #15 $$Date: 2002/08/07 $$Author: wsnyder $
+/* $Revision: #16 $$Date: 2002/11/06 $$Author: wsnyder $
  ************************************************************************
  *
  * THIS MODULE IS PUBLICLY LICENSED
@@ -55,6 +55,7 @@ extern "C" {
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <sys/types.h>
 
 //**********************************************************************
 // Echo a stream to two output streams, one to screen and one to a logfile
@@ -87,37 +88,57 @@ private:
 //	foo.redirect();
 //	cout << "this goes to screen and sim.log";
 //
-//    Eventually this will do logfile rollover also
+//    Eventually this will do logfile split also
 
 class sp_log_file : public std::ofstream {
 public:
-    sp_log_file (void) :
+    // CREATORS
+    sp_log_file () :
 	m_strmOldCout(NULL),
 	m_strmOldCerr(NULL),
-	m_isOpen(false)
-	{};
-    sp_log_file (const char *filename) :
+	m_isOpen(false),
+	m_splitSize(0) {
+    }
+    sp_log_file (const char *filename, streampos split=0) :
 	m_strmOldCout(NULL),
 	m_strmOldCerr(NULL),
-	m_isOpen(true)
-	{ open(filename);}
-    ~sp_log_file () { close();};
+	m_isOpen(true) {
+	open(filename);
+	split_size(split);
+    }
+    ~sp_log_file () { close(); }
     
-    void	open (const char* filename);	// Open the file
-    void	open (const string filename) { open(filename.c_str()); };
-    void	close (void);		// Close the file
-    void	redirect_cout (void);	// Redirect cout and cerr to logfile
-    void	end_redirect (void);	// End redirection
+    // METHODS
+    void	open (const char* filename, int append=0);	// Open the file
+    void	open (const string filename, int append=0) { open(filename.c_str(), append); };
+    void	close ();		// Close the file
+    void	redirect_cout ();	// Redirect cout and cerr to logfile
+    void	end_redirect ();	// End redirection
+    void	split_check ();	// Split if needed
+    void	split_now ();	// Do a split
 
-    static void	flush_all(void) { streambuf::flush_all(); }
+    static void	flush_all() { streambuf::flush_all(); }
 
+    // ACCESSORS
     bool	isOpen() { return(m_isOpen); }	// Is the log file open?
+    void	split_size (streampos size) {	// Set # bytes to roll at
+	m_splitSize = size;
+    }
 
-private:
+  private:
+    // METHODS
+    void	open_int (string filename, int append=0);
+    void	close_int ();
+    string	split_name (unsigned suffixNum);
+
+  private:
     streambuf*	m_strmOldCout;		// Old cout value
     streambuf*	m_strmOldCerr;		// Old cerr value
     bool	m_isOpen;		// File has been opened
     sp_log_teebuf* m_tee;		// Teeing structure
+    string	m_filename;		// Original Filename that was opened
+    streampos	m_splitSize;		// Bytes to split at
+    unsigned	m_splitNum;		// Number of splits done
 };
 
 #endif /*__cplusplus*/

@@ -6,6 +6,24 @@ The contributors that suggested a given feature is shown in [].
 This uses outline mode in Emacs.  See C-h m [M-x describe-mode].
 
 
+* Changes in SystemC 1.140 4/6/2003
+
+***	Allow "sp use DEFINE" where DEFINE is a symbol like ALIAS_CELL
+	that should be replaced with the definition value of ALIAS_CELL.
+
+***	Support tracing AUTOENUM types. [Greg Waters]
+
+****	Report warning if SP_TRACED variables aren't traced. [Greg Waters]
+
+****	Allow enum values to initialize to symbolic constants. [Greg Waters]
+
+****	Use low level I/O routines to improve tracing by 30%.
+
+****	Have AUTOTRACE use values from the module that generates the signal
+	rather then the top level.  With Verilator, tracing is 10% faster.
+
+****	Support bison 1.75
+
 * Changes in SystemC 1.130 11/3/2002
 
 **	Support SystemC version 2.0.1.  A patch is required for tracing
@@ -154,7 +172,7 @@ This uses outline mode in Emacs.  See C-h m [M-x describe-mode].
 
 
 ----------------------------------------------------------------------
-$Revision: #53 $$Date: 2002/11/03 $$Author: wsnyder $
+$Revision: #60 $$Date: 2003/05/06 $$Author: wsnyder $
 ----------------------------------------------------------------------
 Copyright information:
 

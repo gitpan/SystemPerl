@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Revision: #49 $$Date: 2002/11/03 $$Author: wsnyder $
+# $Revision: #51 $$Date: 2003/05/06 $$Author: wsnyder $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -32,7 +32,7 @@ use SystemC::Netlist::AutoCover;
 use SystemC::Netlist::AutoTrace;
 
 @ISA = qw(Verilog::Netlist::Module);
-$VERSION = '1.130';
+$VERSION = '1.140';
 use strict;
 
 sub new_net {
@@ -74,7 +74,8 @@ sub autos1 {
 	my $fromref = $self->netlist->find_module ($frommodname);
 	if (!$fromref && $self->netlist->{link_read}) {
 	    print "  Link_Read_Auto ",$frommodname,"\n" if $Verilog::Netlist::Debug;
-	    $self->netlist->read_file(filename=>$frommodname, is_libcell=>1,);
+	    $self->netlist->read_file(filename=>$frommodname, is_libcell=>1,
+				      error_self=>$self);
 	    $fromref = $self->netlist->find_module ($frommodname);
 	}
 	if (!$fromref) {

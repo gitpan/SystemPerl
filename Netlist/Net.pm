@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Revision: #32 $$Date: 2002/11/03 $$Author: wsnyder $
+# $Revision: #34 $$Date: 2003/05/06 $$Author: wsnyder $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -25,33 +25,53 @@ use Class::Struct;
 use Verilog::Netlist;
 use SystemC::Netlist;
 @ISA = qw(Verilog::Netlist::Net);
-$VERSION = '1.130';
+$VERSION = '1.140';
 use strict;
 
 # List of basic C++ types and their sizes
 use vars qw (%TypeInfo);
-%TypeInfo = (bool=>	{ msb=>0,  lsb=>0, basic_type=>1, },
-	     sc_clock=>	{ msb=>0,  lsb=>0, basic_type=>0, },  # Special AutoTrace code
-#	     int8_t=>	{ msb=>7,  lsb=>0, basic_type=>1, },
-#	     int16_t=>	{ msb=>15, lsb=>0, basic_type=>1, },
-	     int32_t=>	{ msb=>31, lsb=>0, basic_type=>1, },
-#	     int =>	{ msb=>31, lsb=>0, basic_type=>1, },
-#	     uint8_t=>	{ msb=>7,  lsb=>0, basic_type=>1, },
-#	     uint16_t=>	{ msb=>15, lsb=>0, basic_type=>1, },
-	     uint32_t=>	{ msb=>31, lsb=>0, basic_type=>1, },
-#	     uint =>	{ msb=>0,  lsb=>0, basic_type=>1, },
-#	     nint8_t=> 	{ msb=>7,  lsb=>0, basic_type=>1, },
-#	     nint16_t=>	{ msb=>15, lsb=>0, basic_type=>1, },
-	     nint32_t=>	{ msb=>31, lsb=>0, basic_type=>1, },
+%TypeInfo = (bool=>	{ msb=>0,  lsb=>0, cast_type=>undef, },
+	     sc_clock=>	{ msb=>0,  lsb=>0, cast_type=>'bool', },
+#	     int8_t=>	{ msb=>7,  lsb=>0, cast_type=>undef, },
+#	     int16_t=>	{ msb=>15, lsb=>0, cast_type=>undef, },
+	     int32_t=>	{ msb=>31, lsb=>0, cast_type=>undef, },
+#	     int =>	{ msb=>31, lsb=>0, cast_type=>undef, },
+#	     uint8_t=>	{ msb=>7,  lsb=>0, cast_type=>undef, },
+#	     uint16_t=>	{ msb=>15, lsb=>0, cast_type=>undef, },
+	     uint32_t=>	{ msb=>31, lsb=>0, cast_type=>undef, },
+#	     uint =>	{ msb=>0,  lsb=>0, cast_type=>undef, },
+#	     nint8_t=> 	{ msb=>7,  lsb=>0, cast_type=>undef, },
+#	     nint16_t=>	{ msb=>15, lsb=>0, cast_type=>undef, },
+	     nint32_t=>	{ msb=>31, lsb=>0, cast_type=>undef, },
 	 );
 
 ######################################################################
+# Accessors
+
+sub cast_type {
+    my $self = shift;
+    if ($self->is_enum_type) {
+	return 'uint32_t';
+    } else {
+	my $tiref = $TypeInfo{$self->type};
+	return $tiref && $tiref->{cast_type};
+    }
+}
+
+sub is_enum_type {
+    my $self = shift;
+    return defined $self->module->netlist->{_enum_classes}{$self->type};    
+}
+
+######################################################################
+# Methods
 
 sub _link {
     my $self = shift;
     # If there is no msb defined, try to pull it based on the type of the signal
     if (!defined $self->msb && defined $self->type) {
 	my $tiref = $TypeInfo{$self->type};
+	$tiref = $TypeInfo{'uint32_t'} if !$tiref && $self->is_enum_type;
 	if (defined $tiref) {
 	    $self->msb($tiref->{msb});
 	    $self->lsb($tiref->{lsb});

@@ -41,7 +41,7 @@ Verilog language.  See `man SystemPerl' after installation.
 
    sp_include shows a technique for speeding up SystemC compiles using
 GCC.  sp_makecheck allows for cleaning up dependency files when
-dependancies have been removed or changed.
+dependencies have been removed or changed.
 
    Finally, the src directory contains useful C++ utilities for
 simulation, such as changing cout to send to both the screen and a file.

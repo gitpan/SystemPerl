@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Revision: #35 $$Date: 2002/11/03 $$Author: wsnyder $
+# $Revision: #37 $$Date: 2003/05/06 $$Author: wsnyder $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -31,7 +31,7 @@ use Verilog::Netlist::Subclass;
 use strict;
 use vars qw($Debug $Verbose $VERSION);
 
-$VERSION = '1.130';
+$VERSION = '1.140';
 
 ######################################################################
 #### Error Handling
@@ -50,6 +50,7 @@ sub new {
 	 sp_allow_bv_tracing => undef,		# undef = set it automatically
 	 sp_trace_duplicates => 0,
 	 sc_version => undef,
+	 _enum_classes => {},
 	 @_);
     bless $self, $class;
     $self->_set_features();

@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Revision: #32 $$Date: 2002/11/03 $$Author: wsnyder $
+# $Revision: #36 $$Date: 2003/05/06 $$Author: wsnyder $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -23,7 +23,7 @@ package SystemC::Netlist::AutoTrace;
 use File::Basename;
 
 use SystemC::Netlist::Module;
-$VERSION = '1.130';
+$VERSION = '1.140';
 use strict;
 
 use vars qw ($Setup_Ident_Code);	# Local use for recursion only
@@ -46,10 +46,18 @@ sub _write_autotrace {
 	return;
     }
 
+    # Detect duplicate signal information
+    my $dupsref = {};
+    if ($self->_autotrace('recurse') && !$self->netlist->{sp_trace_duplicates}) {
+	_tracer_dups_recurse($self,$dupsref);
+	_tracer_dups_show($self,$dupsref) if $Debug_Check_Code;
+    }
+
     # Flatten out all hiearchy under this into a array of signal information
     my $tracesref = {};
     local $Setup_Ident_Code = 0;
     _tracer_setup($self,$tracesref,
+		  $dupsref, {},
 		  ($self->_autotrace('recurse')),
 		  );
 
@@ -68,16 +76,98 @@ sub _write_autotrace {
     $fileref->print ("${prefix}// End of SystemPerl automatic trace file routine\n"),
 }
 
+sub _tracer_dups_recurse {
+    my $modref = shift or return;   # Submodule may not exist if library cell
+    my $dupsref = shift;	# global entry to write to
+    my $modhier = shift || "";	# ".cellname" appended each recursion
+    # Goal: For each signal, try to find the lowest level in the hiearchy that
+    # sources that signal.  (There are the fewest changedetects at lower levels.)
+
+    # Add our nets to the layout
+    foreach my $cellref ($modref->cells_sorted()) {
+	my $submodhier = $modhier.".".$cellref->name;
+	foreach my $pinref ($cellref->pins_sorted) {
+	    if ($pinref->net && $pinref->port && $pinref->port->net
+		&& $pinref->port->net->array eq $pinref->net->array
+		&& $pinref->port->net->type eq $pinref->net->type
+		&& $pinref->port->net->msb eq $pinref->net->msb
+		&& $pinref->port->net->lsb eq $pinref->net->lsb
+		&& !_net_ignore($pinref->port->net, $modref)
+		&& !_net_ignore($pinref->net, $modref)
+		) {
+		# Thus, it's the same signal passed across the hiearchy.
+		#print "PIN ",$cellref->name," XX ", $pinref->name,"\n";
+		my $nethiername = $modhier."->".$pinref->net->name;
+		my $subnethiername = $submodhier."->".$pinref->port->net->name;
+		# We link *references* so that changing one reference value changes
+		# all signal users that point to it.
+		my $linkref = $nethiername;
+		$dupsref->{$nethiername} ||= \$linkref;
+		if ($pinref->port->direction() eq 'out') {
+		    # Output, use submod's change
+		    ${$dupsref->{$nethiername}} = $subnethiername;
+		    $dupsref->{$subnethiername} = $dupsref->{$nethiername};
+		} else {
+		    # In/inout use upper's change
+		    $dupsref->{$subnethiername} = $dupsref->{$nethiername};
+		}
+	    }
+	}
+	_tracer_dups_recurse ($cellref->submod,
+			      $dupsref,
+			      $submodhier,
+			      );
+    }
+}
+
+sub _tracer_dups_show {
+    my $modref = shift;
+    my $dupsref = shift;	# global entry to write to
+    print "DUPS ",$modref->name,"\n";
+    printf "  %-40s %s\n", "NET", "Gets data from NET";
+    foreach my $netname (sort (keys %{$dupsref})) {
+	my $outputter_name = ${$dupsref->{$netname}};
+	if ($outputter_name ne $netname) {
+	    printf "  %-40s %s\n", $netname, $outputter_name;
+	}
+    }
+}
+
+sub _net_ignore {
+    my $netref = shift;
+    my $modref = shift;
+    # Return a reason for ignoring this signal, or undef
+    return "Leading _" if ($netref->name =~ /^_/);	# Skip leading _ signals
+    return "Unknown width of type ".$netref->type() if !$netref->width();
+    return "Wide Memory Signal"  if (($netref->width()||0)>256);
+    return "Wide Memory Vector"  if ($netref->array()
+				     && ($netref->array=~/^[0-9]/)
+				     && (($netref->array()||0)>32));
+    my $scbv = ($netref->type =~ /^sc_bv/);
+    if (!$netref->simple_type) {
+	if ($netref->port && $netref->port->direction eq "out") {
+	    if (!$modref->netlist->{sp_allow_output_tracing}) {
+		return "Can't read output ports -- need patch";
+	    }
+	}
+	if ($scbv && !$modref->netlist->{sp_allow_bv_tracing}) {
+	    return "Memory Vector - need patch";
+	}
+    }
+    return undef;
+}
+
 sub _tracer_setup {
     my $modref = shift or return;   # Submodule may not exist if library cell
-    my $tracesref = shift;
-    my $recurse = shift;
-    my $level = shift || 1;
-    my $nethier = shift || "t";
-    my $modhier = shift || "";
-    my $upper_codes_ref = shift || {};
+    my $tracesref = shift;	# *PARENT's* {cells} entry to write to
+    my $dupsref = shift;	# global duplicate information
+    my $dupscoderef = shift;	# global duplicate code number info
+    my $recurse = shift;	# static across recursions; AUTOTRACE(,recurse) switch
+    my $level = shift || 1;	# increments each recursion
+    my $nethier = shift || "t";	# "->cellname" appended each recursion
+    my $modhier = shift || "";	# ".cellname" appended each recursion
 
-    # Tracesref is information on the module
+    # Tracesref has information on the module
     $tracesref->{modref} = $modref;
     $tracesref->{modhier} = $modhier;
     $tracesref->{nethier} = $nethier,
@@ -86,13 +176,7 @@ sub _tracer_setup {
     my %our_codes;
     foreach my $netref ($modref->nets_sorted()) {
 	next if ($netref->name =~ /^_/);	# Skip leading _ signals
-	my $ignore = 0;
-	#$ignore = "Memory Vector" if $netref->array();
-	$ignore = "Unknown width" if !$netref->width();
-	$ignore = "Wide Memory Signal"  if (($netref->width()||0)>256);
-	$ignore = "Wide Memory Vector"  if ($netref->array()
-					    && ($netref->array=~/^[0-9]/)
-					    && (($netref->array()||0)>32));
+	my $ignore = _net_ignore($netref,$modref);
 
 	my $accessor = "";	# Function call to get the value of the signal
 	my $scbv = ($netref->type =~ /^sc_bv/);
@@ -111,7 +195,7 @@ sub _tracer_setup {
 		# This is nasty, and might even result in bad data
 		# It also requires a library patch
 		if (!$modref->netlist->{sp_allow_output_tracing}) {
-		    $ignore ||= "Can't read output ports -- need patch";
+		    $ignore or die "%Error: Should have ignored, Can't read output ports,";
 		} elsif ($modref->netlist->{sp_allow_output_tracing} eq 'hack') {
 		    $accessor .= ".const_signal()->get_cur_value()";
 		} else {
@@ -122,23 +206,47 @@ sub _tracer_setup {
 	    }
 	    if ($scbv) {
 		$accessor .= ".get_datap())[0])";
-		$ignore = "Memory Vector - need patch" 
+		$ignore or die "%Error: Should have ignored, memory vector,"
 		    if (!$ignore && !$modref->netlist->{sp_allow_bv_tracing});
 	    }
 	}
+
 	my $code_inc = 0;
 	if (!$ignore) {
 	    $code_inc = (int($netref->width()/32) + 1);
 	}
-	my $identical = $upper_codes_ref->{$netref->name};
+
+	# Check identicals
+	my $nethiername = $modhier."->".$netref->name;
+	my $identical = $dupsref->{$nethiername} && ${$dupsref->{$nethiername}};
+	my $identical_decl; my $identical_use;
+	if ($identical && !$ignore) {
+	    # Thus, it's the same signal passed across the hiearchy.
+	    if (!defined $dupscoderef->{$identical}) {
+		# First module that references it gets to choose the code for it
+		# This isn't necessarially the same cell that generates the *value*
+		$dupscoderef->{$identical}{code} = ++$Setup_Ident_Code;
+	    }
+	    if ($identical ne $nethiername) { 	# Driven from somewhere else
+		# Use previous declaration
+		$identical_use = $dupscoderef->{$identical}{code};
+	    } else {
+		$identical_decl = $dupscoderef->{$identical}{code};
+	    }
+	}
+
+	# Report errors
+	if ($netref->sp_traced && $ignore) {
+	    $netref->warn("Ignoring SP_TRACED, $ignore: ".$netref->name."\n");
+	}
 
 	# Store info for this var
 	my $tref = {
 	    netref => $netref,
 	    code_inc => $code_inc,
 	    ignore => $ignore,
-	    identical => $identical,
-	    identical_code => ($identical || 0),
+	    identical_decl => $identical_decl,
+	    identical_use => $identical_use,
 	    accessor => $accessor,
 	};
 	push @{$tracesref->{vars}}, $tref;
@@ -147,33 +255,16 @@ sub _tracer_setup {
     }
     if ($recurse) {
 	foreach my $cellref ($modref->cells_sorted()) {
-	    my %dup_codes = ();
-	    if (!$modref->netlist->{sp_trace_duplicates}) {
-		foreach my $pinref ($cellref->pins_sorted) {
-		    if ($pinref->net && $pinref->port && $pinref->port->net
-			&& $pinref->port->net->name eq $pinref->net->name
-			&& $pinref->port->net->array eq $pinref->net->array
-			&& $pinref->port->net->type eq $pinref->net->type
-			&& $pinref->port->net->msb eq $pinref->net->msb
-			&& $pinref->port->net->lsb eq $pinref->net->lsb
-			) { # Then, it's the same signal.
-			#print "PIN ",$cellref->name," XX ", $pinref->name,"\n";
-			my $ourref = $our_codes{$pinref->net->name};
-			$ourref->{identical_code} ||= ++$Setup_Ident_Code;
-			my $ourcode = $ourref->{identical_code};
-			$ourref->{identical_child} = $ourcode;	# May be more then one
-			$dup_codes{$pinref->port->net->name} = $ourcode;
-		    }
-		}
-	    }
 	    my $subref = {};
 	    push @{$tracesref->{cells}}, $subref;
 	    _tracer_setup($cellref->submod,
 			  $subref,
+			  $dupsref,
+			  $dupscoderef,
 			  $recurse,
-			  $level+1, $nethier."->".$cellref->name,
+			  $level+1,
+			  $nethier."->".$cellref->name,
 			  $modhier.".".$cellref->name,
-			  \%dup_codes,
 			  );
 	}
     }
@@ -233,14 +324,22 @@ sub _write_tracer_init {
 
     $fileref->print("void ${mod}::traceInit (SpTraceVcd* vcdp, void* userthis, uint32_t code) {\n");
     $fileref->printf("  int _identcode[%d];\n", $Setup_Ident_Code+1) if $Setup_Ident_Code;
+    $fileref->printf("  for (int i=0; i<%d; i++) { _identcode[i]=0; }\n", $Setup_Ident_Code+1) if $Setup_Ident_Code;
     $fileref->print("  // Callback from vcd->open()\n");
     $fileref->print("  if (0 && vcdp && userthis && code) {}  // Prevent unused\n");
     if ($#{$tracesref->{vars}} >= 0) {
 	$fileref->print("  int c=code;\n");
 	$fileref->print("  ${mod}* t=(${mod}*)userthis;\n");
 	$fileref->print("  string prefix = t->name();\n");
+	$fileref->print("  // Calculate identical signal codes\n");
     }
-    _write_tracer_init_recurse($self,$fileref,$tracesref);
+    
+    _write_tracer_init_recurse($self,$fileref,$tracesref, 1);
+    if ($#{$tracesref->{vars}} >= 0) {
+	$fileref->print("  // Setup signal names\n");
+	$fileref->print("  c=code;\n");
+    }
+    _write_tracer_init_recurse($self,$fileref,$tracesref, 0);
     $fileref->print("}\n");
 }
 
@@ -248,74 +347,97 @@ sub _write_tracer_init_recurse {
     my $self = shift;
     my $fileref = shift;
     my $tracesref = shift;
+    my $doident = shift;
     my $level = shift||1;
 
     my $indent = "  "x$level;
 
     my $mod = $self->name;
     my $modref = $tracesref->{modref};
-    $fileref->printf("${indent}\{\n");
-    $fileref->printf("${indent} vcdp->module(prefix+\"%s\");  // Is-a %s\n"
-		     , $tracesref->{modhier}, $modref->name);
-    $fileref->printf("${indent} register %s* ts = %s;\n"
-		     , $modref->name, $tracesref->{nethier});
+    if ($doident) {
+	$fileref->printf("${indent}\{ // %s\n", $tracesref->{modhier});
+    } else {
+	$fileref->printf("${indent}\{\n");
+	$fileref->printf("${indent} vcdp->module(prefix+\"%s\");  // Is-a %s\n"
+			 , $tracesref->{modhier}, $modref->name);
+	$fileref->printf("${indent} register %s* ts = %s;\n"
+			 , $modref->name, $tracesref->{nethier});
+    }
 
     foreach my $tref (@{$tracesref->{vars}}) {
 	my $netref = $tref->{netref};
 	my $accessor = $tref->{accessor};
+	my $aindent = $indent;
 	# Scope to correct parent module
 	# Now do the signal
-	if ($tref->{identical_child} && !$tref->{identical}) {   # This code is reused by a child module.
-	    $fileref->printf("${indent}  _identcode[".$tref->{identical_child}."] = c;\n");
+	if ($doident) {
+	    $fileref->printf("${aindent}  // ".$netref->name."\n") if $Debug_Check_Code;
+	    if ($tref->{identical_decl}) {   # This code is reused by a child module.
+		$fileref->printf("${aindent}  _identcode[".$tref->{identical_decl}."] = c;\n");
+	    }
 	}
-	$fileref->printf("${indent}  ${mod}_checkcode[".$tref->{check_code}."] = c-code;\n") if $Debug_Check_Code;
+	if ($doident) {
+	    $fileref->printf("${aindent}  ${mod}_checkcode[".$tref->{check_code}."] = c-code;\n") if $Debug_Check_Code;
+	    next if $tref->{identical_use};
+	    next if $tref->{ignore};
+	} else {
+	    $fileref->printf("${aindent}  if (${mod}_checkcode[".$tref->{check_code}."] != c-code) abort();\n") if $Debug_Check_Code;
+	}
 	my $c = "c";
 	my $ket = "";
-	if ($tref->{identical} && !$tref->{ignore}) {
+	if ($tref->{identical_use} && !$tref->{ignore}) {
 	    $c = "lc";
-	    $fileref->printf("${indent}  {int lc=_identcode[".$tref->{identical}."];\n"); 
+	    $fileref->printf("${aindent}  {int lc=_identcode[".$tref->{identical_use}."];\n"); 
 	    $ket .= "}";
 	}
 	if ($netref->array && !$tref->{ignore}) {
-	    $fileref->printf("${indent}  for (int i=0; i<%s; ++i) {\n"
+	    $fileref->printf("${aindent}  for (int i=0; i<%s; ++i) {\n"
 			     ,$netref->array);
-	    $indent .= "  ";
+	    $aindent .= "  ";
 	    $ket .= "}";
 	}
 
 	if ($tref->{ignore}) {
-	    $fileref->printf("${indent}  //IGNORED: %s: Type=%s  Array=%s\n"
+	    $fileref->printf("${aindent}  //IGNORED: %s: Type=%s  Array=%s\n"
 			     ,$tref->{ignore},$netref->type||"",$netref->array||'');
-	    $fileref->printf("${indent}  //{");
+	    $fileref->printf("${aindent}  //{");
 	} else {
-	    $fileref->printf("${indent}  {");
+	    $fileref->printf("${aindent}  {");
 	}
 	$ket .= "}";
-	if ($netref->type eq "sc_clock") {
-	    $fileref->printf("const bool& tempClk=%s;\n", $accessor);
-	    $fileref->printf("${indent}   ");
-	    $accessor = "tempClk";
+
+	if ($netref->cast_type && !$doident) {
+	    $fileref->printf("const ".$netref->cast_type."& tempVal=%s;\n", $accessor);
+	    $fileref->printf("${aindent}   ");
+	    $accessor = "tempVal";
 	}
 	my $width = $netref->width || 1;
 	my $arraynum = ($netref->array ? " i":"-1");
 	$fileref->printf("");
 	(my $name = $netref->name()) =~ s/__DOT__/./g;
-	if ($width == 1) {
-	    $fileref->printf("vcdp->declBit  (${c},\"%s\",%s,&(%s)"
-			     ,$name, $arraynum, ${accessor});
-	} elsif ($width <= 32) {
-	    $fileref->printf("vcdp->declBus  (${c},\"%s\",%s,&(%s),%d,%d"
-			     ,$name, $arraynum, ${accessor},$netref->msb, $netref->lsb);
-	} else {
-	    $fileref->printf("vcdp->declArray(${c},\"%s\",%s,&(%s),%d,%d",
-			     ,$name, $arraynum, ${accessor},$netref->msb, $netref->lsb);
+	if (!$doident) {
+	    if ($width == 1) {
+		$fileref->printf("vcdp->declBit  (${c},\"%s\",%s,&(%s)"
+				 ,$name, $arraynum, ${accessor});
+	    } elsif ($width <= 32) {
+		$fileref->printf("vcdp->declBus  (${c},\"%s\",%s,&(%s),%d,%d"
+				 ,$name, $arraynum, ${accessor},$netref->msb, $netref->lsb);
+	    } else {
+		$fileref->printf("vcdp->declArray(${c},\"%s\",%s,&(%s),%d,%d",
+				 ,$name, $arraynum, ${accessor},$netref->msb, $netref->lsb);
+	    }
+	    $fileref->printf("); ");
 	}
-	$fileref->printf("); ${c}+=%s;$ket",$tref->{code_inc});
-	$fileref->printf(" // Is-a: %s\n", $netref->type);
+	$fileref->printf("${c}+=%s;$ket",$tref->{code_inc});
+	if ($doident) {
+	    $fileref->printf("\n");
+	} else {
+	    $fileref->printf(" // Is-a: %s\n", $netref->type);
+	}
     }
 
     foreach my $tref (@{$tracesref->{cells}}) {
-	_write_tracer_init_recurse($self, $fileref, $tref, $level+1);
+	_write_tracer_init_recurse($self, $fileref, $tref, $doident, $level+1);
     }
     $fileref->printf("${indent}\}\n");
 }
@@ -366,7 +488,7 @@ sub _write_tracer_change_recurse {
     foreach my $tref (@{$tracesref->{vars}}) {
 	my $netref = $tref->{netref};
 	next if $tref->{ignore};
-	next if $tref->{identical};
+	next if $tref->{identical_use};
 	my $accessor = $tref->{accessor};
 
 	$fileref->printf("${indent}  if (${mod}_checkcode[".$tref->{check_code}."] != c-code) abort();\n") if $Debug_Check_Code;
@@ -384,11 +506,11 @@ sub _write_tracer_change_recurse {
 	} else {
 	    $code_inc += $tref->{code_inc};
 	}
-	if ($netref->type eq "sc_clock") {
-	    $fileref->printf("${aindent}  {const bool& tempClk=%s;\n",
+	if ($netref->cast_type) {
+	    $fileref->printf("${aindent}  {const ".$netref->cast_type."& tempVal=%s;\n",
 			     $accessor);
 	    $fileref->printf("${aindent}   ");
-	    $accessor = "tempClk";
+	    $accessor = "tempVal";
 	} else {
 	    $fileref->printf("${aindent}  {");
 	}

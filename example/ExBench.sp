@@ -1,4 +1,4 @@
-// $Revision: #13 $$Date: 2002/08/29 $$Author: wsnyder $
+// $Revision: #14 $$Date: 2003/03/11 $$Author: wsnyder $
 // DESCRIPTION: SystemPerl: Example main()
 
 #sp interface
@@ -21,6 +21,7 @@ SC_MODULE (__MODULE__) {
     // These types declare a signal and also mark it for tracing.
     SP_TRACED uint32_t  m_cyclenum;
     SP_TRACED uint32_t  m_array[ARRAYSIZE];
+    SP_TRACED MyENumClass m_enumVal;
     VL_SIG(m_unusedok1,  5,1);		// From Verilator: reg [5:1]  m_unusedok1
     VL_SIGW(m_unusedok2, 35,1,2);	// From Verilator: reg [35:1] m_unusedok2
     VL_SIGW(m_unusedok3[10], 35,1,2);	// From Verilator: reg [35:1] m_unusedok3[10]
@@ -56,6 +57,7 @@ SP_CTOR_IMP(__MODULE__)
      SP_PIN (parse,inhModule2Pin,in);
 
     m_cyclenum = 0;
+    m_enumVal = MyENumClass::ONE;
 
     //m_bv55 = "101_1100_1011_1010_1001_1000__0111_0110_0101_0100__0011_0010_0001_0000";
     m_bv55 = "1011100101110101001100001110110010101000011001000010000";

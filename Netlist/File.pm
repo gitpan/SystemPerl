@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Revision: #97 $$Date: 2002/11/03 $$Author: wsnyder $
+# $Revision: #105 $$Date: 2003/05/06 $$Author: wsnyder $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -28,7 +28,7 @@ use SystemC::Template;
 use Verilog::Netlist::Subclass;
 @ISA = qw(SystemC::Netlist::File::Struct
 	Verilog::Netlist::Subclass);
-$VERSION = '1.130';
+$VERSION = '1.140';
 use strict;
 
 structs('new',
@@ -73,6 +73,10 @@ sub new {
 				     cellref=>undef,	# Cell being parsed now
 				     );
     $parser->{filename} = $parser->{netlist}->resolve_filename($params{filename});
+    if (!$parser->{filename}) {
+	$params{error_self} and $params{error_self}->error("Cannot open $params{filename}");
+	die "%Error: Cannot open $params{filename}\n";
+    }
     $parser->read (filename=>$parser->{filename});
     return $parser;
 }
@@ -167,6 +171,7 @@ sub auto {
     elsif ($line =~ /^(\s*)\/\*AUTOENUM_CLASS\(([a-zA-Z0-9_]+)(\.|::)([a-zA-Z0-9_]+)\)\*\//) {
 	my $prefix = $1; my $class = $2;  my $enumtype = $4;
 	$self->{fileref}->_autoenums($class, $enumtype);
+	$self->{netlist}->{_enum_classes}{$class} = 1;
 	push @Text, [ 1, $self->filename, $self->lineno,
 		      \&SystemC::Netlist::File::_write_autoenum_class,
 		      $self->{fileref}, $class, $enumtype, $prefix,];
@@ -343,17 +348,21 @@ sub signal {
     if ($inout eq "sc_signal"
 	|| $inout eq "sc_clock"
 	|| $inout eq "sp_traced"
+	|| $inout eq "sp_traced_vl"
 	) {
 	my $net = $modref->find_net ($netname);
 	$net or $net = $modref->new_net
 	    (name=>$netname,
 	     filename=>$self->filename, lineno=>$self->lineno,
-	     simple_type=>($inout eq "sp_traced"), type=>$type, array=>$array,
+	     sp_traced=>($inout eq "sp_traced"),
+	     simple_type=>($inout eq "sp_traced" || $inout eq "sp_traced_vl"),
+	     type=>$type, array=>$array,
 	     comment=>undef, msb=>$msb, lsb=>$lsb,
 	     );
 	$self->{netref} = $net;
     }
-    elsif ($inout eq "vl_port") {
+    elsif ($inout =~ /vl_(inout|in|out)/) {
+	my $dir = $1;
 	my $net = $modref->find_net ($netname);
 	$net or $net = $modref->new_net
 	    (name=>$netname,
@@ -365,7 +374,7 @@ sub signal {
 	my $port = $modref->new_port
 	    (name=>$netname,
 	     filename=>$self->filename, lineno=>$self->lineno,
-	     direction=>'inout', type=>$type,
+	     direction=>$dir, type=>$type,
 	     array=>$array, comment=>undef,);
     }
     elsif ($inout =~ /sc_(inout|in|out)$/) {
@@ -399,9 +408,15 @@ sub preproc_sp {
 			  $self->{fileref}, $line];
 	}
 	elsif ($cmd =~ /^use/) {
-	    ($cmd =~ m/^use\s+\"([^\" \n]+)\"$/)
-		or return $self->error("Badly formed sp use line", $line);
-	    my $incname = $1;
+	    my $incname;
+	    if ($cmd =~ m/^use\s+(\S+)$/ && $cmd !~ /\"/) {
+		$incname = $1;
+		$incname = $self->{netlist}->remove_defines($incname);
+	    } elsif ($cmd =~ m/^use\s+\"([^\" \n]+)\"$/) {
+		$incname = $1;
+	    } else {
+		return $self->error("Badly formed sp use line", $line);
+	    }
 	    $incname =~ s/\.(h|sp)$//;
 	    ($incname !~ s/(\.[a-z]+)$//)
 		or $self->error("No $1 extensions on sp use filenames", $line);
@@ -415,7 +430,8 @@ sub preproc_sp {
 		or return $self->error("Badly formed sp include line", $line);
 	    my $filename = $1;
 	    print "#include $filename\n" if $SystemC::Netlist::Debug;
-	    $filename = $self->{netlist}->resolve_filename($filename);
+	    $filename = $self->{netlist}->resolve_filename($filename)
+		or $self->error("%Error: Cannot find $filename\n");
 	    $self->read_include (filename=>$filename);
 	}
 	else {
@@ -507,6 +523,10 @@ sub read {
     $params{strip_autos} = $netlist->{strip_autos} if !exists $params{strip_autos};
 
     my $filepath = $netlist->resolve_filename($filename);
+    if (!$filepath) {
+	$params{error_self} and $params{error_self}->error("Cannot open $params{filename}");
+	die "%Error: Cannot open $params{filename}\n";
+    }
     print __PACKAGE__."::read_file $filepath\n" if $SystemC::Netlist::Debug;
 
     my $fileref = $netlist->new_file (name=>$filepath,
@@ -535,11 +555,13 @@ sub _link {
     foreach my $incref (values %{$self->_uses()}) {
 	if (!$incref->{fileref}) {
 	    print "FILE LINK $incref->{name}\n" if $SystemC::Netlist::Debug;
-	    my $filename = $self->netlist->resolve_filename($incref->{name},$self);
+	    my $filename = $self->netlist->resolve_filename($incref->{name})
+		or $self->error("Cannot find $incref->{name}\n");
 	    $incref->{fileref} = $self->netlist->find_file($filename);
 	    if (!$incref->{fileref} && $self->netlist->{link_read}) {
 		print "  use_Link_Read ",$filename,"\n" if $Verilog::Netlist::Debug;
-		my $filepath = $self->netlist->resolve_filename($filename);
+		my $filepath = $self->netlist->resolve_filename($filename)
+		    or $self->error("Cannot find $filename\n");
 		(my $filename_h = $filename) =~ s/\.sp$/.h/;
 		if (!$filepath && $self->netlist->resolve_filename($filename_h)) {
 		    # There's a .h.  Just consider it as a regular #include

@@ -1,5 +1,5 @@
 #!/usr/local/bin/perl -w
-#$Revision: #35 $$Date: 2002/11/03 $$Author: wsnyder $
+#$Revision: #36 $$Date: 2003/03/28 $$Author: wsnyder $
 ######################################################################
 #
 # This program is Copyright 2000 by Wilson Snyder.
@@ -131,7 +131,7 @@ if ($opt_makedeps) {
 #----------------------------------------------------------------------
 
 sub usage {
-    print '$Revision: #35 $$Date: 2002/11/03 $$Author: wsnyder $ ', "\n";
+    print '$Revision: #36 $$Date: 2003/03/28 $$Author: wsnyder $ ', "\n";
     $SIG{__WARN__} = sub{};	#pod2text isn't clean.
     pod2text($0);
     exit (1);
@@ -156,7 +156,7 @@ sub parameter {
 	    push @sp_files_nolib, $param;
 	}
     } elsif ($param =~ /sp_preproc$/) {
-	# Ignore ourself in case user passed all dependancies including this program
+	# Ignore ourself in case user passed all dependencies including this program
     } else {
 	die "%Error: Unknown parameter: $param\n";
     }
