@@ -1,4 +1,4 @@
-/* $Id: scparse.h,v 1.12 2001/11/26 20:42:27 wsnyder Exp $
+/* $Revision: #14 $$Date: 2002/08/07 $$Author: wsnyder $
  ******************************************************************************
  * DESCRIPTION: SystemC parser header file
  * 
@@ -14,9 +14,7 @@
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of either the GNU General Public License or the
- * Perl Artistic License, with the exception that it cannot be placed
- * on a CD-ROM or similar media for commercial distribution without the
- * prior approval of the author.
+ * Perl Artistic License.
  * 
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of

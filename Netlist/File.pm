@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Id: File.pm,v 1.86 2002/03/11 15:52:09 wsnyder Exp $
+# $Revision: #90 $$Date: 2002/08/07 $$Author: wsnyder $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -7,9 +7,7 @@
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of either the GNU General Public License or the
-# Perl Artistic License, with the exception that it cannot be placed
-# on a CD-ROM or similar media for commercial distribution without the
-# prior approval of the author.
+# Perl Artistic License.
 # 
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -30,7 +28,7 @@ use SystemC::Template;
 use Verilog::Netlist::Subclass;
 @ISA = qw(SystemC::Netlist::File::Struct
 	Verilog::Netlist::Subclass);
-$VERSION = '1.100';
+$VERSION = '1.110';
 use strict;
 
 structs('new',
@@ -185,14 +183,15 @@ sub auto {
 		      \&SystemC::Netlist::Module::_write_autodecls,
 		      $modref, $self->{fileref}, $prefix];
     }
-    elsif ($line =~ /^(\s*)\/\*AUTOTRACE\(([a-zA-Z0-9_]+)(,manual|,recurse|)\)\*\//) {
+    elsif ($line =~ /^(\s*)\/\*AUTOTRACE\(([a-zA-Z0-9_]+)((,manual)?(,recurse)?(,activity)?)\)\*\//) {
 	my $prefix = $1; my $modname = $2; my $manual = $3;
 	$modname = $self->{fileref}->basename if $modname eq "__MODULE__";
 	my $mod = $self->{netlist}->find_module ($modname);
 	$mod or $self->error ("Declaration for module not found: $modname\n");
-	$mod->_autotrace(1);
-	$mod->_autotrace('manual') if $manual =~ /manual/;
-	$mod->_autotrace('recurse') if $manual =~ /recurse/;
+	$mod->_autotrace('on',1);
+	$mod->_autotrace('manual',1) if $manual =~ /manual/;
+	$mod->_autotrace('recurse',1) if $manual =~ /recurse/;
+	$mod->_autotrace('activity',1) if $manual =~ /activity/;
 	push @Text, [ 1, $self->filename, $self->lineno,
 		      \&SystemC::Netlist::AutoTrace::_write_autotrace,
 		      $mod, $self->{fileref}, $prefix,];

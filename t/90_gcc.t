@@ -1,5 +1,5 @@
 #!/usr/local/bin/perl -w
-# $Id: 90_gcc.t,v 1.3 2002/03/11 14:07:22 wsnyder Exp $
+# $Revision: #4 $$Date: 2002/07/16 $$Author: wsnyder $
 # DESCRIPTION: Perl ExtUtils: Type 'make test' to test this package
 
 use strict;

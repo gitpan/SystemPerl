@@ -1,4 +1,4 @@
-// $Id: ExModSub.sp,v 1.6 2001/11/30 19:19:56 wsnyder Exp $
+// $Revision: #7 $$Date: 2002/07/16 $$Author: wsnyder $
 // DESCRIPTION: SystemPerl: Example source module
 
 #sp interface

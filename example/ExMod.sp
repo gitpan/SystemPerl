@@ -1,4 +1,4 @@
-// $Id: ExMod.sp,v 1.8 2002/01/29 14:20:36 wsnyder Exp $
+// $Revision: #9 $$Date: 2002/07/16 $$Author: wsnyder $
 // DESCRIPTION: SystemPerl: Example source module
 
 //error test:

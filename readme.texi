@@ -1,5 +1,5 @@
 \input texinfo @c -*-texinfo-*-
-@c $Id: readme.texi,v 1.17 2002/03/11 14:07:22 wsnyder Exp $
+@c $Revision: #18 $$Date: 2002/07/16 $$Author: wsnyder $
 @c %**start of header
 @setfilename readme.info
 @settitle Perl SystemC Installation

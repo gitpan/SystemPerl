@@ -1,5 +1,5 @@
 %{
-/* $Id: scgrammer.y,v 1.35 2002/01/29 21:53:55 wsnyder Exp $
+/* $Revision: #40 $$Date: 2002/08/07 $$Author: wsnyder $
  ******************************************************************************
  * DESCRIPTION: SystemC bison parser
  *
@@ -15,9 +15,7 @@
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of either the GNU General Public License or the
- * Perl Artistic License, with the exception that it cannot be placed
- * on a CD-ROM or similar media for commercial distribution without the
- * prior approval of the author.
+ * Perl Artistic License.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -152,7 +150,7 @@ exp:		auto
 		| NUMBER	{ SCFree($1); }
 		| PP		{ }
 		| symbol
-;
+		;
 
 auto:		AUTO
 			{
@@ -160,26 +158,36 @@ auto:		AUTO
 			  scparser_PrefixCat(sclextext,sclexleng);  /* Emit as independent TEXT */
 			  scparser_call(1,"auto",sclextext);
 			}
+		;
 
 module:		SC_MODULE '(' SYMBOL ')'
 			{ scparser_call(-1,"module",$3); }
 		| SC_MAIN
 			{ scparser_call(1,"module","sc_main"); }
+		;
 
 class:		CLASS SYMBOL
 			{ scparser_call(-1,"class",$2); }
+		| CLASS '{'	/* Anonymous struct */
+			{ }
+		;
 
 ctor:		SC_CTOR '(' SYMBOL ')'
 			{ scparser_call(-1,"ctor",$3); }
+		;
 // SP_CELL ignores trailing ')' so SP_CELL_FORM is happy
 cell:		SP_CELL '(' cellname ',' SYMBOL
 			{ scparser_call(-2,"cell",$3,$5); }
+		;
 cell_decl:	SP_CELL_DECL '(' SYMBOL ',' cellname ')' ';'
 			{ scparser_call(-2,"cell_decl",$3,$5); }
+		;
 pin:		SP_PIN '(' cellname ',' SYMBOL vector ',' SYMBOL vector ')' ';'
 			{ scparser_call(-5,"pin",$3,$5,$6,$8,$9); }
+		;
 decl:		SC_SIGNAL '<' declType '>' SYMBOL vector ';'
 			{ scparser_call(-4,"signal",$1,$3,$5,$6); }
+		;
 
 //		FOO or FOO::BAR*
 declType:	declType1		{ $$ = $1; }
@@ -187,6 +195,7 @@ declType:	declType1		{ $$ = $1; }
 			  strcpy (cp,$1); strcat(cp,"*");
 			  SCFree ($1);
 			  $$=cp; }
+		;
 
 declType1:	declTypeBase
 		| SYMBOL ':' ':' declType1
@@ -194,6 +203,7 @@ declType1:	declTypeBase
 			  strcpy(cp, $1); strcat(cp, "::"); strcat(cp, $4);
 			  SCFree($1); SCFree($4);
 			  $$=cp; }
+		;
 
 //		uint32_t | sc_bit<4> | unsigned int
 declTypeBase:	SYMBOL
@@ -202,6 +212,7 @@ declTypeBase:	SYMBOL
 			  strcpy (cp,$1); strcat(cp,"<");strcat(cp,$3);strcat(cp,">");
 			  SCFree ($1); SCFree ($3);
 			  $$=cp; }
+		;
 
 //		sc_in_clk SYMBOL
 inout:		SC_INOUT_CLK SYMBOL vector ';'
@@ -209,17 +220,21 @@ inout:		SC_INOUT_CLK SYMBOL vector ';'
 			  {char *cp = strrchr($1,'_'); if (cp) *cp='\0';} /* Drop _clk */
 			  scparser_call(4,"signal",$1,"sc_clock",$2,$3);
  			  SCFree($1); SCFree($2); SCFree($3);}
+		;
 //		sc_clock SYMBOL ;
 inout_clk:	SC_CLOCK SYMBOL ';'
 			{
 			  scparser_call(3,"signal",$1,"sc_clock",$2);
  			  SCFree($1); SCFree($2);}
+		;
 
 		// foo = sc_clk (bar)
 inst_clk:	SC_CLOCK '(' { SCFree($1); }
 		| SC_CLOCK SYMBOL '(' { SCFree($1); SCFree($2);}
+		;
 
 sp:		SP	{ scparser_call(1,"preproc_sp",sclextext);}
+		;
 
 //************************************
 // Tracables
@@ -239,6 +254,7 @@ traceable:	SP_TRACED SYMBOL SYMBOL vector ';'
 		| VL_PORTW '(' SYMBOL vector ',' NUMBER ',' NUMBER ',' vectorNum ')' ';'
  			{ scparser_call(6,"signal","vl_port","uint32_t",$3,$4,$6,$8);
  			  SCFree($3); SCFree($4); SCFree($6); SCFree($8); SCFree($10);}
+		;
 
 //************************************
 // Enumerations
@@ -246,13 +262,17 @@ traceable:	SP_TRACED SYMBOL SYMBOL vector ';'
 enum:		ENUM enumSymbol '{' enumValList '}'
   			{ SCFree (scParserLex.enumname); }
 
+		;
 enumSymbol:	SYMBOL	{ scParserLex.enumname = $1; }
 		|	{ scParserLex.enumname = NULL; }
+		;
 enumValList:	enumVal
- 		| enumValList ',' enumVal ;
+ 		| enumValList ',' enumVal
+		;
 enumVal:	SYMBOL	enumAssign  {
 			if (scParserLex.enumname) scparser_call(2,"enum_value",scParserLex.enumname,$1);
 			SCFree ($1); }
+		;
 enumAssign:	'=' NUMBER	{ SCFree ($2); }
  		| ;
 
@@ -260,19 +280,29 @@ enumAssign:	'=' NUMBER	{ SCFree ($2); }
 
 cellname:	SYMBOL
 		| SYMBOL vectors_bra		{ $$=scstrjoin($1,$2); }
+		;
 
 vectors_bra:	vector_bra
 		| vectors_bra vector_bra	{ $$=scstrjoin($1,$2); }
+		;
 
 vector_bra:	'[' vectorNum ']'	{ char *cp=malloc(strlen($2)+5);
 			  strcpy (cp,"["); strcat(cp,$2);strcat(cp,"]");
 			  SCFree ($2);
 			  $$=cp; }
+		;
 
 vector:		'[' vectorNum ']'	{ $$ = $2; }
 		|	{ $$ = strdup(""); }	/* Horrid */
+		;
 
-vectorNum:	SYMBOL | NUMBER
+vectorNum:	SYMBOL			{ $$ = $1; }
+		| NUMBER		{ $$ = $1; }
+	 	| SYMBOL ':' ':' SYMBOL	{ char *cp=malloc(strlen($1)+strlen($4)+5);
+			  strcpy (cp,$1); strcat(cp,"::"); strcat(cp,$4);
+			  SCFree ($1); SCFree ($4);
+			  $$=cp; }
+		;
 
 %%
 

@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Id: Netlist.pm,v 1.29 2002/03/11 15:52:05 wsnyder Exp $
+# $Revision: #31 $$Date: 2002/08/07 $$Author: wsnyder $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -7,9 +7,7 @@
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of either the GNU General Public License or the
-# Perl Artistic License, with the exception that it cannot be placed
-# on a CD-ROM or similar media for commercial distribution without the
-# prior approval of the author.
+# Perl Artistic License.
 # 
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -33,7 +31,7 @@ use Verilog::Netlist::Subclass;
 use strict;
 use vars qw($Debug $Verbose $VERSION);
 
-$VERSION = '1.100';
+$VERSION = '1.110';
 
 ######################################################################
 #### Error Handling

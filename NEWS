@@ -4,6 +4,12 @@ Copyright (C) 2001 Wilson Snyder.
 The contributors that suggested a given feature is shown in [].
 	
 This uses outline mode in Emacs.  See C-h m [M-x describe-mode].
+
+* Changes in SystemC 1.110 8/8/2002
+
+****	Allow traced modules to determine if they might have any activity.
+	Used for Verilator3 to improve trace speed by about 60%.
+
 
 * Changes in SystemC 1.100 3/11/2002
 
@@ -126,7 +132,7 @@ This uses outline mode in Emacs.  See C-h m [M-x describe-mode].
 
 
 ----------------------------------------------------------------------
-$Id: NEWS,v 1.43 2002/03/11 15:52:05 wsnyder Exp $
+$Revision: #47 $$Date: 2002/08/08 $$Author: wsnyder $
 ----------------------------------------------------------------------
 Copyright information:
 

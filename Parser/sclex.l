@@ -1,6 +1,6 @@
 %option noyywrap align never-interactive prefix="sclex"
 %{
-/* $Id: sclex.l,v 1.28 2002/01/29 21:53:55 wsnyder Exp $
+/* $Revision: #31 $$Date: 2002/08/07 $$Author: wsnyder $
  ******************************************************************************
  * DESCRIPTION: SystemC lexer
  * 
@@ -16,9 +16,7 @@
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of either the GNU General Public License or the
- * Perl Artistic License, with the exception that it cannot be placed
- * on a CD-ROM or similar media for commercial distribution without the
- * prior approval of the author.
+ * Perl Artistic License.
  * 
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -99,6 +97,7 @@ FLOATNUM	[0-9]+"."*[0-9]*[eE][0-9]+
 "sc_main"	{ return(SC_MAIN); }
 "enum"		{ return(ENUM); }
 "class"		{ return(CLASS); }
+"struct"	{ return(CLASS); }
 
 "sc_signal"	|
 "sc_in"		|

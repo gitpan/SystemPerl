@@ -1,13 +1,11 @@
-// $Id: SpTraceVcd.h,v 1.8 2002/02/26 15:50:58 wsnyder Exp $ -*- SystemC -*-
+// $Revision: #10 $$Date: 2002/08/07 $$Author: wsnyder $ -*- SystemC -*-
 //=============================================================================
 //
 // THIS MODULE IS PUBLICLY LICENSED
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of either the GNU General Public License or the
-// Perl Artistic License, with the exception that it cannot be placed
-// on a CD-ROM or similar media for commercial distribution without the
-// prior approval of the author.
+// Perl Artistic License.
 //
 // This is distributed in the hope that it will be useful, but WITHOUT ANY
 // WARRANTY; without even the implied warranty of MERCHANTABILITY or

@@ -1,5 +1,5 @@
 #!/usr/local/bin/perl -w
-# $Id: 01_parser.t,v 1.7 2002/03/11 14:07:22 wsnyder Exp $
+# $Revision: #9 $$Date: 2002/07/16 $$Author: wsnyder $
 # DESCRIPTION: Perl ExtUtils: Type 'make test' to test this package
 
 use strict;
@@ -47,6 +47,7 @@ sub auto {	_common ('AUTO',@_); include(@_);}
 sub module {	_common ('MODULE',@_); }
 sub ctor {	_common ('CTOR',@_); }
 sub cell {	_common ('CELL',@_); }
+sub class {	_common ('CLASS',@_); }
 sub pin {	_common ('PIN',@_); }
 sub signal {	_common ('SIGNAL',@_); }
 sub preproc_sp {_common ('PREPROC_SP',@_); }

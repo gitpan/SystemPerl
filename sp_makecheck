@@ -1,17 +1,12 @@
 #!/usr/local/bin/perl -w
-#$Id: sp_makecheck,v 1.2 2001/10/26 16:02:12 wsnyder Exp $
-######################################################################
-# Unpublished Work Copyright (C) 2001 Wilson Snyder
-# All Rights Reserved.                                                      
+#$Revision: #7 $$Date: 2002/08/07 $$Author: wsnyder $
 ######################################################################
 #
 # This program is Copyright 2001 by Wilson Snyder.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of either the GNU General Public License or the
-# Perl Artistic License, with the exception that it cannot be placed
-# on a CD-ROM or similar media for commercial distribution without the
-# prior approval of the author.
+# Perl Artistic License.
 # 
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -29,7 +24,7 @@ use Getopt::Long;
 use IO::File;
 use Pod::Text;
 use strict;
-use vars qw ($Debug %Depend %Targets %Checked);
+use vars qw ($Debug %Depend %Checked);
 
 #======================================================================
 
@@ -37,25 +32,37 @@ use vars qw ($Debug %Depend %Targets %Checked);
 #======================================================================
 # main
 
+use vars qw ($Opt_Unlink $Opt_Mtime $Opt_Show $Opt_Verbose);
 $Debug = 0;
+$Opt_Unlink = 1;
+$Opt_Mtime = 0;
+$Opt_Show = 0;
 my @dfiles;
 if (! GetOptions (
 		  "help"	=> \&usage,
+		  "mtime!"	=> \$Opt_Mtime,
+		  "show!"	=> \$Opt_Show,
+		  # Debugging
 		  "debug"	=> \&debug,
+		  "verbose!"	=> \$Opt_Verbose,
+		  "unlink!"	=> \$Opt_Unlink,	# Debugging, suppress unlinks
+		  # Everything else
 		  "<>"		=> \&parameter,
 		  )) {
     usage();
 }
 
 foreach my $file (@dfiles) {
-    dfile_read ($file);
+    Dependancy::dfile_read ($file);
 }
-depend_cleanup();
+Dependancy::compute();
+Dependancy::dump() if $Opt_Show;
+Dependancy::unlink_out_of_date();
 
 #----------------------------------------------------------------------
 
 sub usage {
-    print '$Id: sp_makecheck,v 1.2 2001/10/26 16:02:12 wsnyder Exp $ ', "\n";
+    print '$Revision: #7 $$Date: 2002/08/07 $$Author: wsnyder $ ', "\n";
     $SIG{__WARN__} = sub{};	#pod2text isn't clean.
     pod2text($0);
     exit (1);
@@ -63,6 +70,7 @@ sub usage {
 
 sub debug {
     $Debug = 1;
+    $Opt_Verbose = 1;
 }
 
 sub parameter {
@@ -75,9 +83,13 @@ sub parameter {
 }
  
 #######################################################################
+package Dependancy;
+use strict;
+use vars qw (%Depend);
 
 sub dfile_read {
     my $filename = shift;
+    # Static: Read a .d file, and add it to the %Depend hash.
     my $fh = IO::File->new($filename) or die "%Error: $! $filename\n";
     my $line = "";
     while (defined (my $thisline = $fh->getline())) {
@@ -95,9 +107,9 @@ sub dfile_read {
 	    foreach my $dep (split /\s+/,"$depl ") {
 		next if $dep eq "";
 		foreach my $tgt (@tgts) {
-		    $Depend{$tgt}{$dep} = 1;
-		    $Targets{$dep}{$tgt} = 1;
-		    print "DEP $tgt $dep\n" if $Debug;
+		    $Depend{$tgt}{depends}{$dep} = 1;
+		    $Depend{$dep}{targets}{$tgt} = 1;
+		    print "DEP $tgt $dep\n" if $::Debug;
 		}
 	    }
 	} else {
@@ -108,41 +120,86 @@ sub dfile_read {
     $fh->close;
 }
 
-sub depend_cleanup {
-    foreach my $dep (keys %Targets) {
-	depend_cleanup_one($dep, 0);
+sub compute {
+    # Static: Compute levels and other information on the structure
+    foreach my $dep (keys %Depend) {
+	$Depend{$dep}{name} = $dep;
+	$Depend{$dep}{level} = 0;
+	$Depend{$dep}{mtime} = (stat($dep))[9] || 0;
     }
-}
-
-sub depend_cleanup_one {
-    my $dep = shift;
-    my $force_remove = shift;
-    if ($force_remove) {
-	file_rm ($dep);
+    foreach my $depref (values %Depend) {
+	_depend_levels_recurse($depref,0);
     }
-    if ($force_remove || !file_exists($dep)) {
-	foreach my $tgt (keys %{$Targets{$dep}}) {
-	    print "dep_removed $force_remove $dep\t$tgt\n" if $Debug;
-	    depend_cleanup_one ($tgt,$force_remove+1);
+    # Bottom up loop
+    foreach my $tgtref (sort {$b->{level} <=> $a->{level}}
+			(values %Depend)) {
+	foreach my $dep (keys %{$tgtref->{depends}}) {
+	    my $depref = $Depend{$dep};
+	    if ($depref->{out_of_date}) {
+		$tgtref->{out_of_date} = "Child Out-of-date $depref->{name}";
+	    }
+	    elsif (!$depref->{mtime}) {
+		$tgtref->{out_of_date} = "Missing $depref->{name}";
+	    }
+	    elsif ($depref->{mtime}
+		&& ($::Opt_Mtime && ($depref->{mtime} > $tgtref->{mtime}))) {
+		$tgtref->{out_of_date} = "Younger $depref->{name}";
+	    }
 	}
     }
 }
 
-sub file_exists {
-    my $filename = shift;
-    if (!defined $Checked{$filename}) {
-	$Checked{$filename} = -r $filename;
+sub _depend_levels_recurse {
+    my $depref = shift;
+    my $level = shift;
+    $depref->{level} = $level if ($level>$depref->{level});
+    ($level<100) or die "%Error: Recursive dependancy chain involving: ",$depref->{name},"\n";
+    foreach my $tgt (keys %{$depref->{depends}}) {
+	_depend_levels_recurse($Depend{$tgt},$level+1);
     }
-    return $Checked{$filename};
-}
-sub file_rm {
-    my $filename = shift;
-    return if !file_exists($filename);
-    print "rm $filename\n" if $Debug;
-    unlink $filename;
-    $Checked{$filename} = 0;
 }
 
+sub dump {
+    # Static: Dump the dependancy information
+    foreach my $depref (values %Depend) {
+	if ($depref->{level}==0) {
+	    print "-"x70,"\n";
+	    _dump_recurse($depref);
+	}
+    }
+}
+
+sub _dump_recurse {
+    my $depref = shift;
+    printf +("\t%-10s %-4s %s%s\n"
+	     ,_time_format($depref->{mtime}),
+	     ,($depref->{out_of_date}?"old":""),
+	     ,"| "x$depref->{level}
+	     ,$depref->{name});
+    foreach my $tgt (sort (keys %{$depref->{depends}})) {
+	_dump_recurse($Depend{$tgt});
+    }
+}
+
+sub _time_format {
+    my $time = shift;
+    return "gone" if !$time;
+    my $now = time();
+    $time = $now - $time;
+    if ($time<3600) { return sprintf("%02d:%02ds ago",int($time/60),int($time%60)); }
+    return sprintf("%5.1fd ago",($time/(60*60*24)));
+}
+
+sub unlink_out_of_date {
+    # Static: Remove all out of date files
+    my %param = @_;
+    foreach my $depref (values %Depend) {
+	if ($depref->{out_of_date} && $depref->{mtime}) {
+	    print "$0: rm $depref->{name} : $depref->{out_of_date}\n" if $::Debug || $::Opt_Verbose;
+	    unlink $depref->{name} if $::Opt_Unlink;
+	}
+    }
+}
 
 #######################################################################
 __END__
@@ -165,7 +222,8 @@ using the -MMD switch.  This creates a files similar to foo.d:
     foo.o foo.d: foo.cc foo.h
 
 The problem is if a header file is removed, then make will complain that
-there is no rule to build foo.h.
+there is no rule to build foo.h.  Adding a fake target is one way around
+this, but that requires additional .d's, and leaves old objects around.
 
 sp_makecheck reads the specified dependency files, and checks for the
 existance of all dependancies in the file.  If a file does not exist, it
@@ -178,6 +236,14 @@ simply removes all of the targets.
 =item --help
 
 Displays this message and program version and exits.
+
+=item --show
+
+Show each target and the tree of required dependancies.
+
+=item --mtime
+
+Consider the modification time, removing any out of date files.
 
 =back
 

@@ -1,4 +1,4 @@
-// $Id: ExBench.sp,v 1.10 2001/11/27 13:56:52 wsnyder Exp $
+// $Revision: #11 $$Date: 2002/07/16 $$Author: wsnyder $
 // DESCRIPTION: SystemPerl: Example main()
 
 #sp interface

@@ -1,4 +1,5 @@
-// $Id: systemc.h,v 1.1 2001/11/11 19:57:16 wsnyder Exp $
+// $Revision: #3 $$Date: 2002/07/16 $$Author: wsnyder $
+// DESCRIPTION: SystemPerl: SystemC-like library with only most-trivial functions.
 //
 #ifndef _SYSTEMC_H
 #define _SYSTEMC_H

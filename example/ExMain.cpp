@@ -1,4 +1,4 @@
-// $Id: ExMain.cpp,v 1.9 2002/02/26 15:50:58 wsnyder Exp $
+// $Revision: #10 $$Date: 2002/07/16 $$Author: wsnyder $
 // DESCRIPTION: SystemPerl: Example main()
 
 #include <systemperl.h>

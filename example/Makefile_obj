@@ -1,4 +1,4 @@
-# $Id: Makefile_obj,v 1.15 2001/12/03 22:32:00 wsnyder Exp $ -*- Makefile -*-
+# $Revision: #16 $$Date: 2002/07/16 $$Author: wsnyder $ -*- Makefile -*-
 # DESCRIPTION: SystemPerl: Example makefile
 #
 # This is executed in the "test_dir", not in this directory

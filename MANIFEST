@@ -37,11 +37,16 @@ sclite/src/sc_lite.cpp
 sp_includer
 sp_makecheck
 sp_preproc
+src/Sp.cpp
+src/SpCoverage.h
+src/SpFunctor.cpp
+src/SpFunctor.h
 src/SpTraceVcd.cpp
 src/SpTraceVcd.h
 src/sp_log.cpp
 src/sp_log.h
 src/systemperl.h
+systemc-mode.el
 t/01_parser.sp
 t/01_parser.spinc
 t/01_parser.t
