@@ -1,9 +1,9 @@
-// $Revision: #30 $$Date: 2004/07/19 $$Author: ws150726 $ -*- SystemC -*-
+// $Revision: 1.31 $$Date: 2005-03-01 17:59:56 -0500 (Tue, 01 Mar 2005) $$Author: wsnyder $ -*- SystemC -*-
 //=============================================================================
 //
 // THIS MODULE IS PUBLICLY LICENSED
 //
-// Copyright 2001-2004 by Wilson Snyder.  This program is free software;
+// Copyright 2001-2005 by Wilson Snyder.  This program is free software;
 // you can redistribute it and/or modify it under the terms of either the GNU
 // General Public License or the Perl Artistic License.
 //
@@ -13,11 +13,12 @@
 // for more details.
 //
 //=============================================================================
-//
-// AUTHOR:  Wilson Snyder
-//
-// DESCRIPTION: SystemC support for tracing SpTraceVcd format
-//
+///
+/// \file
+/// \brief SystemPerl tracing in VCD format
+///
+/// AUTHOR:  Wilson Snyder
+///
 //=============================================================================
 
 #ifndef _SPTRACEVCD_H_
@@ -29,8 +30,10 @@
 
 //=============================================================================
 // SpTraceFile
-// This class is passed to the SystemC simulation kernal to make it look like
-// a sc_trace_file
+///  SystemPerl VCD Trace class
+////
+/// This class is passed to the SystemC simulation kernel, just like a
+/// documented SystemC trace format.
 
 class SpTraceFile
     : sc_trace_file
@@ -41,15 +44,17 @@ public:
 	sc_get_curr_simcontext()->add_trace_file(this);
     }
     ~SpTraceFile() {}
-    // Called by SystemC simulate()
+    /// Called by SystemC simulate()
+    virtual void cycle (bool delta_cycle) {
 # if (SYSTEMC_VERSION>20011000)
-    virtual void cycle (bool) { spTrace()->dump(sc_time_stamp().to_double()); }
+	if (!delta_cycle) { spTrace()->dump(sc_time_stamp().to_double()); }
 # else
-    virtual void cycle (bool) { spTrace()->dump(sc_time_stamp()); }
+	if (!delta_cycle) { spTrace()->dump(sc_time_stamp()); }
 # endif
+    }
 
 private:
-    // Fake outs for linker
+    /// Fake outs for linker
     virtual void write_comment (const sc_string &);
     virtual void trace (const unsigned int &, const sc_string &, const char **);
 
@@ -62,7 +67,7 @@ private:
     // SystemC 2.0.1
     virtual void delta_cycles (bool) {}
     virtual void space( int n ) {}
-    
+
     DECL_TRACE_METHOD_A( bool )
     DECL_TRACE_METHOD_A( sc_bit )
     DECL_TRACE_METHOD_A( sc_logic )
@@ -70,6 +75,9 @@ private:
     DECL_TRACE_METHOD_B( unsigned short )
     DECL_TRACE_METHOD_B( unsigned int )
     DECL_TRACE_METHOD_B( unsigned long )
+#ifdef SYSTEMC_64BIT_PATCHES
+    DECL_TRACE_METHOD_B( unsigned long long)
+#endif
     DECL_TRACE_METHOD_B( char )
     DECL_TRACE_METHOD_B( short )
     DECL_TRACE_METHOD_B( int )

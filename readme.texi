@@ -1,5 +1,5 @@
 \input texinfo @c -*-texinfo-*-
-@c $Revision: #29 $$Date: 2004/03/26 $$Author: wsnyder $
+@c $Revision: 1.31 $$Date: 2005-03-01 17:59:56 -0500 (Tue, 01 Mar 2005) $$Author: wsnyder $
 @c %**start of header
 @setfilename readme.info
 @settitle Perl SystemC Installation
@@ -12,6 +12,7 @@
 @c prefix arg).  This updates the node pointers, which texinfmt.el needs.
 
 @node Top, Copyright, (dir), (dir)
+@chapter SystemPerl
 
 This is the SystemC Perl Package, aka SystemPerl.
 
@@ -28,7 +29,7 @@ This is the SystemC Perl Package, aka SystemPerl.
 @node Copyright, Summary, Top, Top
 @section Copyright
 
-This package is Copyright 2001-2004 by Wilson Snyder @email{wsnyder@@wsnyder.org}.
+This package is Copyright 2001-2005 by Wilson Snyder @email{wsnyder@@wsnyder.org}.
 
 You may distribute under the terms of either the GNU General Public License
 or the Perl Artistic License, as specified in the Perl README file.

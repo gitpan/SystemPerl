@@ -1,9 +1,9 @@
-// $Revision: #1 $$Date: 2004/07/19 $$Author: ws150726 $ -*- SystemC -*-
+// $Revision: 1.2 $$Date: 2005-03-01 17:59:56 -0500 (Tue, 01 Mar 2005) $$Author: wsnyder $ -*- SystemC -*-
 //=============================================================================
 //
 // THIS MODULE IS PUBLICLY LICENSED
 //
-// Copyright 2001-2004 by Wilson Snyder.  This program is free software;
+// Copyright 2001-2005 by Wilson Snyder.  This program is free software;
 // you can redistribute it and/or modify it under the terms of either the GNU
 // General Public License or the Perl Artistic License.
 //
@@ -13,11 +13,12 @@
 // for more details.
 //
 //=============================================================================
-//
-// AUTHOR:  Wilson Snyder
-//
-// DESCRIPTION: SystemC common simple utilities, not requiring SystemC
-//
+///
+/// \file
+/// \brief SystemPerl common simple utilities, not requiring SystemC
+///
+/// AUTHOR:  Wilson Snyder
+///
 //=============================================================================
 
 #ifndef _SPCOMMON_H_
@@ -26,6 +27,7 @@
 // Utilities here must NOT require SystemC headers!
 //=============================================================================
 
+/// Report SystemPerl internal error message and abort
 #if defined(UERROR) && defined(UERROR_NLN)
 # define SP_ABORT(msg) { UERROR(msg); }
 #else

@@ -1,9 +1,9 @@
-// $Revision: #3 $$Date: 2004/08/12 $$Author: ws150726 $ -*- SystemC -*-
+// $Revision: 1.4 $$Date: 2005-03-01 17:59:56 -0500 (Tue, 01 Mar 2005) $$Author: wsnyder $ -*- SystemC -*-
 //=============================================================================
 //
 // THIS MODULE IS PUBLICLY LICENSED
 //
-// Copyright 2001-2004 by Wilson Snyder.  This program is free software;
+// Copyright 2001-2005 by Wilson Snyder.  This program is free software;
 // you can redistribute it and/or modify it under the terms of either the GNU
 // General Public License or the Perl Artistic License.
 //
@@ -13,11 +13,12 @@
 // for more details.
 //
 //=============================================================================
-//
-// AUTHOR:  Wilson Snyder
-//
-// DESCRIPTION: Tracing in vcd Format
-//
+///
+/// \file
+/// \brief C++ Tracing in VCD Format
+///
+/// AUTHOR:  Wilson Snyder
+///
 //=============================================================================
 
 #include <time.h>
@@ -38,20 +39,26 @@
 //=============================================================================
 // Global
 
-vector<SpTraceVcd*>	SpTraceVcd::s_vcdVecp;	// List of all created traces
+vector<SpTraceVcd*>	SpTraceVcd::s_vcdVecp;	///< List of all created traces
 
 //=============================================================================
 // SpTraceCallback
+/// Internal callback routines for each module being traced.
+////
+/// Each SystemPerl module that wishes to be traced registers a set of
+/// callbacks stored in this class.  When the trace file is being
+/// constructed, this class provides the callback routines to be executed.
 
 class SpTraceCallInfo {
 protected:
     friend class SpTraceVcd;
-    SpTraceCallback_t	m_initcb;	// Initalization Callback function
-    SpTraceCallback_t	m_fullcb;	// Full Dumping Callback function
-    SpTraceCallback_t	m_changecb;	// Incremental Dumping Callback function
-    void*		m_userthis;	// Fake "this" for caller
-    uint32_t		m_code;		// Starting code number
-    SpTraceCallInfo (SpTraceCallback_t icb, SpTraceCallback_t fcb, SpTraceCallback_t changecb, 
+    SpTraceCallback_t	m_initcb;	///< Initalization Callback function
+    SpTraceCallback_t	m_fullcb;	///< Full Dumping Callback function
+    SpTraceCallback_t	m_changecb;	///< Incremental Dumping Callback function
+    void*		m_userthis;	///< Fake "this" for caller
+    uint32_t		m_code;		///< Starting code number
+    // CREATORS
+    SpTraceCallInfo (SpTraceCallback_t icb, SpTraceCallback_t fcb, SpTraceCallback_t changecb,
 		     void* ut, uint32_t code)
 	: m_initcb(icb), m_fullcb(fcb), m_changecb(changecb), m_userthis(ut), m_code(code) {};
 };
@@ -192,7 +199,7 @@ void SpTraceVcd::dumpHeader () {
     time_t time_str = time(NULL);
     printStr("$date "); printStr(ctime(&time_str)); printStr(" $end\n");
     printStr("$timescale 1ns/1ns $end\n");
-    
+
     // Take signal information from each module and build m_namemapp
     m_namemapp = new NameMap;
     for (uint32_t ent = 0; ent< m_callbacks.size(); ent++) {
@@ -429,11 +436,11 @@ main() {
     v1 = v2 = s1 = 0;
     s2[0] = s2[1] = s2[2] = 0;
     ch = 0;
-  
+
     SpTraceVcdCFile* vcdp = new SpTraceVcdCFile;
     vcdp->spTrace()->addCallback (&init, &full, &change, 0);
-    vcdp->open ("test.dump");
-  
+    vcdp->open ("test.vcd");
+
     // Dumping
     vcdp->dump(timestamp++);
     v1 = 0xfff;
@@ -449,5 +456,5 @@ main() {
 
 //********************************************************************
 // Local Variables:
-// compile-command: "mkdir -p ../test_dir && cd ../test_dir && g++ -DSPTRACEVCD_TEST ../src/SpTraceVcdC.cpp -o SpTraceVcdC && ./SpTraceVcdC && cat test.dump"
+// compile-command: "mkdir -p ../test_dir && cd ../test_dir && g++ -DSPTRACEVCD_TEST ../src/SpTraceVcdC.cpp -o SpTraceVcdC && ./SpTraceVcdC && cat test.vcd"
 // End:

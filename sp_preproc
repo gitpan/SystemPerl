@@ -1,8 +1,8 @@
 #!/usr/bin/perl -w
-#$Revision: #44 $$Date: 2004/08/26 $$Author: ws150726 $
+#$Revision: 1.45 $$Date: 2005-03-01 17:59:56 -0500 (Tue, 01 Mar 2005) $$Author: wsnyder $
 ######################################################################
 #
-# Copyright 2001-2004 by Wilson Snyder.  This program is free software;
+# Copyright 2001-2005 by Wilson Snyder.  This program is free software;
 # you can redistribute it and/or modify it under the terms of either the GNU
 # General Public License or the Perl Artistic License.
 # 
@@ -51,6 +51,7 @@ my $opt_libcell = 0;
 my $opt_libfile;
 my $opt_tree;
 my $opt_trace_duplicates = 0;
+my $opt_write_verilog;
 
 my $opt = new Verilog::Getopt(gcc_style=>1, vcs_style=>0);
 $opt->libext([".sp"]);
@@ -69,6 +70,7 @@ if (! GetOptions (
 		  "libfile=s"	=> \$opt_libfile,
 		  "tree=s"	=> \$opt_tree,
 		  "trace-duplicates!" => \$opt_trace_duplicates,
+		  "write-verilog=s"   => \$opt_write_verilog,
 		  "<>"		=> \&parameter,
 		  )) {
     usage();
@@ -104,6 +106,7 @@ foreach my $file (@sp_files_lib) {
 $nl->link();
 $nl->autos();
 tree_report($nl, $opt_tree) if ($opt_tree);
+write_verilog($nl, $opt_write_verilog) if $opt_write_verilog;
 $nl->write_cell_library(filename=>$opt_libfile) if $opt_libfile;
 $nl->lint();
 our_rulecheck($nl);
@@ -140,7 +143,7 @@ if ($opt_makedeps) {
 #----------------------------------------------------------------------
 
 sub usage {
-    print '$Revision: #44 $$Date: 2004/08/26 $$Author: ws150726 $ ', "\n";
+    print '$Revision: 1.45 $$Date: 2005-03-01 17:59:56 -0500 (Tue, 01 Mar 2005) $$Author: wsnyder $ ', "\n";
     $SIG{__WARN__} = sub{};	#pod2text isn't clean.
     pod2text($0);
     exit (1);
@@ -273,6 +276,25 @@ sub mod_levels_recurse {
     }
 }
 
+#######################################################################
+# Output formats
+
+sub write_verilog {
+    my $netlist = shift;
+    my $filename = shift;
+
+    mod_levels($netlist);
+    my $fh = IO::File->new($filename,'w') or die "%Error: $! writing $filename\n";
+
+    # Write in top-down order to appease the program that reads this this file
+    foreach my $modref (sort {$b->userdata('level') <=> $a->userdata('level')}
+			$netlist->modules) {
+	printf $fh join("",$modref->verilog_text);
+	printf $fh "\n";
+    }
+
+    $fh->close();
+}
 
 #######################################################################
 __END__
@@ -338,6 +360,12 @@ With --inline, remove any expanded automatics.
 
 Shows which files are being written, or are the same.
 
+=item --write-verilog I<filename>
+
+Write the SystemC interconnections in Verilog format to the specified
+filename.  Note this does not include logic, it only contains module ports
+and cells.
+
 =item -M
 
 Makes the dependency listing (similar to I<cpp -M>).
@@ -360,7 +388,7 @@ See L<SystemC::SystemPerl> for the language specification.
 
 The latest version is available from CPAN and from L<http://www.veripool.com/>.
 
-Copyright 2001-2004 by Wilson Snyder.  This package is free software; you
+Copyright 2001-2005 by Wilson Snyder.  This package is free software; you
 can redistribute it and/or modify it under the terms of either the GNU
 Lesser General Public License or the Perl Artistic License.
 

@@ -1,6 +1,6 @@
 %option noyywrap align never-interactive prefix="sclex"
 %{
-/* $Revision: #41 $$Date: 2004/08/26 $$Author: ws150726 $
+/* $Revision: 1.42 $$Date: 2005-03-01 17:59:56 -0500 (Tue, 01 Mar 2005) $$Author: wsnyder $
  ******************************************************************************
  * DESCRIPTION: SystemC lexer
  * 
@@ -12,7 +12,7 @@
  * 
  ******************************************************************************
  * 
- * Copyright 2001-2004 by Wilson Snyder.  This program is free software;
+ * Copyright 2001-2005 by Wilson Snyder.  This program is free software;
  * you can redistribute it and/or modify it under the terms of either the GNU
  * General Public License or the Perl Artistic License.
  * 
@@ -247,6 +247,10 @@ int sclex_open  (const char* filename)
     }
     scparse_set_filename(filename,1);
     yy_switch_to_buffer( yy_new_buffer( newin, YY_BUF_SIZE ) );
+    if (0) {
+	char c='x';
+	unput(c);  /* Prevent unused function warning on Suse 9.1 */
+    }
     return 1;
 }
 

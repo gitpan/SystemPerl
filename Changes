@@ -1,19 +1,30 @@
-SystemC::Netlist NEWS --  history of user-visible changes.
+Revision history for Perl extension SystemC::Netlist
 
-The contributors that suggested a given feature is shown in [].
-	
-This uses outline mode in Emacs.  See C-h m [M-x describe-mode].
+The contributors that suggested a given feature are shown in [].
 
-
-* Changes in SystemC 1.163 11/18/2004
+* SystemC 1.170 3/1/2005
+
+**	NEWS is now renamed Changes, to support CPAN indexing. [Offer Kaye]
+
+**	SystemC 1.170 requires Verilog-Perl 2.310 or newer.
+
+***	Add Doxygen comments to C++ sources.
+
+***	Fix sc_in<sc_clock> vs. sc_in_clk SystemC 2.0.1 difference.
+
+***	Fix tracing of uint64_t. [Bryce Denney]
+
+***	Fix declaring pins not directly under cells.  [Matt Reilly]
+
+* SystemC 1.163 11/18/2004
 
 ****	Fix sc_lite.cpp compile error on GCC 3.3.3. [Hans van Antwerpen]
-
-* Changes in SystemC 1.162 10/26/2004
+
+* SystemC 1.162 10/26/2004
 
 ****	Allow any filename to be a coverage file.  [Dawn Campanelli]
-
-* Changes in SystemC 1.161 8/26/2004
+
+* SystemC 1.161 8/26/2004
 
 ***	Support macro calls in enumeration values.
 
@@ -22,63 +33,63 @@ This uses outline mode in Emacs.  See C-h m [M-x describe-mode].
 ****	Fixed cygwin test error.  [John Brownlee]
 
 ****	Fix pod documentation errors. [Offer Kaye]
-
-* Changes in SystemC 1.160 8/12/2004
+
+* SystemC 1.160 8/12/2004
 
 **	Added vcoverage, SystemC::Coverage, and related coverage examples.
 	Functions named sp_coverage_* have been changed to SpCoverage::*
 
 ***	Added uint64 tracing and structure support for Verilator 3.240.
-
-* Changes in SystemC 1.150 6/16/2004
+
+* SystemC 1.150 6/16/2004
 
 ***	Trace file code now supports standalone C code.
 
 ****	More reliable detection of existing patches.
-
-* Changes in SystemC 1.149 3/10/2004
+
+* SystemC 1.149 3/10/2004
 
 ***	Patch process fixes for Solaris.
-
-* Changes in SystemC 1.148 1/27/2004
+
+* SystemC 1.148 1/27/2004
 
 ****	Documentation fixes
-
-* Changes in SystemC 1.147 12/5/2003
+
+* SystemC 1.147 12/5/2003
 
 ****	Support Verilator Modules
-
-* Changes in SystemC 1.146 10/28/2003
+
+* SystemC 1.146 10/28/2003
 
 ****	Support Verilator PVT cell names
-
-* Changes in SystemC 1.145 8/19/2003
+
+* SystemC 1.145 8/19/2003
 
 ****	Fix rare array-out-of-bounds crash with tracing array signal
 
 ****	More Redhat 9 and GCC 3.2.2 fixes
-
-* Changes in SystemC 1.144 8/12/2003
+
+* SystemC 1.144 8/12/2003
 
 ****	Redhat 9 and GCC 3.2.2 fixes
-
-* Changes in SystemC 1.143 7/30/2003
+
+* SystemC 1.143 7/30/2003
 
 ****	Redhat 9 installation fixes
-
-* Changes in SystemC 1.142 7/16/2003
+
+* SystemC 1.142 7/16/2003
 
 ****	Support tracing of uint8_t's  
-
-* Changes in SystemC 1.141 7/15/2003
+
+* SystemC 1.141 7/15/2003
 
 ***	Allow "sp use .cell.subcell.subsubcell" to include entire paths.
 
 ****	Fix whitespace in sp preprocessor directives, "# sp use ...".
 
 ****	Fix some RedHat 9.0 warnings
-
-* Changes in SystemC 1.140 4/6/2003
+
+* SystemC 1.140 4/6/2003
 
 ***	Allow "sp use DEFINE" where DEFINE is a symbol like ALIAS_CELL
 	that should be replaced with the definition value of ALIAS_CELL.
@@ -95,35 +106,31 @@ This uses outline mode in Emacs.  See C-h m [M-x describe-mode].
 	rather then the top level.  With Verilator, tracing is 10% faster.
 
 ****	Support bison 1.75
-
-* Changes in SystemC 1.130 11/3/2002
+
+* SystemC 1.130 11/3/2002
 
 **	Support SystemC version 2.0.1.  A patch is required for tracing
 	input signals and sc_bv types, see the the README file.
 
 ***	Add example of SP_COVER statement.
 
-
-* Changes in SystemC 1.122 8/29/2002
+* SystemC 1.122 8/29/2002
 
 ***	Put AUTOINOUT signals under that label, so they can be public
 	while AUTOSIGNALs can be private.  [Greg Waters]
 
 ***	Support signals in inherited sc_modules. [Navit Fedida]
 
-
-* Changes in SystemC 1.120 8/19/2002
+* SystemC 1.120 8/19/2002
 
 ***	Support modules declared as inherited from sc_module. [Navit Fedida]
 
-
-* Changes in SystemC 1.110 8/8/2002
+* SystemC 1.110 8/8/2002
 
 ****	Allow traced modules to determine if they might have any activity.
 	Used for Verilator3 to improve trace speed by about 60%.
 
-
-* Changes in SystemC 1.100 3/11/2002
+* SystemC 1.100 3/11/2002
 
 **	Added Emacs mode in systemc-mode.el
 
@@ -137,8 +144,7 @@ This uses outline mode in Emacs.  See C-h m [M-x describe-mode].
 
 ****	Improve tracing to allow smaller files, rollover, inlining child traces.
 
-
-* Changes in SystemC 1.000 11/16/2001
+* SystemC 1.000 11/16/2001
 
 **	Moved Netlist guts into Verilog package,
 	made SystemC a derived class.  This allows mixed-mode netlists.
@@ -153,8 +159,8 @@ This uses outline mode in Emacs.  See C-h m [M-x describe-mode].
 
 ****	Addition of experimental sclite library
 	for testing package without SystemC installed.
-
-* Changes in SystemC 0.430 9/26/2001
+
+* SystemC 0.430 9/26/2001
 
 **	Added #sp include directive.  [Experimental, some crashes]
 
@@ -183,8 +189,7 @@ This uses outline mode in Emacs.  See C-h m [M-x describe-mode].
 
 ***	Handle nested typenames (e.g. sc_out<ClassFoo::EnumBar>).
 
-
-* Changes in SystemC 0.420 6/27/2001
+* SystemC 0.420 6/27/2001
 
 **	Added AUTOSUBCELL_INCLUDE and AUTOSUBCELL_CLASS
 
@@ -199,8 +204,7 @@ This uses outline mode in Emacs.  See C-h m [M-x describe-mode].
 
 ***	Fixed bug with recognizing sc_inouts.  [Amir Sahar]
 
-
-* Changes in SystemC 0.410 5/21/2001
+* SystemC 0.410 5/21/2001
 
 **	Added AUTOTRACE for creating trace statements for all signals.
 
@@ -208,8 +212,8 @@ This uses outline mode in Emacs.  See C-h m [M-x describe-mode].
 
 ***	Added sp_preproc --libcell for cells that are not to be expanded.
 	This is useful for hierarchical sp_preproc'essing.
-
-* Changes in SystemC 0.400 5/4/2001
+
+* SystemC 0.400 5/4/2001
 
 **	Added AUTOENUM_* for ascii displays of enum values.
 
@@ -225,8 +229,7 @@ This uses outline mode in Emacs.  See C-h m [M-x describe-mode].
 
 ****	The debugging dump methods are now ->dump, not ->print.
 
-
-* Changes in SystemC 0.300 4/3/2001
+* SystemC 0.300 4/3/2001
 
 **	sc_clocks are now recognized as signal declarations.
 
@@ -236,24 +239,22 @@ This uses outline mode in Emacs.  See C-h m [M-x describe-mode].
 
 ****	Many, Many bug fixes.
 
-
-* Changes in SystemC 0.1 3/31/2001
+* SystemC 0.1 3/31/2001
 
 ****	Package Created
 
 
 ----------------------------------------------------------------------
-$Revision: #85 $$Date: 2004/11/18 $$Author: ws150726 $
+$Revision: 1.2 $$Date: 2005-03-01 17:59:56 -0500 (Tue, 01 Mar 2005) $$Author: wsnyder $
 ----------------------------------------------------------------------
-Copyright information:
 
-   Copyright 2001-2004 by Wilson Snyder.  This program is free software;
-   you can redistribute it and/or modify it under the terms of either the GNU
-   General Public License or the Perl Artistic License.
+This uses outline mode in Emacs.  See C-h m [M-x describe-mode].
 
-   See the README file included with this file for licencing information.
+Copyright 2001-2005 by Wilson Snyder.  This program is free software;
+you can redistribute it and/or modify it under the terms of either the GNU
+General Public License or the Perl Artistic License.
 
 Local variables:
 mode: outline
-paragraph-separate: "[ 	]*$"
+paragraph-separate: "[ 	\f\n]*$"
 end:

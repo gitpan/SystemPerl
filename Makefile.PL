@@ -1,7 +1,7 @@
-# $Revision: #38 $$Date: 2004/08/26 $$Author: ws150726 $
+# $Revision: 1.41 $$Date: 2005-03-01 17:59:56 -0500 (Tue, 01 Mar 2005) $$Author: wsnyder $
 # DESCRIPTION: Perl ExtUtils: Type 'perl Makefile.PL' to create a Makefile for this package
 #
-# Copyright 2001-2004 by Wilson Snyder.  This program is free software;
+# Copyright 2001-2005 by Wilson Snyder.  This program is free software;
 # you can redistribute it and/or modify it under the terms of either the GNU
 # General Public License or the Perl Artistic License.
 
@@ -12,7 +12,7 @@ use Carp;
 sub MY::postamble {
 "
 README: readme.texi
-	-rm \$@
+	-rm -rf \$@
 	makeinfo \$< --output \$@ --no-headers --no-validate
 
 dist: distcheck README
@@ -30,13 +30,10 @@ preexist:
 	test ! -r \$(HOME)/src/kits/\$(DISTVNAME).tar.gz
 
 tag:
-	c4 label -d     \$(DISTNAME)_\$(VERSION_SYM) || true
-	c4 label        \$(DISTNAME)_\$(VERSION_SYM)
-	c4 labelsync -l \$(DISTNAME)_\$(VERSION_SYM) ...
-#	cvs tag -F      \$(DISTNAME)_\$(VERSION_SYM) .
+	svnorcvs tag  \$(DISTNAME)_\$(VERSION_SYM)
 
 maintainer-diff:
-	c4 diff     ...@\$(DISTNAME)_\$(VERSION_SYM) 
+	svnorcvs diff \$(DISTNAME)_\$(VERSION_SYM) 
 
 maintainer-dist: preexist dist tag
 	cp \$(DISTVNAME).tar.gz \$(HOME)/src/kits
@@ -44,11 +41,10 @@ maintainer-dist: preexist dist tag
 	echo \"NOTE: Did you try a test without SYSTEMC set?\"
 
 maintainer-clean: distclean
-	-rm README Makefile
+	-rm -rf README Makefile
 
 clean::
 	-rm -rf test_dir test_scl
-
 ";
 }
 
@@ -62,8 +58,9 @@ WriteMakefile(
 	      AUTHOR	=> 'Wilson Snyder <wsnyder@wsnyder.org>',
 	      ABSTRACT  => 'SystemC Netlist Utilities and Parsing',
 	      VERSION_FROM  => 'Netlist.pm',
+	      NO_META	=> 1,
 	      PREREQ_PM => {'Verilog::Getopt' => 2.211,
-			    'Verilog::Netlist' => 2.210,
+			    'Verilog::Netlist' => 2.310,
 			},
 	      EXE_FILES => [qw( sp_preproc sp_includer sp_makecheck vcoverage )],
 	      'clean'	=> {FILES => qw ( ),},

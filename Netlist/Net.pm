@@ -1,9 +1,9 @@
 # SystemC - SystemC Perl Interface
-# $Revision: #50 $$Date: 2004/11/18 $$Author: ws150726 $
+# $Revision: 1.52 $$Date: 2005-03-01 17:59:56 -0500 (Tue, 01 Mar 2005) $$Author: wsnyder $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
-# Copyright 2001-2004 by Wilson Snyder.  This program is free software;
+# Copyright 2001-2005 by Wilson Snyder.  This program is free software;
 # you can redistribute it and/or modify it under the terms of either the GNU
 # General Public License or the Perl Artistic License.
 # 
@@ -20,7 +20,7 @@ use Class::Struct;
 use Verilog::Netlist;
 use SystemC::Netlist;
 @ISA = qw(Verilog::Netlist::Net);
-$VERSION = '1.163';
+$VERSION = '1.170';
 use strict;
 
 # List of basic C++ types and their sizes
@@ -30,14 +30,17 @@ use vars qw (%TypeInfo);
 #	     int8_t=>	{ msb=>7,  lsb=>0, cast_type=>undef, },
 #	     int16_t=>	{ msb=>15, lsb=>0, cast_type=>undef, },
 	     int32_t=>	{ msb=>31, lsb=>0, cast_type=>undef, },
+	     int64_t=>	{ msb=>63, lsb=>0, cast_type=>undef, },
 #	     int =>	{ msb=>31, lsb=>0, cast_type=>undef, },
 #	     uint8_t=>	{ msb=>7,  lsb=>0, cast_type=>undef, },
 #	     uint16_t=>	{ msb=>15, lsb=>0, cast_type=>undef, },
 	     uint32_t=>	{ msb=>31, lsb=>0, cast_type=>undef, },
+	     uint64_t=>	{ msb=>63, lsb=>0, cast_type=>undef, },
 #	     uint =>	{ msb=>0,  lsb=>0, cast_type=>undef, },
 #	     nint8_t=> 	{ msb=>7,  lsb=>0, cast_type=>undef, },
 #	     nint16_t=>	{ msb=>15, lsb=>0, cast_type=>undef, },
 	     nint32_t=>	{ msb=>31, lsb=>0, cast_type=>undef, },
+	     nint64_t=>	{ msb=>63, lsb=>0, cast_type=>undef, },
 	 );
 
 ######################################################################
@@ -88,9 +91,32 @@ sub lint {
 	&& !defined $self->module->_code_symbols->{$self->name}) {
 	$self->warn("Signal has no drivers: ",$self->name(), "\n");
 	$self->dump_drivers(8);
-	$self->module->dump();
+	$self->module->dump() if $Verilog::Netlist::Debug;
     }
 }
+
+sub _scdecls {
+    my $self = shift;
+    my $type = $self->_decls;
+    $type = "wire" if $TypeInfo{$type};
+    $type = "wire" if $type =~ /^sc_bv\b/;
+    return $type;
+}
+
+sub verilog_text {
+    my $self = shift;
+    my @out;
+    foreach my $decl ($self->_scdecls) {
+	push @out, $decl;
+	push @out, " [".$self->msb.":".$self->lsb."]"
+	    if defined $self->msb && !($self->msb==0 && $self->lsb==0);
+	push @out, " ".$self->name;
+	push @out, " ".$self->array if $self->array;
+	push @out, ";";
+    }
+    return (wantarray ? @out : join('',@out));
+}
+
 ######################################################################
 #### Package return
 1;
@@ -111,7 +137,7 @@ pin.
 
 The latest version is available from CPAN and from L<http://www.veripool.com/>.
 
-Copyright 2001-2004 by Wilson Snyder.  This package is free software; you
+Copyright 2001-2005 by Wilson Snyder.  This package is free software; you
 can redistribute it and/or modify it under the terms of either the GNU
 Lesser General Public License or the Perl Artistic License.
 

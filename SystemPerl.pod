@@ -1,7 +1,7 @@
-#$Revision: #32 $$Date: 2004/08/26 $$Author: ws150726 $
+#$Revision: 1.33 $$Date: 2005-03-01 17:59:56 -0500 (Tue, 01 Mar 2005) $$Author: wsnyder $
 ######################################################################
 #
-# Copyright 2001-2004 by Wilson Snyder.  This program is free software;
+# Copyright 2001-2005 by Wilson Snyder.  This program is free software;
 # you can redistribute it and/or modify it under the terms of either the GNU
 # General Public License or the Perl Artistic License.
 # 
@@ -115,8 +115,8 @@ obscure errors when the filename does not match the module name.
 
 For example:
 
-SC_MODULE (__MODULE__) {
-  ...
+    SC_MODULE (__MODULE__) {
+      ...
 
 =item /*AUTOENUM_I<CLASS|GLOBAL>(I<enum>)*/
 
@@ -126,48 +126,48 @@ it easy to print the value of the enumeration in text form.
 
 For example:
 
-class MyENumClass {
-public:
-    enum en {
+    class MyENumClass {
+    public:
+	enum en {
 	IDLE = 0,
-	ONE, TWO, THREE, FOUR, FIVE
+	ONE, TWO
+	};
+	/*AUTOENUM_CLASS(MyENumClass.en)*/
     };
-    /*AUTOENUM_CLASS(MyENumClass.en)*/
-};
-/*AUTOENUM_GLOBAL(MyENumClass.en)*/
+    /*AUTOENUM_GLOBAL(MyENumClass.en)*/
 
 Becomes:
 
-class MyENumClass {
-public:
-    enum en {
-	IDLE = 0,
-	ONE, TWO
+    class MyENumClass {
+    public:
+	enum en {
+	    IDLE = 0,
+	    ONE, TWO
+	};
+	/*AUTOENUM_CLASS(MyENumClass.en)*/
+	// Beginning of SystemPerl automatic enumeration
+	enum en e_en;
+	inline MyENumClass () {};
+	inline MyENumClass (en _e) : e_en(_e) {};
+	explicit inline MyENumClass (int _e) : e_en(static_cast<en>(_e)) {};
+	operator const char * (void) const { return ascii(); };
+	operator en (void) const { return e_en; };
+	const char *ascii (void) const {
+	   switch (e_en) {
+	   case IDLE: return "IDLE";
+	   case ONE: return "ONE";
+	   case TWO: return "TWO";
+	   default: return "%E:BadVal:MyENumClass";
+	   };
+	};
+	// End of SystemPerl automatic enumeration
     };
-    /*AUTOENUM_CLASS(MyENumClass.en)*/
+    /*AUTOENUM_GLOBAL(MyENumClass.en)*/
     // Beginning of SystemPerl automatic enumeration
-    enum en e_en;
-    inline MyENumClass () {};
-    inline MyENumClass (en _e) : e_en(_e) {};
-    explicit inline MyENumClass (int _e) : e_en(static_cast<en>(_e)) {};
-    operator const char * (void) const { return ascii(); };
-    operator en (void) const { return e_en; };
-    const char *ascii (void) const {
-       switch (e_en) {
-       case IDLE: return "IDLE";
-       case ONE: return "ONE";
-       case TWO: return "TWO";
-       default: return "%E:BadVal:MyENumClass";
-       };
-    };
+    inline bool operator== (MyENumClass lhs, MyENumClass rhs) { return (lhs.e_en == rhs.e_en); }
+    //... other accessors
     // End of SystemPerl automatic enumeration
-};
-/*AUTOENUM_GLOBAL(MyENumClass.en)*/
-// Beginning of SystemPerl automatic enumeration
-inline bool operator== (MyENumClass lhs, MyENumClass rhs) { return (lhs.e_en == rhs.e_en); }
-//... other accessors
-// End of SystemPerl automatic enumeration
-
+    
 =item /*AUTOINOUT_MODULE(I<mod>)*/
 
 AUTOINOUT_MODULE indicates the input/output list should be copied from the
@@ -190,23 +190,23 @@ named the same as the port name.
 
 For example:
 
-SC_MODULE(submod) {
-    sc_in_clk	clk;
-    ...
-
-SC_MODULE(mod) {
-    SC_CTOR(mod) {
-	SP_CELL (sub, submod);
-	  /*AUTOINST*/
+    SC_MODULE(submod) {
+	sc_in_clk   clk;
+	...
+    
+    SC_MODULE(mod) {
+	SC_CTOR(mod) {
+	    SP_CELL (sub, submod);
+	      /*AUTOINST*/
 
 Becomes:
 
-SC_MODULE(mod) {
-    SC_CTOR(mod) {
-	SP_CELL (sub, submod);
-	  // Beginning of SystemPerl automatic instantiation pins
-	  SP_PIN (sub, clk,	clk);
-	  // End of SystemPerl automatic instantiation pins
+    SC_MODULE(mod) {
+	SC_CTOR(mod) {
+	    SP_CELL (sub, submod);
+	      // Beginning of SystemPerl automatic instantiation pins
+	      SP_PIN (sub, clk,	    clk);
+	      // End of SystemPerl automatic instantiation pins
 
 =item /*AUTOMETHODS*/
 
@@ -222,18 +222,18 @@ instantiated in SP_CELL declarations.
 
 For example:
 
-/*AUTOSUBCELL_CLASS*/
-SC_MODULE(mod) {
-    SC_CTOR(mod) {
-	SP_CELL (sub, submod);
+    /*AUTOSUBCELL_CLASS*/
+    SC_MODULE(mod) {
+	SC_CTOR(mod) {
+	    SP_CELL (sub, submod);
 
 Becomes:
 
-/*AUTOSUBCELL_CLASS*/
-// Beginning of SystemPerl automatic subcell includes
-class submod;
-// End of SystemPerl automatic subcell includes
-...
+    /*AUTOSUBCELL_CLASS*/
+    // Beginning of SystemPerl automatic subcell includes
+    class submod;
+    // End of SystemPerl automatic subcell includes
+    ...
 
 =item /*AUTOSUBCELL_DECL*/
 
@@ -241,24 +241,24 @@ AUTOSUBCELL_DECL declares the submodules instantiated in SP_CELL declarations.
 
 For example:
 
-SC_MODULE(mod) {
-    /*AUTOSUBCELL_DECL*/
-    SC_CTOR(mod) {
-	SP_CELL (sub, submod);
-	  SP_PIN (sub, a,	a);
-
+    SC_MODULE(mod) {
+	/*AUTOSUBCELL_DECL*/
+	SC_CTOR(mod) {
+	    SP_CELL (sub, submod);
+	      SP_PIN (sub, a,	    a);
+    
 Becomes:
 
-SC_MODULE(mod) {
-    /*AUTOSUBCELL_DECL*/
-    // Beginning of SystemPerl automatic subcells
-    submod            *sub;
-    // End of SystemPerl automatic subcells
-
-    SC_CTOR(mod) {
-	SP_CELL (sub, submod);
-	  SP_PIN (sub, a,	a);
-
+    SC_MODULE(mod) {
+	/*AUTOSUBCELL_DECL*/
+	// Beginning of SystemPerl automatic subcells
+	submod		  *sub;
+	// End of SystemPerl automatic subcells
+    
+	SC_CTOR(mod) {
+	    SP_CELL (sub, submod);
+	      SP_PIN (sub, a,	    a);
+    
 =item /*AUTOSUBCELL_INCLUDE*/
 
 AUTOSUBCELL_INCLUDE creates includes for the submodules instantiated in
@@ -266,19 +266,19 @@ SP_CELL declarations.
 
 For example:
 
-/*AUTOSUBCELL_INCLUDE*/
-SC_MODULE(mod) {
-    SC_CTOR(mod) {
-	SP_CELL (sub, submod);
-
+    /*AUTOSUBCELL_INCLUDE*/
+    SC_MODULE(mod) {
+	SC_CTOR(mod) {
+	    SP_CELL (sub, submod);
+    
 Becomes:
 
-/*AUTOSUBCELL_INCLUDE*/
-// Beginning of SystemPerl automatic subcell includes
-#include "submod.h"
-// End of SystemPerl automatic subcell includes
-...
-
+    /*AUTOSUBCELL_INCLUDE*/
+    // Beginning of SystemPerl automatic subcell includes
+    #include "submod.h"
+    // End of SystemPerl automatic subcell includes
+    ...
+    
 =item /*AUTOSIGNAL*/
 
 AUTOSIGNAL declares any signals used in SP_PIN connections that are not
@@ -286,24 +286,24 @@ declared elsewhere.
 
 For example:
 
-SC_MODULE(mod) {
-    /*AUTOSIGNAL*/
-    SC_CTOR(mod) {
-	SP_CELL (sub, submod);
-	  SP_PIN (sub, a,	a);
-
+    SC_MODULE(mod) {
+	/*AUTOSIGNAL*/
+	SC_CTOR(mod) {
+	    SP_CELL (sub, submod);
+	      SP_PIN (sub, a,	    a);
+    
 Becomes:
 
-SC_MODULE(mod) {
-    /*AUTOSIGNAL*/
-    // Beginning of SystemPerl automatic signals
-    sc_signal<bool>             a;       // For submod
-    // End of SystemPerl automatic signals
-
-    SC_CTOR(mod) {
-	SP_CELL (sub, submod);
-	  SP_PIN (sub, a,	a);
-
+    SC_MODULE(mod) {
+	/*AUTOSIGNAL*/
+	// Beginning of SystemPerl automatic signals
+	sc_signal<bool>		    a;	     // For submod
+	// End of SystemPerl automatic signals
+    
+	SC_CTOR(mod) {
+	    SP_CELL (sub, submod);
+	      SP_PIN (sub, a,	    a);
+    
 =item /*AUTOTRACE(I<module>,I<recurse>)*/
 
 AUTOTRACE creates a routine to trace the ports and signals in the current
@@ -324,27 +324,33 @@ quite right yet.
 
 Example:
 
-SC_MODULE (ExMod) {
-    ...
-    sc_in<bool>		in;
-    SP_CELL_DECL(ExModSub,          suba);
-
-    /*AUTOMETHODS*/
-    // Beginning of SystemPerl automatic declarations
-    void trace (sc_trace_file *tf, const sc_string& prefix, int levels, int options=0);
-    // End of SystemPerl automatic declarations
-}
-...
-
-/*AUTOTRACE(ExMod)*/
-// Beginning of SystemPerl automatic trace file routine
-void ExMod::trace (sc_trace_file *tf, const sc_string& prefix, int levels, int options=0) {
-    sc_trace(tf, this->in.read(),           prefix+"in", 1);
-    if (levels > 0) {
-        this->suba->trace (tf, prefix+"suba.", levels-1, options);
+    SC_MODULE (ExMod) {
+	...
+	sc_in<bool>	    in;
+	SP_CELL_DECL(ExModSub,		suba);
+    
+	/*AUTOMETHODS*/
+	// Beginning of SystemPerl automatic declarations
+	void trace (sc_trace_file *tf, const sc_string& prefix, int levels, int options=0);
+	// End of SystemPerl automatic declarations
     }
-}
-// End of SystemPerl automatic trace file routine
+    ...
+    
+    /*AUTOTRACE(ExMod)*/
+    // Beginning of SystemPerl automatic trace file routine
+    void ExMod::trace (sc_trace_file *tf, const sc_string& prefix, int levels, int options=0) {
+	sc_trace(tf, this->in.read(),		prefix+"in", 1);
+	if (levels > 0) {
+	    this->suba->trace (tf, prefix+"suba.", levels-1, options);
+	}
+    }
+    // End of SystemPerl automatic trace file routine
+    
+=item SP_AUTO_CTOR
+
+SP_AUTO_CTOR should be called first in every constructor.  It will call
+internal functions needed for coverage analysis, and other possible future
+enhancements.
 
 =item #sp include
 
@@ -384,7 +390,7 @@ will be substituted to find the file to be included.  If a name of the form
 
 The latest version is available from CPAN and from L<http://www.veripool.com/>.
 
-Copyright 2001-2004 by Wilson Snyder.  This package is free software; you
+Copyright 2001-2005 by Wilson Snyder.  This package is free software; you
 can redistribute it and/or modify it under the terms of either the GNU
 Lesser General Public License or the Perl Artistic License.
 

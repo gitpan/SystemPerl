@@ -1,9 +1,12 @@
-   This is the SystemC Perl Package, aka SystemPerl.
+1 SystemPerl
+************
 
-Copyright
-=========
+This is the SystemC Perl Package, aka SystemPerl.
 
-   This package is Copyright 2001-2004 by Wilson Snyder
+1.1 Copyright
+=============
+
+This package is Copyright 2001-2005 by Wilson Snyder
 <wsnyder@wsnyder.org>.
 
    You may distribute under the terms of either the GNU General Public
@@ -13,23 +16,23 @@ file.
    This code is provided with no warranty of any kind, and is used
 entirely at your own risk.
 
-Summary
-=======
-
-   The publicly licensed SystemPerl package provides several extensions
-to SystemC.  It provides sp_preproc, extending the language for
-AUTOmatic connection of hierarchy like my Verilog-Mode, trace files and
-netlist linting.  Its netlist and parsing utilities are general enough
-for writing your own tools.  Two additional tools provide for speeding
-up GCC compiles and dependency correction.  You can download SystemC
-from the link off of http://www.veripool.com/systemperl.html
-
-Description
+1.2 Summary
 ===========
 
-   This package provides several major sub-packages.  The
-SystemC::Parser understands how to read SystemC files, and extract
-tokens and such, similar to Verilog::Parser.
+The publicly licensed SystemPerl package provides several extensions to
+SystemC.  It provides sp_preproc, extending the language for AUTOmatic
+connection of hierarchy like my Verilog-Mode, trace files and netlist
+linting.  Its netlist and parsing utilities are general enough for
+writing your own tools.  Two additional tools provide for speeding up
+GCC compiles and dependency correction.  You can download SystemC from
+the link off of http://www.veripool.com/systemperl.html
+
+1.3 Description
+===============
+
+This package provides several major sub-packages.  The SystemC::Parser
+understands how to read SystemC files, and extract tokens and such,
+similar to Verilog::Parser.
 
    SystemC::Netlist builds netlists out of SystemC files.  This allows
 easy scripts to determine things such as the hierarchy of SC_MODULEs.
@@ -51,14 +54,14 @@ simulation, such as changing cout to send to both the screen and a file.
 
          package Trialparser;
          @ISA = qw(SystemC::Parser);
-     
+
          sub module {
              my $self = shift;
              my $module = shift;
              print $self->filename.":".$self->lineno().": ";
              print "Contains the module declaration for $module\n";
          }
-     
+
          package main;
          my $sp = Trialparser->new();
          $sp->read ("test.sp");
@@ -66,7 +69,7 @@ simulation, such as changing cout to send to both the screen and a file.
    Netlist example:
 
        use SystemC::Netlist;
-     
+
          my $nl = new SystemC::Netlist ();
          foreach my $file ('testnetlist.sp') {
              $nl->read_file (filename=>$file,
@@ -76,11 +79,11 @@ simulation, such as changing cout to send to both the screen and a file.
          $nl->autos();
          $nl->lint();
          $nl->exit_if_error();
-     
+
          foreach my $mod ($nl->modules_sorted) {
              show_hier ($mod, "  ");
          }
-     
+
          sub show_hier {
              my $mod = shift;
              my $indent = shift;
@@ -90,8 +93,8 @@ simulation, such as changing cout to send to both the screen and a file.
              }
          }
 
-SystemPerl Example
-==================
+1.4 SystemPerl Example
+======================
 
      SC_MODULE(mod) {
          /*AUTOSIGNAL*/
@@ -106,7 +109,7 @@ SystemPerl Example
          // Beginning of SystemPerl automatic signals
          sc_signal<bool>             a;       // For submod
          // End of SystemPerl automatic signals
-     
+
          SC_CTOR(mod) {
      	SP_CELL (sub, submod);
      	  /*AUTOINST*/
@@ -114,18 +117,18 @@ SystemPerl Example
      	  SP_PIN (sub, a,	a);
                // End of SystemPerl automatic pins
 
-Obtaining Distribution
-======================
+1.5 Obtaining Distribution
+==========================
 
-   The latest version is available at `http://www.perl.org/CPAN/'
+The latest version is available at `http://www.perl.org/CPAN/'
 
    Download the latest package from that site, and decompress.  `gunzip
 SystemPerl_version.tar.gz ; tar xvf SystemPerl_version.tar'
 
-Supported Systems
-=================
+1.6 Supported Systems
+=====================
 
-   This version of SystemPerl has been built and tested on:
+This version of SystemPerl has been built and tested on:
 
    * i386-linux
 
@@ -135,8 +138,8 @@ Supported Systems
 1.2.1beta and 2.0.1 are the versions supported for tracing, other
 versions should work without tracing.
 
-Installation
-============
+1.7 Installation
+================
 
   1. `cd' to the directory containing this README notice.  Some files
      will permanently live in this directory, so make sure it's in a

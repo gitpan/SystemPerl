@@ -1,9 +1,9 @@
 # SystemC - SystemC Perl Interface
-# $Revision: #43 $$Date: 2004/11/18 $$Author: ws150726 $
+# $Revision: 1.46 $$Date: 2005-03-01 17:59:56 -0500 (Tue, 01 Mar 2005) $$Author: wsnyder $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
-# Copyright 2001-2004 by Wilson Snyder.  This program is free software;
+# Copyright 2001-2005 by Wilson Snyder.  This program is free software;
 # you can redistribute it and/or modify it under the terms of either the GNU
 # General Public License or the Perl Artistic License.
 # 
@@ -20,7 +20,7 @@ use Class::Struct;
 use Verilog::Netlist;
 use SystemC::Netlist;
 @ISA = qw(Verilog::Netlist::Cell);
-$VERSION = '1.163';
+$VERSION = '1.170';
 use strict;
 
 ######################################################################
@@ -31,7 +31,7 @@ sub new_pin {
     # Create a new pin under this cell
     my $pinref = new SystemC::Netlist::Pin (cell=>$self, @_);
     $self->portname($self->name) if !$self->name;	# Back Version 1.000 compatibility
-    $self->pins ($pinref->name(), $pinref);
+    $self->_pins ($pinref->name(), $pinref);
     return $pinref;
 }
 
@@ -43,10 +43,10 @@ sub _autos {
     if ($self->_autoinst) {
 	if ($self->submod()) {
 	    my %conn_ports = ();
-	    foreach my $pinref (values %{$self->pins}) {
+	    foreach my $pinref ($self->pins) {
 		$conn_ports{$pinref->name} = 1;
 	    }
-	    foreach my $portref (values %{$self->submod->ports}) {
+	    foreach my $portref ($self->submod->ports) {
 		if (!$conn_ports{$portref->name}) {
 		    print "  AUTOINST connect ",$self->module->name,"."
 			,$self->name," (",$self->submod->name,") port ",$portref->name
@@ -59,7 +59,7 @@ sub _autos {
 	    }
 	}
     }
-    foreach my $pinref (values %{$self->pins}) {
+    foreach my $pinref ($self->pins) {
 	$pinref->_autos();
     }
 }
@@ -100,7 +100,7 @@ pin.
 
 The latest version is available from CPAN and from L<http://www.veripool.com/>.
 
-Copyright 2001-2004 by Wilson Snyder.  This package is free software; you
+Copyright 2001-2005 by Wilson Snyder.  This package is free software; you
 can redistribute it and/or modify it under the terms of either the GNU
 Lesser General Public License or the Perl Artistic License.
 

@@ -1,9 +1,9 @@
 # SystemC - SystemC Perl Interface
-# $Revision: #68 $$Date: 2004/11/18 $$Author: ws150726 $
+# $Revision: 1.71 $$Date: 2005-03-01 17:59:56 -0500 (Tue, 01 Mar 2005) $$Author: wsnyder $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
-# Copyright 2001-2004 by Wilson Snyder.  This program is free software;
+# Copyright 2001-2005 by Wilson Snyder.  This program is free software;
 # you can redistribute it and/or modify it under the terms of either the GNU
 # General Public License or the Perl Artistic License.
 # 
@@ -27,7 +27,7 @@ use SystemC::Netlist::AutoCover;
 use SystemC::Netlist::AutoTrace;
 
 @ISA = qw(Verilog::Netlist::Module);
-$VERSION = '1.163';
+$VERSION = '1.170';
 use strict;
 
 sub new_net {
@@ -35,7 +35,7 @@ sub new_net {
     # @_ params
     # Create a new net under this module
     my $netref = new SystemC::Netlist::Net (direction=>'net', @_, module=>$self, );
-    $self->nets ($netref->name(), $netref);
+    $self->_nets ($netref->name(), $netref);
     return $netref;
 }
 
@@ -44,7 +44,7 @@ sub new_port {
     # @_ params
     # Create a new port under this module
     my $portref = new SystemC::Netlist::Port (@_, module=>$self,);
-    $self->ports ($portref->name(), $portref);
+    $self->_ports ($portref->name(), $portref);
     return $portref;
 }
 
@@ -53,7 +53,7 @@ sub new_cell {
     # @_ params
     # Create a new cell under this module
     my $cellref = new SystemC::Netlist::Cell (@_, module=>$self,);
-    $self->cells ($cellref->name(), $cellref);
+    $self->_cells ($cellref->name(), $cellref);
     return $cellref;
 }
 
@@ -140,7 +140,7 @@ sub _autos1_recurse_inherits {
 sub autos2 {
     my $self = shift;
     # Below must be after creating above autoinouts
-    foreach my $cellref (values %{$self->cells}) {
+    foreach my $cellref ($self->cells) {
 	$cellref->_autos();
     }
     $self->link();
@@ -172,10 +172,11 @@ sub _write_autoinout {
 	 if ($portref->sp_autocreated) {
 	     my $vec = $portref->array || "";
 	     $vec = "[$vec]" if $vec;
-	     $fileref->printf ("%ssc_%-26s %-20s //%s\n"
+	     # Space below in " >" to prevent >> C++ operator
+	     my $type = "sc_".$portref->direction."<".$portref->type." >";
+	     $fileref->printf ("%s%-29s %-20s //%s\n"
 			       ,$prefix
-			       ,$portref->direction."<".$portref->type." >"
-			       # Space above in " >" to prevent >> C++ operator
+			       ,$type
 			       ,$portref->name.$vec.";", $portref->comment);
 	 }
     }
@@ -249,7 +250,7 @@ pin.
 
 The latest version is available from CPAN and from L<http://www.veripool.com/>.
 
-Copyright 2001-2004 by Wilson Snyder.  This package is free software; you
+Copyright 2001-2005 by Wilson Snyder.  This package is free software; you
 can redistribute it and/or modify it under the terms of either the GNU
 Lesser General Public License or the Perl Artistic License.
 

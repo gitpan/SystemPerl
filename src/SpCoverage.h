@@ -1,9 +1,9 @@
-// $Revision: #6 $$Date: 2004/07/19 $$Author: ws150726 $ -*- SystemC -*-
+// $Revision: 1.7 $$Date: 2005-03-01 17:59:56 -0500 (Tue, 01 Mar 2005) $$Author: wsnyder $ -*- SystemC -*-
 //=============================================================================
 //
 // THIS MODULE IS PUBLICLY LICENSED
 //
-// Copyright 2001-2004 by Wilson Snyder.  This program is free software;
+// Copyright 2001-2005 by Wilson Snyder.  This program is free software;
 // you can redistribute it and/or modify it under the terms of either the GNU
 // General Public License or the Perl Artistic License.
 //
@@ -13,11 +13,12 @@
 // for more details.
 //
 //=============================================================================
-//
-// AUTHOR:  Wilson Snyder
-//
-// DESCRIPTION: Coverage analysis
-//
+///
+/// \file
+/// \brief SystemPerl Coverage analysis
+///
+/// AUTHOR:  Wilson Snyder
+///
 //=============================================================================
 
 #ifndef _VLCOVERAGE_H_
@@ -29,14 +30,17 @@
 #include "SpFunctor.h"
 
 //=============================================================================
-// SpCoverage
+//  SpCoverage
+///  SystemPerl coverage global class
+////
+/// Global class with methods affecting all coverage data.
 
 class SpCoverage {
 public:
     // GLOBAL METHODS
-    // Write all coverage data to a file
+    /// Write all coverage data to a file
     static void write (const char* filename = "logs/coverage.pl");
-    // Called by write lower-level routines to log a single coverage statistic
+    /// Called by write lower-level routines to log a single coverage statistic
     static void data (const char* hier, const char* what, const char* file, int lineno, const char* cmt, uint32_t data);
 };
 

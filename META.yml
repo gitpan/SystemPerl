@@ -1,12 +1,11 @@
 # http://module-build.sourceforge.net/META-spec.html
-#XXXXXXX This is a prototype!!!  It will change in the future!!! XXXXX#
 name:         SystemPerl
-version:      1.163
+version:      1.170
 version_from: Netlist.pm
+license:      perl
 installdirs:  site
 requires:
     Verilog::Getopt:               2.211
-    Verilog::Netlist:              2.21
+    Verilog::Netlist:              2.31
 
 distribution_type: module
-generated_by: ExtUtils::MakeMaker version 6.17

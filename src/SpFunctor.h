@@ -1,9 +1,9 @@
-// $Revision: #6 $$Date: 2004/01/27 $$Author: wsnyder $ -*- SystemC -*-
+// $Revision: 1.7 $$Date: 2005-03-01 17:59:56 -0500 (Tue, 01 Mar 2005) $$Author: wsnyder $ -*- SystemC -*-
 //=============================================================================
 //
 // THIS MODULE IS PUBLICLY LICENSED
 //
-// Copyright 2001-2004 by Wilson Snyder.  This program is free software;
+// Copyright 2001-2005 by Wilson Snyder.  This program is free software;
 // you can redistribute it and/or modify it under the terms of either the GNU
 // General Public License or the Perl Artistic License.
 //
@@ -13,29 +13,28 @@
 // for more details.
 //
 //=============================================================================
-//
-// AUTHOR:  Wilson Snyder
-//
-// DESCRIPTION: SystemPerl Functors
-//
-//=============================================================================
-//
-// This allows you to declare a named function and later invoke that function.
-// Multiple functions may have the same name, all will be called when that
-// name is invoked.  This is like hooks in Emacs.
-//
-// For example:
-//	 class x {
-//	     void myfunc ();
-//	     ...
-//	     x() { // constructor
-//	        SpFunctorNamed::add("do_it", &myfunc);
-//
-// Then you can invoke
-//		SpFunctorNamed::call("do_it");
-//
-// Which will call x_this->myfunc()
-//
+///
+/// \file
+/// \brief SystemPerl Functors
+///
+/// AUTHOR:  Wilson Snyder
+///
+/// This allows you to declare a named function and later invoke that function.
+/// Multiple functions may have the same name, all will be called when that
+/// name is invoked.  This is like hooks in Emacs.
+///
+/// For example:
+///	 class x {
+///	     void myfunc ();
+///	     ...
+///	     x() { // constructor
+///	        SpFunctorNamed::add("do_it", &myfunc);
+///
+/// Then you can invoke
+///		SpFunctorNamed::call("do_it");
+///
+/// Which will call x_this->myfunc()
+///
 //=============================================================================
 
 #ifndef _VLFUNCTOR_H_
@@ -46,12 +45,17 @@
 
 //=============================================================================
 // SpFunctor
+///  SystemPerl function operator
+////
+/// Class containing a function we may operate upon.
 
 class SpFunctor {
   public:
     SpFunctor() {};
     virtual void call(void* userdata) = 0;
 };
+
+///  SpFunctor templated for a specific class
 template <class T> class SpFunctorSpec : public SpFunctor {
     void (T::*m_cb)(void* userdata);	// Pointer to method function
     T*	m_obj;		// Module object to invoke on
@@ -63,21 +67,27 @@ template <class T> class SpFunctorSpec : public SpFunctor {
 
 //=============================================================================
 // SpFunctorNamed
+///  SystemPerl function operators with named access
+////
+/// SpFunctorNamed stores a list of SpFunctors to be operated upon, referenced
+/// by a callback name.  After a function is added under the specified name,
+/// all functions under that name may be called by another application.
 
 class SpFunctorNamed {
 public:
     // CREATORS:
+    /// Add a SpFunctor to be callable by given name, with this class
   template <class T>
     static void add(const char* funcName, void (T::*cb)(void* userdata), T* that) {
       add(funcName, new SpFunctorSpec<T>(that,cb));
     }
-    //template <class T>	// Doesn't work yet
-    //static void add(const char* funcName, void (T::*cb)(), T* that) {
-    //add(funcName, new SpFunctorSpec<T>(that,cb));
-    //}
+    /// Add a SpFunctor to be callable by given name
     static void add(const char* funcName, SpFunctor* ftor);
+
     // INVOCATION:
+    /// Call all functions with given name
     static void call(const char* funcName) {call(funcName,NULL);}
+    /// Call all functions with given name, with userdata
     static void call(const char* funcName, void* userdata);
 };
 

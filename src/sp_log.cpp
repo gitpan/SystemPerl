@@ -1,21 +1,25 @@
-/* $Revision: #17 $$Date: 2004/08/20 $$Author: ws150726 $
- ************************************************************************
- *
- * THIS MODULE IS PUBLICLY LICENSED
- *
- * Copyright 2001-2004 by Wilson Snyder.  This program is free software;
- * you can redistribute it and/or modify it under the terms of either the GNU
- * General Public License or the Perl Artistic License.
- *
- * This is distributed in the hope that it will be useful, but WITHOUT ANY
- * WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
- * for more details.
- *
- **********************************************************************
- * DESCRIPTION: SystemPerl: File logging, redirection of cout,cerr
- **********************************************************************
- */
+// $Revision: 1.18 $$Date: 2005-03-01 17:59:56 -0500 (Tue, 01 Mar 2005) $$Author: wsnyder $
+//********************************************************************
+//
+// THIS MODULE IS PUBLICLY LICENSED
+//
+// Copyright 2001-2005 by Wilson Snyder.  This program is free software;
+// you can redistribute it and/or modify it under the terms of either the GNU
+// General Public License or the Perl Artistic License.
+//
+// This is distributed in the hope that it will be useful, but WITHOUT ANY
+// WARRANTY; without even the implied warranty of MERCHANTABILITY or
+// FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+// for more details.
+//
+//********************************************************************
+///
+/// \file
+/// \brief SystemPerl: File logging, redirection of cout,cerr
+///
+/// AUTHOR:  Wilson Snyder
+///
+//********************************************************************
 
 #include <cstdarg>
 
@@ -24,7 +28,7 @@
 //**********************************************************************
 // Static
 
-list<sp_log_file*> sp_log_file::s_fileps;
+list<sp_log_file*> sp_log_file::s_fileps;	///< List of open sp_log_files
 
 //**********************************************************************
 // Opening

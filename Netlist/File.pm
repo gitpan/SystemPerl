@@ -1,9 +1,9 @@
 # SystemC - SystemC Perl Interface
-# $Revision: #128 $$Date: 2004/11/18 $$Author: ws150726 $
+# $Revision: 1.130 $$Date: 2005-03-01 17:59:56 -0500 (Tue, 01 Mar 2005) $$Author: wsnyder $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
-# Copyright 2001-2004 by Wilson Snyder.  This program is free software;
+# Copyright 2001-2005 by Wilson Snyder.  This program is free software;
 # you can redistribute it and/or modify it under the terms of either the GNU
 # General Public License or the Perl Artistic License.
 # 
@@ -23,7 +23,7 @@ use SystemC::Template;
 use Verilog::Netlist::Subclass;
 @ISA = qw(SystemC::Netlist::File::Struct
 	Verilog::Netlist::Subclass);
-$VERSION = '1.163';
+$VERSION = '1.170';
 use strict;
 
 structs('new',
@@ -51,6 +51,7 @@ structs('new',
 
 package SystemC::Netlist::File::Parser;
 use SystemC::Parser;
+use Carp;
 use strict;
 use vars qw (@ISA);
 use vars qw (@Text);	# Local for speed while inside parser.
@@ -69,7 +70,7 @@ sub new {
 				     );
     $parser->{filename} = $parser->{netlist}->resolve_filename($params{filename});
     if (!$parser->{filename}) {
-	$params{error_self} and $params{error_self}->error("Cannot open $params{filename}");
+	$params{error_self} and $params{error_self}->error("Cannot open $params{filename}\n");
 	die "%Error: Cannot open $params{filename}\n";
     }
     $parser->read (filename=>$parser->{filename});
@@ -313,10 +314,16 @@ sub pin {
     my $net = shift;
     my $netvec = shift;
 
-    my $cellref = $self->{cellref};
-    if (!$cellref) {
-	return $self->error ("SP_PIN outside of cell definition", $pin);
+    my $modref = $self->{modref};
+    if (!$modref) {
+	return $self->error ("SP_PIN outside of module definition", $pin);
     }
+    # Lookup cell based on the name
+    my $cellref = $modref->find_cell($cellname);
+    if (!$cellref) {
+	return $self->error ("Cell name not found for SP_PIN:", $cellname);
+    }
+
     my $pinref;
     my $pinname = $pin;
     if ($pinref = $cellref->find_pin($pin)) {
@@ -342,6 +349,11 @@ sub signal {
     my $array = shift;
     my $msb = shift;
     my $lsb = shift;
+
+    if ($type eq "sc_clock" && ($self->{netlist}->sc_version||0) > 20020000) {
+	# 2.0.1 changed the basic type of sc_in_clk to a bool
+	$type = "bool";
+    }
 
     my $modref = $self->{modref};
     if (!$modref) {
@@ -530,6 +542,7 @@ sub lineno { return 0; }
 
 sub read {
     my %params = (@_);	# filename=>
+    # If error_self==0, then it's non fatal if we can't open the file.
 
     my $filename = $params{filename} or croak "%Error: ".__PACKAGE__."::read_file (filename=>) parameter required, stopped";
     my $netlist = $params{netlist} or croak ("Call SystemC::Netlist::read_file instead,");
@@ -537,7 +550,8 @@ sub read {
 
     my $filepath = $netlist->resolve_filename($filename);
     if (!$filepath) {
-	$params{error_self} and $params{error_self}->error("Cannot open $params{filename}");
+	return if (!$params{error_self});  # Non-fatal
+	$params{error_self} and $params{error_self}->error("Cannot open $params{filename}\n");
 	die "%Error: Cannot open $params{filename}\n";
     }
     print __PACKAGE__."::read_file $filepath\n" if $SystemC::Netlist::Debug;
@@ -1007,7 +1021,7 @@ Prints debugging information for this file.
 
 The latest version is available from CPAN and from L<http://www.veripool.com/>.
 
-Copyright 2001-2004 by Wilson Snyder.  This package is free software; you
+Copyright 2001-2005 by Wilson Snyder.  This package is free software; you
 can redistribute it and/or modify it under the terms of either the GNU
 Lesser General Public License or the Perl Artistic License.
 

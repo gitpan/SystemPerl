@@ -1,9 +1,9 @@
-// $Revision: #33 $$Date: 2004/08/12 $$Author: ws150726 $ -*- SystemC -*-
+// $Revision: 1.34 $$Date: 2005-03-01 17:59:56 -0500 (Tue, 01 Mar 2005) $$Author: wsnyder $ -*- SystemC -*-
 //********************************************************************
 //
 // THIS MODULE IS PUBLICLY LICENSED
 //
-// Copyright 2001-2004 by Wilson Snyder.  This program is free software;
+// Copyright 2001-2005 by Wilson Snyder.  This program is free software;
 // you can redistribute it and/or modify it under the terms of either the GNU
 // General Public License or the Perl Artistic License.
 //
@@ -13,7 +13,16 @@
 // for more details.
 //
 //********************************************************************
-// DESCRIPTION: SystemPerl: Overall header file
+///
+/// \file
+/// \brief SystemPerl: Overall header file for all SystemPerl programs
+///
+/// AUTHOR:  Wilson Snyder
+///
+/// This file should be #included at the top of all SystemPerl
+/// programs/modules that require any SystemC functions, instead of
+/// systemc.h.
+///
 //********************************************************************
 
 #ifndef _SYSTEMPERL_H_
@@ -115,8 +124,9 @@ class SpTraceFile;
 //********************************************************************
 // Simple classes.  If get bigger, move to optional include
 
+/// Uint32_t which constructs to zero.
 class SpUInt32Zeroed { public:
-    uint32_t m_l; 
+    uint32_t m_l;
     SpUInt32Zeroed(): m_l(0) {};
     inline operator const uint32_t () const { return m_l; };
 };
@@ -128,7 +138,7 @@ class SpUInt32Zeroed { public:
 # ifdef __GNUC__
 #  define UTIL_ATTR_PRINTF(fmtArgNum) __attribute__ ((format (printf, fmtArgNum, fmtArgNum+1)))
 # else
-#  define UTIL_ATTR_PRINTF(fmtArgNum) 
+#  define UTIL_ATTR_PRINTF(fmtArgNum)
 # endif
 #endif
 
@@ -152,4 +162,4 @@ extern "C" {
 
 //********************************************************************
 
-#endif /*_SYSTEMPERL_H_*/
+#endif // guard

@@ -1,7 +1,7 @@
-// $Revision: #16 $$Date: 2004/07/19 $$Author: ws150726 $
+// $Revision: 1.17 $$Date: 2005-03-01 17:59:56 -0500 (Tue, 01 Mar 2005) $$Author: wsnyder $
 // DESCRIPTION: SystemPerl: Example main()
 //
-// Copyright 2001-2004 by Wilson Snyder.  This program is free software;
+// Copyright 2001-2005 by Wilson Snyder.  This program is free software;
 // you can redistribute it and/or modify it under the terms of either the GNU
 // General Public License or the Perl Artistic License.
 
@@ -43,14 +43,14 @@ int sc_main (int argc, char *argv[]) {
     // SystemPerl traces
     SpTraceFile* stp = new SpTraceFile;
     bench->trace(stp,999);
-    stp->open("sim_sp.dump");
+    stp->open("sim_sp.vcd");
 
     // Alternative SystemPerl traces, allowing rollover
     // After running, concat the two files to make the vcd file.
     SpTraceFile* stp2 = new SpTraceFile;
     stp2->rolloverMB(1);	// Rollover logfiles when size > 1MB
     bench->trace(stp2,999);
-    stp2->open("sim_sp2.dump");
+    stp2->open("sim_sp2.vcd");
 
     cout << "Starting\n";
     sc_start(-1);

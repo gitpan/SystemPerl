@@ -1,9 +1,9 @@
-// $Revision: #29 $$Date: 2004/06/18 $$Author: ws150726 $ -*- SystemC -*-
+// $Revision: 1.30 $$Date: 2005-03-01 17:59:56 -0500 (Tue, 01 Mar 2005) $$Author: wsnyder $ -*- SystemC -*-
 //=============================================================================
 //
 // THIS MODULE IS PUBLICLY LICENSED
 //
-// Copyright 2001-2004 by Wilson Snyder.  This program is free software;
+// Copyright 2001-2005 by Wilson Snyder.  This program is free software;
 // you can redistribute it and/or modify it under the terms of either the GNU
 // General Public License or the Perl Artistic License.
 //
@@ -13,11 +13,12 @@
 // for more details.
 //
 //=============================================================================
-//
-// AUTHOR:  Wilson Snyder
-//
-// DESCRIPTION: Tracing in vcd Format
-//
+///
+/// \file
+/// \brief SystemPerl Tracing in VCD Format
+///
+/// AUTHOR:  Wilson Snyder
+///
 //=============================================================================
 
 #include <sys/types.h>
@@ -48,6 +49,9 @@ void SpTraceFile::trace (const unsigned int &, const sc_string &, const char **)
     DECL_TRACE_METHOD_B( unsigned short )
     DECL_TRACE_METHOD_B( unsigned int )
     DECL_TRACE_METHOD_B( unsigned long )
+#ifdef SYSTEMC_64BIT_PATCHES
+    DECL_TRACE_METHOD_B( unsigned long long)
+#endif
     DECL_TRACE_METHOD_B( char )
     DECL_TRACE_METHOD_B( short )
     DECL_TRACE_METHOD_B( int )

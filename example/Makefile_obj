@@ -1,9 +1,9 @@
-# $Revision: #25 $$Date: 2004/10/01 $$Author: ws150726 $ -*- Makefile -*-
+# $Revision: 1.26 $$Date: 2005-03-01 17:59:56 -0500 (Tue, 01 Mar 2005) $$Author: wsnyder $ -*- Makefile -*-
 # DESCRIPTION: SystemPerl: Example makefile
 #
 # This is executed in the "test_dir", not in this directory
 #
-# Copyright 2001-2004 by Wilson Snyder.  This program is free software;
+# Copyright 2001-2005 by Wilson Snyder.  This program is free software;
 # you can redistribute it and/or modify it under the terms of either the GNU
 # General Public License or the Perl Artistic License.
 #
@@ -33,7 +33,7 @@ SP_SP = $(wildcard ../example/*.sp)
 CFLAGS += -DWAVES
 
 ifeq ($(VERILATOR_AUTHOR_SITE),1)	# Local... Else don't burden users
-CPPFLAGS += -Wall -Wno-char-subscripts -Werror
+CFLAGS += -Wall -Wno-char-subscripts -Werror -m32
 endif
 
 # List Objects in bottom-up order, that way lower modules get errors first

@@ -1,9 +1,9 @@
-// $Revision: #6 $$Date: 2004/01/27 $$Author: wsnyder $ -*- SystemC -*-
+// $Revision: 1.7 $$Date: 2005-03-01 17:59:56 -0500 (Tue, 01 Mar 2005) $$Author: wsnyder $ -*- SystemC -*-
 //=============================================================================
 //
 // THIS MODULE IS PUBLICLY LICENSED
 //
-// Copyright 2001-2004 by Wilson Snyder.  This program is free software;
+// Copyright 2001-2005 by Wilson Snyder.  This program is free software;
 // you can redistribute it and/or modify it under the terms of either the GNU
 // General Public License or the Perl Artistic License.
 //
@@ -13,20 +13,25 @@
 // for more details.
 //
 //=============================================================================
-//
-// AUTHOR:  Wilson Snyder
-//
-// DESCRIPTION: SystemPerl Functors
-//
+///
+/// \file
+/// \brief SystemPerl Functors
+///
+/// AUTHOR:  Wilson Snyder
+///
 //=============================================================================
 
 #include <map>
 #include "SpFunctor.h"
 
+//=============================================================================
+// SpFunctorNamedImp
+///  Implementation of SpFunctorNamed
+
 class SpFunctorNamedImp {	
 public:
-    typedef multimap<string, SpFunctor*>  FtMap;
-    static FtMap	s_map;
+    typedef multimap<string, SpFunctor*>  FtMap;	///< Map typedef
+    static FtMap	s_map;	///< Multimap of all functors for each name
 };
 
 SpFunctorNamedImp::FtMap SpFunctorNamedImp::s_map;

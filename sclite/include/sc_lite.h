@@ -1,7 +1,7 @@
-// $Revision: #12 $$Date: 2004/10/29 $$Author: ws150726 $ -*- C++ -*-
+// $Revision: 1.13 $$Date: 2005-03-01 17:59:56 -0500 (Tue, 01 Mar 2005) $$Author: wsnyder $ -*- C++ -*-
 //********************************************************************
 //
-// Copyright 2001-2004 by Wilson Snyder.  This program is free software;
+// Copyright 2001-2005 by Wilson Snyder.  This program is free software;
 // you can redistribute it and/or modify it under the terms of either the GNU
 // General Public License or the Perl Artistic License.
 //
@@ -11,8 +11,15 @@
 // GNU General Public License for more details.
 //
 //********************************************************************
-// DESCRIPTION: SystemPerl: SystemC-like library with only most-trivial functions.
-//	This allows for testing of this package without the real SC library.
+///
+/// \file
+/// \brief SystemPerl: SystemC-like library with only most-trivial functions.
+///
+/// AUTHOR:  Wilson Snyder
+///
+/// This allows for testing of this package without the real SC library.
+/// It is NOT for any production use.
+///
 //********************************************************************
 
 #ifndef _SC_LITE_H
@@ -110,7 +117,7 @@ inline ostream& operator<< (ostream& lhs, const sc_signal<T>& rhs) { return lhs;
 #define sc_in sc_signal
 #define sc_out sc_signal
 #define sc_inout sc_signal
-typedef sc_in<sc_clock> sc_in_clk;
+typedef sc_in<bool> sc_in_clk;
 
 //=== Methods
 class SclFunctor {

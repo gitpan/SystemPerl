@@ -1,42 +1,46 @@
-/* $Revision: #22 $$Date: 2004/08/20 $$Author: ws150726 $ -*- C++ -*-
- ************************************************************************
- *
- * THIS MODULE IS PUBLICLY LICENSED
- *
- * Copyright 2001-2004 by Wilson Snyder.  This program is free software;
- * you can redistribute it and/or modify it under the terms of either the GNU
- * General Public License or the Perl Artistic License.
- *
- * This is distributed in the hope that it will be useful, but WITHOUT ANY
- * WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
- * for more details.
- *
- **********************************************************************
- * DESCRIPTION: SystemPerl: File logging, redirection of cout,cerr
- **********************************************************************
- */
+// $Revision: 1.23 $$Date: 2005-03-01 17:59:56 -0500 (Tue, 01 Mar 2005) $$Author: wsnyder $ -*- C++ -*-
+//********************************************************************
+//
+// THIS MODULE IS PUBLICLY LICENSED
+//
+// Copyright 2001-2005 by Wilson Snyder.  This program is free software;
+// you can redistribute it and/or modify it under the terms of either the GNU
+// General Public License or the Perl Artistic License.
+//
+// This is distributed in the hope that it will be useful, but WITHOUT ANY
+// WARRANTY; without even the implied warranty of MERCHANTABILITY or
+// FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+// for more details.
+//
+//********************************************************************
+///
+/// \file
+/// \brief SystemPerl: File logging, redirection of cout,cerr
+///
+/// AUTHOR:  Wilson Snyder
+///
+//********************************************************************
 
 #ifndef _SP_LOG_H_
 #define _SP_LOG_H_ 1
 
 #ifndef UTIL_ATTR_PRINTF
 # ifdef __GNUC__
+/// Declare a routine to have PRINTF format error checking
 #  define UTIL_ATTR_PRINTF(fmtArgNum) __attribute__ ((format (printf, fmtArgNum, fmtArgNum+1)))
 # else
-#  define UTIL_ATTR_PRINTF(fmtArgNum) 
+#  define UTIL_ATTR_PRINTF(fmtArgNum)
 # endif
 #endif
 
 #include <stdio.h>
 
-/* Some functions may be used by generic C compilers! */
-
+// Some functions may be used by generic C compilers!
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-    /* Print to cout, but with C style arguments */
+    /// Print to cout, but with C style arguments
     extern void sp_log_printf(const char *format, ...) UTIL_ATTR_PRINTF(1);
 
 #ifdef __cplusplus
@@ -55,7 +59,7 @@ extern "C" {
 using namespace std;
 
 //**********************************************************************
-// Echo a stream to two output streams, one to screen and one to a logfile
+/// Internal, echo a stream to two output streams, one to screen and one to a logfile.
 
 class sp_log_teebuf : public std::streambuf {
 public:
@@ -75,27 +79,31 @@ private:
 };
 
 //**********************************************************************
-// Create a log file
-//    Usage:
-//
-//	sp_log_file foo;
-//	foo.open ("sim.log");
-// or	sp_log_file foo ("sim.log");
-//
-//	foo.redirect_cout();
-//	cout << "this goes to screen and sim.log";
-//
-//    Eventually this will do logfile split also
+// sp_log_file
+/// Create a SystemPerl log file
+////
+///    Usage:
+///
+///	sp_log_file foo;
+///	foo.open ("sim.log");
+/// or	sp_log_file foo ("sim.log");
+///
+///	foo.redirect_cout();
+///	cout << "this goes to screen and sim.log";
+///
+///    Eventually this will do logfile split also
 
 class sp_log_file : public std::ofstream {
 public:
     // CREATORS
+    /// Create a closed log file
     sp_log_file () :
 	m_strmOldCout(NULL),
 	m_strmOldCerr(NULL),
 	m_isOpen(false),
 	m_splitSize(0) {
     }
+    /// Create a open log file
     sp_log_file (const char *filename, streampos split=0) :
 	m_strmOldCout(NULL),
 	m_strmOldCerr(NULL),
@@ -104,7 +112,7 @@ public:
 	open(filename);
     }
     ~sp_log_file () { close(); }
-    
+
     // TYPES
 #if defined(__GNUC__) && __GNUC__ >= 3
     typedef ios_base::openmode open_mode_t;
@@ -115,24 +123,25 @@ public:
 #endif
 
     // METHODS
-    void	open (const char* filename, open_mode_t append=DEFAULT_OPEN_MODE);	// Open the file
+    /// Open the logfile
+    void	open (const char* filename, open_mode_t append=DEFAULT_OPEN_MODE);
     void	open (const string filename, open_mode_t append=DEFAULT_OPEN_MODE) {
 	open(filename.c_str(), append);
     }
-    void	close ();		// Close the file
-    void	redirect_cout ();	// Redirect cout and cerr to logfile
-    void	end_redirect ();	// End redirection
-    void	split_check ();	// Split if needed
-    void	split_now ();	// Do a split
+    void	close ();		///< Close the file
+    void	redirect_cout ();	///< Redirect cout and cerr to logfile
+    void	end_redirect ();	///< End redirection
+    void	split_check ();		///< Split if needed
+    void	split_now ();		///< Do a split
 
-    static void	flush_all();
+    static void	flush_all();		///< Flush all open logfiles
 
     // ACCESSORS
-    bool	isOpen() const { return(m_isOpen); }	// Is the log file open?
-    void	split_size (streampos size) {	// Set # bytes to roll at
+    bool	isOpen() const { return(m_isOpen); }	///< Is the log file open?
+    void	split_size (streampos size) {	///< Set # bytes to roll at
 	m_splitSize = size;
     }
-    inline operator bool () const { return isOpen(); };  // Compatible w/ostream
+    inline operator bool () const { return isOpen(); };  ///< Test operator compatible w/ostream
 
   private:
     // METHODS
@@ -144,14 +153,14 @@ public:
 
   private:
     // STATE
-    streambuf*	m_strmOldCout;		// Old cout value
-    streambuf*	m_strmOldCerr;		// Old cerr value
-    bool	m_isOpen;		// File has been opened
-    sp_log_teebuf* m_tee;		// Teeing structure
-    string	m_filename;		// Original Filename that was opened
-    streampos	m_splitSize;		// Bytes to split at
-    unsigned	m_splitNum;		// Number of splits done
-    static list<sp_log_file*> s_fileps;	// List of current files open
+    streambuf*	m_strmOldCout;		///< Old cout value
+    streambuf*	m_strmOldCerr;		///< Old cerr value
+    bool	m_isOpen;		///< File has been opened
+    sp_log_teebuf* m_tee;		///< Teeing structure
+    string	m_filename;		///< Original Filename that was opened
+    streampos	m_splitSize;		///< Bytes to split at
+    unsigned	m_splitNum;		///< Number of splits done
+    static list<sp_log_file*> s_fileps;	///< List of current files open
 };
 
 #undef DEFAULT_OPEN_MODE

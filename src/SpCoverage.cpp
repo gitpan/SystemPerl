@@ -1,9 +1,9 @@
-// $Revision: #1 $$Date: 2004/07/19 $$Author: ws150726 $ -*- SystemC -*-
+// $Revision: 1.2 $$Date: 2005-03-01 17:59:56 -0500 (Tue, 01 Mar 2005) $$Author: wsnyder $ -*- SystemC -*-
 //=============================================================================
 //
 // THIS MODULE IS PUBLICLY LICENSED
 //
-// Copyright 2001-2004 by Wilson Snyder.  This program is free software;
+// Copyright 2001-2005 by Wilson Snyder.  This program is free software;
 // you can redistribute it and/or modify it under the terms of either the GNU
 // General Public License or the Perl Artistic License.
 //
@@ -13,11 +13,12 @@
 // for more details.
 //
 //=============================================================================
-//
-// AUTHOR:  Wilson Snyder
-//
-// DESCRIPTION: SystemPerl Coverage analysis
-//
+///
+/// \file
+/// \brief SystemPerl Coverage analysis
+///
+/// AUTHOR:  Wilson Snyder
+///
 //=============================================================================
 
 #include <stdio.h>
@@ -25,7 +26,7 @@
 #include "SpCoverage.h"
 #include "SpFunctor.h"
 
-static FILE* sp_Coverage_Fp = NULL;
+static FILE* sp_Coverage_Fp = NULL;	///< Internal file pointer being written to
 
 //=============================================================================
 // SpFunctorNamed
