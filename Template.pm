@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Revision: #22 $$Date: 2003/10/28 $$Author: wsnyder $
+# $Revision: #24 $$Date: 2003/12/05 $$Author: wsnyder $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -26,7 +26,7 @@ use Verilog::Netlist::Subclass;
 use strict;
 use vars qw ($Debug $Default_Self $VERSION);
 
-$VERSION = '1.146';
+$VERSION = '1.147';
 
 structs('_new_base',
 	'SystemC::Template::Struct'
@@ -253,7 +253,7 @@ First $read is called, which loads the $self->src_text() as a array of
 manipulates this array and loads $self->out_text() probably using
 $self->printf().  $self->write() is then called to write the results.
 
-For convience, most methods can be called as non-method calls, this will
+For convenience, most methods can be called as non-method calls, this will
 use the template that was most recently called with write.  (This enables
 functions to simply call SystemC::Template::print and not need to pass the
 class around.)

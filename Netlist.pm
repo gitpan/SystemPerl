@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Revision: #45 $$Date: 2003/10/28 $$Author: wsnyder $
+# $Revision: #47 $$Date: 2003/12/05 $$Author: wsnyder $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -26,7 +26,7 @@ use Verilog::Netlist::Subclass;
 use strict;
 use vars qw($Debug $Verbose $VERSION);
 
-$VERSION = '1.146';
+$VERSION = '1.147';
 
 ######################################################################
 #### Error Handling
@@ -228,7 +228,7 @@ SystemC::Netlist - SystemC Netlist
 
 SystemC::Netlist contains interconnect information about a whole design
 database.  The classes of SystemC::Netlist parallel those of
-Verilog::Netlist, which should be seen for all documentaion.
+Verilog::Netlist, which should be seen for all documentation.
 
 The database is composed of files, which contain the text read from each
 file.

@@ -1,4 +1,4 @@
-#$Revision: #33 $$Date: 2003/10/28 $$Author: wsnyder $
+#$Revision: #35 $$Date: 2003/12/05 $$Author: wsnyder $
 ######################################################################
 #
 # Copyright 2001-2003 by Wilson Snyder.  This program is free software;
@@ -21,7 +21,7 @@ require DynaLoader;
 use strict;
 use vars qw($VERSION);
 
-$VERSION = '1.146';
+$VERSION = '1.147';
 
 ######################################################################
 #### Configuration Section
@@ -212,7 +212,7 @@ The busses are any [] subscripts after the type names.
 
 Text is called for all text not otherwise recognized.  Dumping all
 text to a file will produce the original file, minus any #sp and
-stipped // Auto inserted comments.
+stripped // Auto inserted comments.
 
 =back
 

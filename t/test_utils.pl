@@ -1,5 +1,5 @@
 #!/usr/local/bin/perl -w
-# $Revision: #9 $$Date: 2003/09/22 $$Author: wsnyder $
+# $Revision: #10 $$Date: 2003/11/14 $$Author: wsnyder $
 # DESCRIPTION: Perl ExtUtils: Common routines required by package tests
 #
 # Copyright 2001-2003 by Wilson Snyder.  This program is free software;
@@ -15,9 +15,11 @@ mkdir 'test_dir',0777;
 
 if (!$ENV{HARNESS_ACTIVE}) {
     use lib '.';
-    use lib '..';
     use lib "blib/lib";
     use lib "blib/arch";
+    use lib '..';
+    use lib "../Verilog/blib/lib";
+    use lib "../Verilog/blib/arch";
 }
 
 sub run_system {

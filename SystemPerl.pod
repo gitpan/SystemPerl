@@ -1,4 +1,4 @@
-#$Revision: #27 $$Date: 2003/09/22 $$Author: wsnyder $
+#$Revision: #28 $$Date: 2003/11/18 $$Author: wsnyder $
 ######################################################################
 #
 # Copyright 2001-2003 by Wilson Snyder.  This program is free software;
@@ -22,7 +22,7 @@ SystemPerl - SystemPerl Language Extension to SystemC
 =head1 DESCRIPTION
 
 SystemPerl is a version of the SystemC language.  It is designed to expand
-text so that needless repitition in the language is minimized.  By using
+text so that needless repetition in the language is minimized.  By using
 C<sp_preproc>, SystemPerl files can be expanded into C++ files at compile
 time, or expanded in place to make them valid stand-alone SystemC files.
 
@@ -57,7 +57,7 @@ time.
 
 SystemPerl requires the following coding conventions.  These tokens are not
 changed in any way, but are simply required for SystemPerl to be able to
-derrive required information from the source code.
+derive required information from the source code.
 
 =over 4
 
@@ -89,7 +89,7 @@ public sc_module" must instead be coded as "SC_MODULE(mod1)".
 
 =item SP_PIN (I<instname>, I<portname>, I<netname>)
 
-SP_PIN declares a connection of a instantation's port to the specified net.
+SP_PIN declares a connection of a instantiation's port to the specified net.
 
 =item SP_TRACED
 
@@ -314,11 +314,11 @@ submodules, leading to smaller trace files, but longer compile and link
 times.
 
 AUTOTRACE will not trace signals beginning with a underscore.  It also
-replaces __DOT__ in signal names to "." to support fake hiearchy, such as
+replaces __DOT__ in signal names to "." to support fake hierarchy, such as
 is created with Verilator.
 
 Note because of a SystemC limitation, output ports cannot be traced.  Also
-the hiearchy is not properly placed into the trace file; the hiearchy path
+the hierarchy is not properly placed into the trace file; the hierarchy path
 will be added to the signal name itself.  Also, arrayed nets/cells aren't
 quite right yet.
 
@@ -372,7 +372,7 @@ to the link list.  Thus using #sp use automatically finds the objects
 required for linking against the includer.  (Just like perl's package and
 use statements.)
 
-In addition to specifing an exact string like with #include, you may also
+In addition to specifying an exact string like with #include, you may also
 specify a define symbol or a cell search path.  The value of a definition
 will be substituted to find the file to be included.  If a name of the form
 .cell.subcell is used, it will include both the header for the module for

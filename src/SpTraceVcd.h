@@ -1,4 +1,4 @@
-// $Revision: #23 $$Date: 2003/09/22 $$Author: wsnyder $ -*- SystemC -*-
+// $Revision: #25 $$Date: 2003/11/21 $$Author: wsnyder $ -*- SystemC -*-
 //=============================================================================
 //
 // THIS MODULE IS PUBLICLY LICENSED
@@ -142,8 +142,9 @@ public:
 
     // Full dumping
     inline void fullBit (uint32_t code, const uint32_t newval) {
+	// Note the &1, so we don't require clean input -- makes more common no change case faster
 	m_sigs_oldval[code] = newval;
-	*m_writep++=(newval?'1':'0'); printCode(code); *m_writep++='\n';
+	*m_writep++=('0'+(newval&1)); printCode(code); *m_writep++='\n';
 	bufferCheck();
     }
     inline void fullBus (uint32_t code, const uint32_t newval, int bits) {

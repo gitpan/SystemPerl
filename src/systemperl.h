@@ -1,4 +1,4 @@
-// $Revision: #26 $$Date: 2003/09/22 $$Author: wsnyder $ -*- SystemC -*-
+// $Revision: #27 $$Date: 2003/12/05 $$Author: wsnyder $ -*- SystemC -*-
 //********************************************************************
 //
 // THIS MODULE IS PUBLICLY LICENSED
@@ -71,6 +71,10 @@ using namespace std;
 # define VL_PORT(name, msb,lsb)		uint32_t name		// Depreciated
 # define VL_PORTW(name, msb,lsb, words)	uint32_t name[words]	// Depreciated
 # define VL_PIN_NOP(instname,pin,port)
+# define VL_CELL(instname,type)
+# define VL_MODULE(modname)		class modname : public VerilatedModule
+# define VL_CTOR(name) name()
+# define VL_CTOR_IMP(name) name::name()
 #endif
 
 //********************************************************************
