@@ -1,4 +1,4 @@
-// $Revision: #5 $$Date: 2004/01/27 $$Author: wsnyder $ -*- SystemC -*-
+// $Revision: #6 $$Date: 2004/06/18 $$Author: ws150726 $ -*- SystemC -*-
 //=============================================================================
 //
 // THIS MODULE IS PUBLICLY LICENSED
@@ -26,5 +26,6 @@
 // at a much better compile time then each separately.
 
 #include "SpTraceVcd.cpp"
+#include "SpTraceVcdC.cpp"
 #include "SpFunctor.cpp"
 #include "sp_log.cpp"

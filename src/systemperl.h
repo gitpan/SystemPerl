@@ -1,4 +1,4 @@
-// $Revision: #30 $$Date: 2004/01/27 $$Author: wsnyder $ -*- SystemC -*-
+// $Revision: #31 $$Date: 2004/06/18 $$Author: ws150726 $ -*- SystemC -*-
 //********************************************************************
 //
 // THIS MODULE IS PUBLICLY LICENSED
@@ -29,6 +29,13 @@ using namespace std;
 #endif
 #include <stdint.h>      // uint32_t
 #include <stdarg.h>      // ... vaargs
+
+//********************************************************************
+// Switches
+
+#if VM_TRACE		// Verilator tracing requested
+# define WAVES 1	// So, trace in SystemC too
+#endif
 
 //********************************************************************
 // Macros
@@ -90,8 +97,9 @@ inline const char *sp_cell_sprintf(const char *fmt...) {
 //********************************************************************
 // Classes so we can sometimes avoid header inclusion
 
-class SpTraceFile;
 class SpTraceVcd;
+class SpTraceVcdCFile;
+class SpTraceFile;
 
 //********************************************************************
 // Simple classes.  If get bigger, move to optional include

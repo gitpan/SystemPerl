@@ -1,5 +1,5 @@
 \input texinfo @c -*-texinfo-*-
-@c $Revision: #28 $$Date: 2004/03/10 $$Author: wsnyder $
+@c $Revision: #29 $$Date: 2004/03/26 $$Author: wsnyder $
 @c %**start of header
 @setfilename readme.info
 @settitle Perl SystemC Installation
@@ -61,7 +61,7 @@ netlist database may also be extended to support other languages.
 sp_preproc provides extensions to the SystemC language, called the
 SystemPerl language.  This allows most of the Tedium to be removed from
 SystemC coding, just as the author's /*AUTO*/ comments did for the
-Verilog language.  See @samp{man SystemPerl} after installation.
+Verilog language.  See @samp{man SystemC::SystemPerl} after installation.
 
 sp_include shows a technique for speeding up SystemC compiles using GCC.
 sp_makecheck allows for cleaning up dependency files when dependencies

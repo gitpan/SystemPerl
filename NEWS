@@ -5,6 +5,12 @@ The contributors that suggested a given feature is shown in [].
 This uses outline mode in Emacs.  See C-h m [M-x describe-mode].
 
 
+* Changes in SystemC 1.150 6/16/2004
+
+***	Trace file code now supports standalone C code.
+
+****	More reliable detection of existing patches.
+
 * Changes in SystemC 1.149 3/10/2004
 
 ***	Patch process fixes for Solaris.
@@ -33,7 +39,7 @@ This uses outline mode in Emacs.  See C-h m [M-x describe-mode].
 
 * Changes in SystemC 1.143 7/30/2003
 
-****	Minor Redhat 9 installation fixes
+****	Redhat 9 installation fixes
 
 * Changes in SystemC 1.142 7/16/2003
 
@@ -214,7 +220,7 @@ This uses outline mode in Emacs.  See C-h m [M-x describe-mode].
 
 
 ----------------------------------------------------------------------
-$Revision: #74 $$Date: 2004/03/10 $$Author: wsnyder $
+$Revision: #76 $$Date: 2004/06/18 $$Author: ws150726 $
 ----------------------------------------------------------------------
 Copyright information:
 

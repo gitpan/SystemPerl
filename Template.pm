@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Revision: #26 $$Date: 2004/03/10 $$Author: wsnyder $
+# $Revision: #27 $$Date: 2004/06/18 $$Author: ws150726 $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -26,7 +26,7 @@ use Verilog::Netlist::Subclass;
 use strict;
 use vars qw ($Debug $Default_Self $VERSION);
 
-$VERSION = '1.149';
+$VERSION = '1.150';
 
 structs('_new_base',
 	'SystemC::Template::Struct'

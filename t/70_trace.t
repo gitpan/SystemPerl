@@ -1,5 +1,5 @@
-#!/usr/local/bin/perl -w
-# $Revision: #9 $$Date: 2004/03/08 $$Author: wsnyder $
+#!/usr/bin/perl -w
+# $Revision: #11 $$Date: 2004/06/21 $$Author: ws150726 $
 # DESCRIPTION: Perl ExtUtils: Type 'make test' to test this package
 #
 # Copyright 2001-2004 by Wilson Snyder.  This program is free software;
@@ -21,8 +21,8 @@ if ($Config{archname} !~ /linux/
     skip("skip Harmless; Not linux or missing SystemC",1);
 } else {
     run_system ("cd test_dir "
-		."&& g++ -ggdb -DSPTRACEVCD_TEST ../src/SpTraceVcd.cpp -o SpTraceVcd "
-		."&& ./SpTraceVcd");
+		."&& g++ -ggdb -DSPTRACEVCD_TEST ../src/SpTraceVcdC.cpp -o SpTraceVcdC "
+		."&& ./SpTraceVcdC");
     ok(1);
     ok(-r "test_dir/test.dump")
 }
