@@ -1,0 +1,237 @@
+#!/usr/local/bin/perl -w
+#$Id: sp_preproc,v 1.9 2001/03/31 19:59:15 wsnyder Exp $
+######################################################################
+# Unpublished Work Copyright (C) 2000 Wilson Snyder
+# All Rights Reserved.                                                      
+######################################################################
+#
+# This program is Copyright 2000 by Wilson Snyder.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of either the GNU General Public License or the
+# Perl Artistic License, with the exception that it cannot be placed
+# on a CD-ROM or similar media for commercial distribution without the
+# prior approval of the author.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# If you do not have a copy of the GNU General Public License write to
+# the Free Software Foundation, Inc., 675 Mass Ave, Cambridge, 
+# MA 02139, USA.
+#                                                                           
+######################################################################
+#FIX
+#
+#VREGS_VARIABLE (R_FOO, VariableName32Bits);
+#VREGS_VARIABLE (R_FOO[bit:bit], VariableNameSomeBits);
+#VREGS_VARIABLE (R_FOO_FIELD, FieldVariableName);
+#
+#Connect the register field or bit range to the given variable.
+#This will provide a function to direct read & write the value of
+#the register, and a function to set it.  (Allow user bound check?)
+#
+#Standard functions
+#clock()
+#
+#check_config()
+#
+#Called at end of vregs function
+#
+#direct_write
+#direct_read
+
+require 5.005;
+use Getopt::Long;
+use IO::File;
+use Pod::Text;
+use strict;
+
+use FindBin qw($RealBin);
+use lib "$RealBin/lib";
+use lib "$RealBin/blib/lib";
+use lib "$RealBin/blib/arch";
+use lib "$RealBin/..";
+use SystemC::Netlist;
+
+use vars qw ($Debug $Opt_Makedeps $Opt_Lint $Exit_Status %Error_Unlink);
+
+#======================================================================
+$Opt_Lint = 1;
+
+#======================================================================
+# main
+
+$Debug = 0;
+my $opt_preproc = 0;
+my $opt_inline;
+my $opt_autos = 1;
+my @sp_files = ();
+if (! GetOptions (
+		  "help"	=> \&usage,
+		  "verbose"	=> \&verbose,
+		  "debug"	=> \&debug,
+		  "M!"		=> \$Opt_Makedeps,
+		 # "lint!"	=> \$Opt_Lint,
+		  "autos!"	=> \$opt_autos,
+		  "preproc!"	=> \$opt_preproc,
+		  "inline!"	=> \$opt_inline,
+		  "<>"		=> \&parameter,
+		  )) {
+    usage();
+}
+
+my $nl = new SystemC::Netlist ();
+
+foreach my $file (@sp_files) {
+  $nl->read_file (filename=>$file,
+		  strip_autos=>1);
+}
+
+$nl->link();
+$nl->autos();
+$nl->lint();
+our_rulecheck($nl);
+$nl->print() if $Debug;
+$nl->exit_if_error();
+
+ #use Data::Dumper; print Dumper (\%SystemC::Module::Modules);
+
+if ($opt_preproc) {
+    foreach my $fileref ($nl->files()) {
+	my $filename_c = $fileref->basename() . ".cpp";
+	my $filename_h = $fileref->basename() . ".h";
+	$fileref->write( filename=> $filename_c,
+			 as_implementation=>1, expand_autos=>1,
+			 keep_timestamp=>1,);
+	$fileref->write( filename=> $filename_h,
+			 as_interface=>1, expand_autos=>1,
+			 keep_timestamp=>1,);
+    }
+}
+if ($opt_inline) {
+    foreach my $fileref ($nl->files()) {
+	$fileref->write( filename=>$fileref->name(),
+			 expand_autos=>$opt_autos,
+			 keep_timestamp=>1,);
+    }
+}
+
+#----------------------------------------------------------------------
+
+sub usage {
+    print '$Id: sp_preproc,v 1.9 2001/03/31 19:59:15 wsnyder Exp $ ', "\n";
+    $SIG{__WARN__} = sub{};	#pod2text isn't clean.
+    pod2text($0);
+    exit (1);
+}
+
+sub verbose {
+    $SystemC::Netlist::Verbose = 1;
+}
+
+sub debug {
+    verbose();
+    $Debug = 1;
+}
+
+sub parameter {
+    my $param = shift;
+    if ($param =~ /\.sp$/) {
+	push @sp_files, $param;
+    } elsif ($param =~ /sp_preproc$/) {
+	# Ignore ourself in case user passed all dependancies including this program
+    } else {
+	die "%Error: Unknown parameter: $param\n";
+    }
+}
+ 
+#######################################################################
+
+sub our_rulecheck {
+    my $netlist = shift;
+    foreach my $modref ($netlist->modules) {
+	foreach my $sigref ($modref->nets_sorted) {
+	    if (!$sigref->comment || $sigref->comment eq "") {
+		#$sigref->warn ($sigref, "Missing documentation on ",$sigref->name,"\n");
+	    }
+	}
+	foreach my $sigref ($modref->ports_sorted) {
+	    if (!$sigref->comment || $sigref->comment eq "") {
+		#$sigref->warn ($sigref, "Missing documentation on ",$sigref->name,"\n");
+	    }
+	}
+    }
+}
+
+#######################################################################
+__END__
+
+=pod
+
+=head1 NAME
+
+sp_preproc - SystemPerl Preprocessor
+
+=head1 SYNOPSIS
+
+C<sp_preproc> I<file.sp>
+
+=head1 DESCRIPTION
+
+sp_preproc takes a .sp (systemperl) file and creates the SystemC header
+and C files.
+
+It is generally only executed from the standard build scripts.
+
+=head1 ARGUMENTS
+
+=over 4
+
+=item --help
+
+Displays this message and program version and exits.
+
+=item --inline
+
+Edit the existing source code "inline".  Similar to the Verilog-mode AUTOs.
+Use --inline --noautos to remove the expanded automatics.
+
+=item --preproc
+
+Preprocess the code, writing to separate header and cpp files.
+
+=item --noautos
+
+With --inline, remove any expanded automatics.
+
+=item --verbose
+
+Shows which files are being written, or are the same.
+
+=item --M
+
+Makes the dependancy listing (similar to I<cpp -M>).
+
+=back
+
+=head1 LANGUAGE
+
+See C<SystemPerl> for the language specification.
+
+=head1 SEE ALSO
+
+C<SystemPerl>
+
+=head1 AUTHORS
+
+Wilson Snyder <wsnyder@wsnyder.org>
+
+=cut
+
+######################################################################
+### Local Variables:
+### compile-command: "./sp_preproc "
+### End:

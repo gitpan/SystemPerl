@@ -1,0 +1,207 @@
+#$Id: SystemPerl.pod,v 1.2 2001/03/31 20:23:47 wsnyder Exp $
+######################################################################
+#
+# This program is Copyright 2001 by Wilson Snyder.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of either the GNU General Public License or the
+# Perl Artistic License, with the exception that it cannot be placed
+# on a CD-ROM or similar media for commercial distribution without the
+# prior approval of the author.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# If you do not have a copy of the GNU General Public License write to
+# the Free Software Foundation, Inc., 675 Mass Ave, Cambridge, 
+# MA 02139, USA.
+#                                                                           
+######################################################################
+
+=pod
+
+=head1 NAME
+
+SystemPerl - SystemPerl Lanugage Extension to SystemC
+
+=head1 DESCRIPTION
+
+SystemPerl is a version of the SystemC language.  It is designed to expand
+text so that needless repitition in the language is minimized.  By using
+C<sp_preproc>, SystemPerl files can be expanded into C++ files at compile
+time, or expanded in place to make them valid stand-alone SystemC files.
+
+The concept of SystemPerl is based upon the AUTOS in the C<verilog-mode>
+package for Emacs, by the same author.
+
+=head1 LANGUAGE
+
+=over 4
+
+=item #sp
+
+#sp directives are recognized by SystemPerl to split up files and control
+preprocessing.  Use of any #sp's forces use of SystemPerl preprocessing, and
+removes full SystemC compatibility.
+
+=item /*AUTOS*/
+
+AUTOmatics provide a way of expanding interconnections, while potentially
+retaining fully compatible SystemC code.  The preprocessor can edit the
+source code file directly, resulting in the source code having the expanded
+automatics.  
+
+Code with expanded AUTOs are fully valid SystemC code, and can be sent to
+anyone who does not even have system perl.  Anyone with SystemPerl has the
+benefit of being able to automatically regenerate them, and saves coding
+time.
+
+=back
+
+=head1 LANGUAGE REQUIREMENTS
+
+SystemPerl requires the following coding conventions.  These tokens are not
+changed in any way, but are simply required for SystemPerl to be able to
+derrive required information from the source code.
+
+=over 4
+
+=item SP_CELL (I<instname>, I<refname>)
+
+SP_CELL instantiates the given module named refname as a instantiation
+called instname.  The instname is also passed as a parameter to refname as
+a string.
+
+=item SC_MODULE (I<modulename>)
+
+Though a standard optional SystemC construct, SystemC requires use of the
+SC_MODULE macro when defining a module class.
+
+=item SP_PIN (I<instname>, I<portname>, I<netname>)
+
+SP_PIN declares a connection of a instantation's port to the specified net.
+
+=back
+
+=head1 EXPANSIONS
+
+SystemPerl expands the following special tokens.
+
+=over 4
+
+=item __MODULE__
+
+__MODULE__ is predefined to the name of the module, from the basename of
+the filename.  This allows files to be more easily replicated, and to avoid
+obscure errors when the filename does not match the module name.
+
+For example:
+
+SC_MODULE (__MODULE__) {
+  ...
+
+=item /*AUTOINST*/
+
+AUTOINST connects any unreferenced ports for the current SP_CELL to signals
+named the same as the port name.
+
+For example:
+
+SC_MODULE(submod) {
+    sc_in_clk	clk;
+    ...
+
+SC_MODULE(mod) {
+    SC_CTOR(mod) {
+	SP_CELL (sub, submod);
+	  /*AUTOINST*/
+
+Becomes:
+
+SC_MODULE(mod) {
+    SC_CTOR(mod) {
+	SP_CELL (sub, submod);
+	  // Beginning of SystemPerl automatic instantiation pins
+	  SP_PIN (sub, clk,	clk);
+	  // End of SystemPerl automatic instantiation pins
+
+=item /*AUTOSUBCELLS*/
+
+AUTOSUBCELLS declares the submodules instantiated in SP_CELL declarations.
+
+For example:
+
+SC_MODULE(mod) {
+    /*AUTOSUBCELLS*/
+    SC_CTOR(mod) {
+	SP_CELL (sub, submod);
+	  SP_PIN (sub, a,	a);
+
+Becomes:
+
+SC_MODULE(mod) {
+    /*AUTOSUBCELLS*/
+    // Beginning of SystemPerl automatic subcells
+    submod            *sub;
+    // End of SystemPerl automatic subcells
+
+    SC_CTOR(mod) {
+	SP_CELL (sub, submod);
+	  SP_PIN (sub, a,	a);
+
+=item /*AUTOSIGNAL*/
+
+AUTOSIGNAL declares any signals used in SP_PIN connections that are not
+declared elsewhere.
+
+For example:
+
+SC_MODULE(mod) {
+    /*AUTOSIGNAL*/
+    SC_CTOR(mod) {
+	SP_CELL (sub, submod);
+	  SP_PIN (sub, a,	a);
+
+Becomes:
+
+SC_MODULE(mod) {
+    /*AUTOSUBCELLS*/
+    // Beginning of SystemPerl automatic signals
+    sc_signal<bool>             a;       // For submod
+    // End of SystemPerl automatic signals
+
+    SC_CTOR(mod) {
+	SP_CELL (sub, submod);
+	  SP_PIN (sub, a,	a);
+
+=item #sp interface
+
+Interface specifies the following code should be moved into a the header
+file.  This allows a common .sp file to contain both .h and .cpp
+information.  SystemPerl automatically adds include guards in the header,
+to protect against multiple inclusion.
+
+=item #sp implementation
+
+The Interface specifies the following code should be part of the cpp file.
+This allows a common .sp file to contain both .h and .cpp information.
+
+=back
+
+=head1 SEE ALSO
+
+C<sp_preproc>
+C<SystemC::Netlist>
+C<SystemC::Parser>
+
+=head1 DISTRIBUTION
+
+The latest version is available from CPAN and from C<http://veripool.com/>.
+
+=head1 AUTHORS
+
+Wilson Snyder <wsnyder@wsnyder.org>
+
+=cut

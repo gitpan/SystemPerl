@@ -1,0 +1,47 @@
+# $Id: Makefile_obj,v 1.4 2001/04/03 16:39:58 wsnyder Exp $ -*- Makefile -*-
+# DESCRIPTION: SystemPerl: Example makefile
+#
+# This is executed in the "test_dir", not in this directory
+#
+
+# Sigh... SystemC should provide a program to determine this
+TARGET_ARCH = linux
+SYSTEMPERL = ..
+
+CC = g++
+INCDIR += -I. -I.. -I$(SYSTEMC)/include 
+LIBDIR += -L. -L.. -L$(SYSTEMC)/lib-$(TARGET_ARCH)
+VPATH += ../example $(SYSTEMPERL)
+MAKEFILES += ../example/Makefile_obj
+LIBS   =  -lsystemc -lnumeric_bit -lqt -lm $(EXTRA_LIBS)
+
+SP_SP = $(wildcard ../example/*.sp)
+
+# List Objects in bottom-up order, that way lower modules get errors first
+OBJS = $(SP_OBJS) ex_main.o 
+
+default: build
+
+######################################################################
+
+SP_SP_BASE := $(basename $(notdir $(SP_SP)))
+SP_H   := $(addsuffix .h,$(SP_SP_BASE))
+SP_CPP := $(addsuffix .cpp,$(SP_SP_BASE))
+SP_OBJS   := $(addsuffix .o,$(SP_SP_BASE))
+
+build:	preproc ex_main
+
+# Setup as a "always" rule; we don't check for enough sp_preproc dependancies
+# In a user example where you were'nt editing sp_preproc, you could have:
+#preproc $(SP_CPP) $(SP_H): $(SP_SP)
+preproc $(SP_CPP) $(SP_H):
+	../sp_preproc --preproc $(SP_SP)
+
+ex_main:	$(OBJS)
+	$(CC) $(CFLAGS) $(INCDIR) $(LIBDIR) -o $@ $^ $(LIBS) 2>&1 | c++filt
+
+.cpp.o:
+	$(CC) $(CFLAGS) $(INCDIR) -c $<
+
+run:	ex_main
+	./ex_main
