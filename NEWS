@@ -5,9 +5,25 @@ The contributors that suggested a given feature is shown in [].
 	
 This uses outline mode in Emacs.  See C-h m [M-x describe-mode].
 
+* Changes in SystemC 1.000 11/16/2001
+
+**	Moved Netlist guts into Verilog package,
+	made SystemC a derrived class.  This allows mixed-mode netlists.
+
+**	$SYSTEMPERL should now point to the root of this package,
+	not the root/src directory.
+
+***	Include header guards in .cpp file so that multiple CONCAT
+	inclusions with sp_includer work OK.
+
+***	Allow tracing of sc_bv<>'s
+
+****	Addition of experimental sclite library
+	for testing package without SystemC installed.
+
 * Changes in SystemC 0.430 9/26/2001
 
-**	Added #sp include directive.
+**	Added #sp include directive.  [Experimental, some crashes]
 
 **	AUTOMETHODS is the new name for AUTODECLS
 	AUTOMETHODS will create a SC_CTOR(__MODULE__); if there is not
@@ -95,7 +111,7 @@ This uses outline mode in Emacs.  See C-h m [M-x describe-mode].
 
 
 ----------------------------------------------------------------------
-$Id: NEWS,v 1.30 2001/09/26 14:55:17 wsnyder Exp $
+$Id: NEWS,v 1.37 2001/11/16 15:01:38 wsnyder Exp $
 ----------------------------------------------------------------------
 Copyright information:
 

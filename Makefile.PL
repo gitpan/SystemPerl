@@ -1,4 +1,4 @@
-# $Id: Makefile.PL,v 1.17 2001/08/23 21:21:17 wsnyder Exp $
+# $Id: Makefile.PL,v 1.20 2001/11/16 15:01:38 wsnyder Exp $
 # DESCRIPTION: Perl ExtUtils: Type 'perl Makefile.PL' to create a Makefile for this package
 
 require 5.005;
@@ -33,6 +33,10 @@ clean::
 ";
 }
 
+local $! = undef;
+`flex --version`; ($?==0) or die "\n%Error: 'flex' must be installed to build\n";
+`bison --version`; ($?==0) or die "\n%Error: 'bison' must be installed to build\n";
+
 WriteMakefile(
 	      DISTNAME  => 'SystemPerl',
 	      NAME      => 'SystemC::Netlist',
@@ -40,6 +44,7 @@ WriteMakefile(
 	      ABSTRACT  => 'SystemC Netlist Utilities and Parsing',
 	      VERSION_FROM  => 'Netlist.pm',
 	      PREREQ_PM => {'Verilog::Getopt' => 1.13,
+			    'Verilog::Netlist' => 2.010,
 			},
 	      EXE_FILES => [qw( sp_preproc sp_includer sp_makecheck )],
 	      'clean'	=> {FILES => qw ( ),},

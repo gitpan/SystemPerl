@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Id: Netlist.pm,v 1.25 2001/08/23 23:08:00 wsnyder Exp $
+# $Id: Netlist.pm,v 1.27 2001/11/16 15:01:38 wsnyder Exp $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -25,14 +25,15 @@ package SystemC::Netlist;
 use Carp;
 use IO::File;
 
+use Verilog::Netlist;
 use SystemC::Netlist::Module;
 use SystemC::Netlist::File;
-use SystemC::Netlist::Subclass;
-@ISA = qw(SystemC::Netlist::Subclass);
+use Verilog::Netlist::Subclass;
+@ISA = qw(Verilog::Netlist);
 use strict;
 use vars qw($Debug $Verbose $VERSION);
 
-$VERSION = '0.430';
+$VERSION = '1.000';
 
 ######################################################################
 #### Error Handling
@@ -46,11 +47,9 @@ sub lineno { return ''; }
 
 sub new {
     my $class = shift;
-    my $self = {_modules => {},
-		_files => {},
-		options => undef,	# Usually pointer to Verilog::Getopt
-		allow_output_tracing => 0,
-		@_};
+    my $self = $class->SUPER::new
+	(sp_allow_output_tracing => 0,
+	 @_);
     bless $self, $class;
     return $self;
 }
@@ -58,20 +57,6 @@ sub new {
 ######################################################################
 #### Functions
 
-sub link {
-    my $self = shift;
-    foreach my $modref ($self->modules) {
-	next if $modref->is_libcell();
-	$modref->link();
-    }
-}
-sub lint {
-    my $self = shift;
-    foreach my $modref ($self->modules_sorted) {
-	next if $modref->is_libcell();
-	$modref->lint();
-    }
-}
 sub autos {
     my $self = shift;
     foreach my $modref ($self->modules) {
@@ -85,12 +70,6 @@ sub autos {
     }
     $self->link();
 }
-sub dump {
-    my $self = shift;
-    foreach my $modref ($self->modules_sorted) {
-	$modref->dump();
-    }
-}
 
 ######################################################################
 #### Module access
@@ -102,56 +81,10 @@ sub new_module {
     # as not allowed to override Class::Struct's new()
     my $modref = new SystemC::Netlist::Module
 	(netlist=>$self,
+	 is_top=>1,
 	 @_);
     $self->{_modules}{$modref->name} = $modref;
     return $modref;
-}
-
-sub defvalue_nowarn {
-    my $self = shift;
-    my $sym = shift;
-    # Look up the value of a define, letting the user pick the accessor class
-    if ($self->{options}) {
-	return $self->{options}->defvalue_nowarn($sym);
-    }
-    return undef;
-}
-
-sub remove_defines {
-    my $self = shift;
-    my $sym = shift;
-    my $val = "x";
-    while (defined $val) {
-	$val = $self->defvalue_nowarn($sym);  #Undef if not found
-	$sym = $val if defined $val;
-    }
-    return $sym;
-}
-
-sub find_module {
-    my $self = shift;
-    my $search = shift;
-    # Return module maching name
-    my $mod = $self->{_modules}{$search};
-    return $mod if $mod;
-    # Allow FOO_CELL to be a #define to choose what instantiation is really used
-    my $rsearch = $self->remove_defines($search);
-    if ($rsearch ne $search) {
-	return $self->find_module($rsearch);
-    }
-    return undef;
-}
-    
-sub modules {
-    my $self = shift;
-    # Return all modules
-    return (values %{$self->{_modules}});
-}
-
-sub modules_sorted {
-    my $self = shift;
-    # Return all modules
-    return (sort {$a->name() cmp $b->name()} (values %{$self->{_modules}}));
 }
 
 ######################################################################
@@ -167,21 +100,8 @@ sub new_file {
 	 @_);
     defined $fileref->name or carp "%Error: No name=> specified, stopped";
     $self->{_files}{$fileref->name} = $fileref;
-    $fileref->basename (SystemC::Netlist::Module::modulename_from_filename($fileref->name));
+    $fileref->basename (Verilog::Netlist::Module::modulename_from_filename($fileref->name));
     return $fileref;
-}
-
-sub find_file {
-    my $self = shift;
-    my $search = shift;
-    # Return file maching name
-    return $self->{_files}{$search};
-}
-    
-sub files {
-    my $self = shift; ref $self or die;
-    # Return all files
-    return (sort {$a->name() cmp $b->name()} (values %{$self->{_files}}));
 }
 
 sub read_file {
@@ -189,37 +109,6 @@ sub read_file {
     my $fileref = SystemC::Netlist::File::read
 	(netlist=>$self,
 	 @_);
-}
-
-######################################################################
-#### Dependancies
-
-sub dependancy_in {
-    my $self = shift;
-    my $filename = shift;
-    $self->{_depend_in}{$filename} = 1;
-}
-sub dependancy_out {
-    my $self = shift;
-    my $filename = shift;
-    $self->{_depend_out}{$filename} = 1;
-}
-
-sub dependancy_write {
-    my $self = shift;
-    my $filename = shift;
-
-    my $fh = IO::File->new(">$filename") or die "%Error: $! $filename\n";
-    print $fh "$filename";
-    foreach my $dout (sort (keys %{$self->{_depend_out}})) {
-	print $fh " $dout";
-    }
-    print $fh " :";
-    foreach my $din (sort (keys %{$self->{_depend_in}})) {
-	print $fh " $din";
-    }
-    print $fh "\n";
-    $fh->close();
 }
 
 ######################################################################
@@ -237,33 +126,17 @@ SystemC::Netlist - SystemC Netlist
 
   use SystemC::Netlist;
 
-    my $nl = new SystemC::Netlist ();
-    foreach my $file ('testnetlist.sp') {
-	$nl->read_file (filename=>$file,
-			strip_autos=>1);
-    }
-    $nl->link();
+  # See Verilog::Netlist for base functions
+
     $nl->autos();
-    $nl->lint();
     $nl->exit_if_error();
 
-    foreach my $mod ($nl->modules_sorted) {
-	show_hier ($mod, "  ");
-    }
-
-    sub show_hier {
-	my $mod = shift;
-	my $indent = shift;
-	print $indent,"Module ",$mod->name,"\n";
-	foreach my $cell ($mod->cells_sorted) {
-	    show_hier ($cell->submod, $indent."  ".$cell->name."  ");
-	}
-    }
 
 =head1 DESCRIPTION
 
 SystemC::Netlist contains interconnect information about a whole design
-database.
+database.  The classes of SystemC::Netlist parallel those of
+Verilog::Netlist, which should be seen for all documentaion.
 
 The database is composed of files, which contain the text read from each
 file.
@@ -285,6 +158,8 @@ SystemC::Netlist::Pin (s) that interconnect that cell.
 
 =head1 FUNCTIONS
 
+See Verilog::Netlist for all common functions.
+
 =over 4
 
 =item $netlist->autos
@@ -292,84 +167,17 @@ SystemC::Netlist::Pin (s) that interconnect that cell.
 Updates /*AUTO*/ comments in the internal database.  Normally called before
 lint.
 
-=item $netlist->error
-
-Prints an error in a standard way, and increments $Errors.
-
-=item $netlist->lint
-
-Error checks the entire netlist structure.
-
-=item $netlist->link
-
-Resolves references between the different modules.
-
-=item $netlist->dump
-
-Prints debugging information for the entire netlist structure.
-
-=item $netlist->warn
-
-Prints a warning in a standard way, and increments $Warnings.
-
-=back
-
-=head1 MODULE FUNCTIONS
-
-=over 4
-
-=item $netlist->find_module($name)
-
-Returns SystemC::Netlist::Module matching given name.
-
-=item $netlist->modules_sorted
-
-Returns list of all SystemC::Netlist::Module.
-
-=item $netlist->new_module
-
-Creates a new SystemC::Netlist::Module.
-
-=back
-
-=head1 FILE FUNCTIONS
-
-=over 4
-
-=item $netlist->find_file($name)
-
-Returns SystemC::Netlist::File matching given name.
-
-=item $netlist->read_file( filename=>$name)
-
-Reads the given SystemC file, and returns a SystemC::Netlist::File
-reference.
-
-=item $netlist->files
-
-Returns list of all files.
-
-Generally called as $netlist->read_file.  Pass a hash of parameters.  Reads
-the filename=> parameter, parsing all instantiations, ports, and signals,
-and creating SystemC::Netlist::Module structures.  The optional
-preserve_autos=> parameter prevents default ripping of /*AUTOS*/ out for
-later recomputation.
-
-=item $netlist->dependancy_write($name)
-
-Writes a dependancy file for make, listing all input and output files.
-
 =back
 
 =head1 SEE ALSO
 
-L<SystemC::Cell>,
-L<SystemC::File>,
-L<SystemC::Module>,
-L<SystemC::Net>,
-L<SystemC::Pin>,
-L<SystemC::Port>,
-L<SystemC::Subclass>
+L<SystemC::Netlist::Cell>,
+L<SystemC::Netlist::File>,
+L<SystemC::Netlist::Module>,
+L<SystemC::Netlist::Net>,
+L<SystemC::Netlist::Pin>,
+L<SystemC::Netlist::Port>,
+L<Verilog::Netlist::Subclass>
 
 =head1 DISTRIBUTION
 

@@ -1,4 +1,4 @@
-// $Id: ExBench.sp,v 1.4 2001/09/26 14:51:01 wsnyder Exp $
+// $Id: ExBench.sp,v 1.7 2001/11/14 03:21:36 wsnyder Exp $
 // DESCRIPTION: SystemPerl: Example main()
 
 #sp interface
@@ -12,26 +12,30 @@ SC_MODULE (__MODULE__) {
 
     sc_in_clk clk;
 
+  private:
     sc_signal<bool> in;
     sc_signal<bool> out;
     sc_signal<uint32_t> out_array[ARRAYSIZE];
+    sc_signal<sc_bv<55> > m_bv55;
 
     // These types declare a signal and also mark it for tracing.
-    SP_TRACED uint32_t m_cyclenum;
-    SP_TRACED uint32_t m_array[ARRAYSIZE];
+    SP_TRACED uint32_t  m_cyclenum;
+    SP_TRACED uint32_t  m_array[ARRAYSIZE];
     VL_SIG(m_unusedok1,  5,1);		// From Verilator: reg [5:1]  m_unusedok1
     VL_SIGW(m_unusedok2, 35,1,2);	// From Verilator: reg [35:1] m_unusedok2
     VL_SIGW(m_unusedok3[10], 35,1,2);	// From Verilator: reg [35:1] m_unusedok3[10]
 
     /*AUTOSUBCELLS*/
     /*AUTOSIGNAL*/
-    /*AUTOMETHODS*/
+    void clock();
 
-    void clock (void);
+  public:
+    /*AUTOMETHODS*/
     void configure();
 };
 /*AUTOINTERFACE*/
 
+//######################################################################
 #sp implementation
 /*AUTOSUBCELL_INCLUDE*/
 
@@ -46,6 +50,9 @@ SP_CTOR_IMP(__MODULE__)
     SP_PIN (mod,clk,clk);
 
     m_cyclenum = 0;
+
+    //m_bv55 = "101_1100_1011_1010_1001_1000__0111_0110_0101_0100__0011_0010_0001_0000";
+    m_bv55 = "1011100101110101001100001110110010101000011001000010000";
 
     for (int i=0; i<ARRAYSIZE; i++) m_array[i] = i;
 }

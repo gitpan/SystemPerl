@@ -28,7 +28,7 @@ sub text {
     my $self = shift;
     #print $::Fdump ("Parser.pm::TEXT: ",$self->filename,":",$self->lineno,
     #	   ": '",join("','", @_),"'\n");
-    $self->writetext($_[0]);
+    $self->writetext($_[0], 0);
 }
 
 sub include {
@@ -51,9 +51,11 @@ sub enum_value {_common ('ENUM_VALUE',@_); }
 sub writetext {
     my $self = shift;
     my $text = shift;
+    my $add_lines = shift;
+
     my $fn = $self->filename;
     my $ln = $self->lineno();
-    if ($self->{lastline} != $ln) {
+    if ($self->{lastline} != $ln && $add_lines) {
 	if ($self->{lastfile} ne $fn) {
 	    print $::Fh "#line $ln \"$fn\"\n";
 	} else {

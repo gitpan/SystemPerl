@@ -1,4 +1,4 @@
-// $Id: ExModNull.sp,v 1.4 2001/09/26 14:51:02 wsnyder Exp $
+// $Id: ExModNull.sp,v 1.5 2001/10/05 15:46:41 wsnyder Exp $
 // DESCRIPTION: SystemPerl: Example "null" module
 
 #sp interface
@@ -18,6 +18,7 @@ SC_MODULE (__MODULE__) {
     /*AUTOMETHODS*/
 };
 
+//######################################################################
 #sp implementation
 /*AUTOSUBCELL_INCLUDE*/
 

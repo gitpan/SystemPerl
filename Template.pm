@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Id: Template.pm,v 1.6 2001/06/27 13:15:57 wsnyder Exp $
+# $Id: Template.pm,v 1.8 2001/11/16 15:01:38 wsnyder Exp $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -27,13 +27,13 @@ use IO::File;
 use File::Basename;
 use Carp;
 
-use SystemC::Netlist::Subclass;
+use Verilog::Netlist::Subclass;
 @ISA = qw(SystemC::Template::Struct
-	SystemC::Netlist::Subclass);
+	Verilog::Netlist::Subclass);
 use strict;
 use vars qw ($Debug $Default_Self $VERSION);
 
-$VERSION = '0.430';
+$VERSION = '1.000';
 
 structs('_new_base',
 	'SystemC::Template::Struct'

@@ -1,4 +1,4 @@
-// $Id: ExMain.cpp,v 1.3 2001/09/26 14:51:01 wsnyder Exp $
+// $Id: ExMain.cpp,v 1.4 2001/11/11 19:59:22 wsnyder Exp $
 // DESCRIPTION: SystemPerl: Example main()
 
 #include <systemperl.h>
@@ -23,7 +23,9 @@ int sc_main (int argc, char *argv[])
 
     // SystemC traces are flawed, you can't even trace ports
     sc_trace_file *tf = sc_create_vcd_trace_file("sim_sc" );
+#ifndef _SC_LITE_
     sc_trace(tf, clk, "clk");
+#endif
 
     // SystemPerl traces
     SpTraceFile* stp = new SpTraceFile;

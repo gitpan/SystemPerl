@@ -1,5 +1,5 @@
 #/* SystemC.xs -- SystemC Booter  -*- Mode: C -*-
-#* $Id: Parser.xs,v 1.13 2001/09/26 14:51:01 wsnyder Exp $
+#* $Id: Parser.xs,v 1.14 2001/09/27 17:41:34 wsnyder Exp $
 #*********************************************************************
 #*
 #* Vl SystemC perl utility library
@@ -148,8 +148,6 @@ void scparse_init (SV *CLASS, const char *filename, int strip)
     ScParserState.Errors = 0;
     ScParserLex.stripAutos = strip;
 
-    scparse_set_filename(filename,1);
-
     sclextext = "";  /* In case we get a error in the open */
 }
 
@@ -220,9 +218,7 @@ CODE:
     in_parser = 1;
 
     scparse_init (CLASS, filename, strip_autos);
-    sclexin = fopen (filename, "r");
-    if (!sclexin) {
-	/* Presume user does -r before calling us */
+    if (!sclex_open (filename)) {
 	in_parser = 0;
 	croak ("SystemC::Parser::read() file not found");
     }

@@ -1,4 +1,4 @@
-// $Id: ExModSub.sp,v 1.2 2001/08/31 14:56:15 wsnyder Exp $
+// $Id: ExModSub.sp,v 1.3 2001/10/05 15:46:41 wsnyder Exp $
 // DESCRIPTION: SystemPerl: Example source module
 
 #sp interface
@@ -10,13 +10,16 @@ SC_MODULE (__MODULE__) {
     sc_in<bool>		in;
     sc_out<bool>	out;
 
+  private:
     /*AUTOSUBCELLS*/
     /*AUTOSIGNAL*/
-    /*AUTOMETHODS*/
-
     void clock (void);
+
+  public:
+    /*AUTOMETHODS*/
 };
 
+//######################################################################
 #sp implementation
 /*AUTOSUBCELL_INCLUDE*/
 

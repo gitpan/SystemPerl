@@ -1,4 +1,4 @@
-// $Id: SpTraceVcd.cpp,v 1.5 2001/07/19 13:33:34 wsnyder Exp $ -*- SystemC -*-
+// $Id: SpTraceVcd.cpp,v 1.8 2001/11/11 19:55:59 wsnyder Exp $ -*- SystemC -*-
 //=============================================================================
 //
 // THIS MODULE IS PUBLICLY LICENSED
@@ -77,7 +77,7 @@ void SpTraceVcd::open (const char* filename)
     enddefinitions ();
 }
 
-void SpTraceVcd::close (void)
+void SpTraceVcd::close ()
 {
     if (!m_isOpen) return;
 
@@ -95,7 +95,7 @@ void SpTraceVcd::printIndent (int level_change) {
 //=============================================================================
 // Definitions
 
-void SpTraceVcd::definitions (void)
+void SpTraceVcd::definitions ()
 {
     assert (m_modDepth==0);
     printIndent(1);
@@ -131,7 +131,11 @@ void SpTraceVcd::module (string name)
     while (*np) {
 	printIndent(1);
 	m_fp << "$scope module ";
-	for (; *np && *np!='.'; np++) m_fp.put(*np);
+	for (; *np && *np!='.'; np++) {
+	    if (*np=='[') m_fp.put('(');
+	    else if (*np==']') m_fp.put(')');
+	    else m_fp.put(*np);
+	}
 	if (*np=='.') np++;
 	m_fp << " $end\n";
     }
@@ -139,7 +143,7 @@ void SpTraceVcd::module (string name)
     m_modName = name;
 }
 
-//void SpTraceVcd::endmodule (void)
+//void SpTraceVcd::endmodule ()
 //{
 //}
 
@@ -188,7 +192,7 @@ void SpTraceVcd::declare (uint32_t code, const char* name,
     m_nextCode = max(nextCode(), code+1+int((msb-lsb+1)/32));
 }
 
-void SpTraceVcd::enddefinitions (void)
+void SpTraceVcd::enddefinitions ()
 {
     module("");
 
@@ -256,14 +260,14 @@ void SpTraceVcd::dumpPrep (double timestamp)
     m_fp <<"#"<<((int)(timestamp))<<"\n";
 }
 
-void SpTraceVcd::dumpDone (void)
+void SpTraceVcd::dumpDone ()
 {
 }
 
 //=============================================================================
 // SpTraceVcd
 
-const char* genId (void)
+const char* genId ()
 {
     static char vcd_var_id_number[4] = {1,0,0,0};   /* one number for each ascii character */
     static char pistr[5];
@@ -290,11 +294,8 @@ const char* genId (void)
 //======================================================================
 // Helper
 #ifndef SPTRACEVCD_TEST
+void SpTraceFile::write_comment (const sc_string &) {}
 void SpTraceFile::trace (const bool &, const sc_string &) {}
-void SpTraceFile::trace (const sc_bit &, const sc_string &) {}
-void SpTraceFile::trace (const sc_logic &, const sc_string &) {}
-void SpTraceFile::trace (const sc_bool_vector &, const sc_string &) {}
-void SpTraceFile::trace (const sc_logic_vector &, const sc_string &) {}
 void SpTraceFile::trace (const unsigned char &, const sc_string &, int) {}
 void SpTraceFile::trace (const short unsigned int &, const sc_string &, int) {}
 void SpTraceFile::trace (const unsigned int &, const sc_string &, int) {}
@@ -305,6 +306,12 @@ void SpTraceFile::trace (const int &, const sc_string &, int) {}
 void SpTraceFile::trace (const long int &, const sc_string &, int) {}
 void SpTraceFile::trace (const float &, const sc_string &) {}
 void SpTraceFile::trace (const double &, const sc_string &) {}
+void SpTraceFile::trace (const unsigned int &, const sc_string &, const char **) {}
+#ifndef _SC_LITE_
+void SpTraceFile::trace (const sc_bit &, const sc_string &) {}
+void SpTraceFile::trace (const sc_logic &, const sc_string &) {}
+void SpTraceFile::trace (const sc_bool_vector &, const sc_string &) {}
+void SpTraceFile::trace (const sc_logic_vector &, const sc_string &) {}
 void SpTraceFile::trace (const sc_signal_bool_vector &, const sc_string &) {}
 void SpTraceFile::trace (const sc_signal_logic_vector &, const sc_string &) {}
 void SpTraceFile::trace (const sc_uint_base &, const sc_string &) {}
@@ -315,8 +322,7 @@ void SpTraceFile::trace (const sc_signal_resolved &, const sc_string &) {}
 void SpTraceFile::trace (const sc_signal_resolved_vector &, const sc_string &) {}
 void SpTraceFile::trace (const sc_bv_ns::sc_bv_base &, const sc_string &) {}
 void SpTraceFile::trace (const sc_bv_ns::sc_lv_base &, const sc_string &) {}
-void SpTraceFile::trace (const unsigned int &, const sc_string &, const char **) {}
-void SpTraceFile::write_comment (const sc_string &) {}
+#endif
 #endif
 
 //======================================================================

@@ -10,7 +10,6 @@ Netlist/Module.pm
 Netlist/Net.pm
 Netlist/Pin.pm
 Netlist/Port.pm
-Netlist/Subclass.pm
 Parser/Makefile.PL
 Parser/Parser.pm
 Parser/Parser.xs
@@ -30,6 +29,10 @@ example/ExModNull.sp
 example/ExModSub.sp
 example/Makefile_obj
 readme.texi
+sclite/include/sc_lite.h
+sclite/include/systemc.h
+sclite/src/empty.cpp
+sclite/src/sc_lite.cpp
 sp_includer
 sp_makecheck
 sp_preproc
@@ -50,4 +53,6 @@ t/50_spp_inline.t
 t/60_spp_pre.t
 t/70_trace.t
 t/90_gcc.t
+t/95_scl.t
+t/9x_common_build.pl
 t/test_utils.pl

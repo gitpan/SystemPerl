@@ -1,5 +1,5 @@
 %{
-/* $Id: scgrammer.y,v 1.30 2001/08/29 16:59:16 gwaters Exp $
+/* $Id: scgrammer.y,v 1.31 2001/09/27 15:38:32 wsnyder Exp $
  ******************************************************************************
  * DESCRIPTION: SystemC bison parser
  *
@@ -52,14 +52,17 @@ char *scstrjoin (char *a, char *b)
 
 int scgrammerlex() {
     int toke;
+    sclex_include_switch ();
     toke = sclexlex();
     if (toke != SP) {
 	scparser_PrefixCat(sclextext,sclexleng);
     }
-    /*
-      printf ("ln%d: GOT %d: '%s'\n", ScParserLex.lineno, toke,
-      DENULL(sclextext));
-    */
+#ifdef FLEX_DEBUG
+    if (sclex_flex_debug) {
+	fprintf(stderr,"ln%d: GOT %d: '%s'\n", ScParserLex.lineno, toke,
+		DENULL(sclextext));
+    }
+#endif
     return (toke);
 };
 

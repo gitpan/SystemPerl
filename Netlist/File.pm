@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Id: File.pm,v 1.65 2001/09/26 14:51:01 wsnyder Exp $
+# $Id: File.pm,v 1.71 2001/11/16 15:01:41 wsnyder Exp $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -27,10 +27,10 @@ use Carp;
 
 use SystemC::Netlist;
 use SystemC::Template;
-use SystemC::Netlist::Subclass;
+use Verilog::Netlist::Subclass;
 @ISA = qw(SystemC::Netlist::File::Struct
-	SystemC::Netlist::Subclass);
-$VERSION = '0.430';
+	Verilog::Netlist::Subclass);
+$VERSION = '1.000';
 use strict;
 
 structs('new',
@@ -73,7 +73,7 @@ sub resolve_filename {
 	$from->error("Cannot open $filename") if $from;
 	die "%Error: Cannot open $filename\n";
     }
-    $self->{netlist}->dependancy_in ($filename);
+    $self->{netlist}->dependency_in ($filename);
     return $filename;
 }
 
@@ -194,7 +194,7 @@ sub auto {
 	my $prefix = $1; my $modname = $2; my $manual = $3;
 	$modname = $self->{fileref}->basename if $modname eq "__MODULE__";
 	my $mod = $self->{netlist}->find_module ($modname);
-	$mod or $self->warn ("Declaration for module not found: $modname\n");
+	$mod or $self->error ("Declaration for module not found: $modname\n");
 	$mod->_autotrace(1);
 	$mod->_autotrace('manual') if $manual =~ /manual/;
 	$mod->_autotrace('recurse') if $manual =~ /recurse/;
@@ -206,11 +206,11 @@ sub auto {
 	my $attrs = $2 . ",";
 	foreach my $attr (split (",", $attrs)) {
 	    if ($attr eq "verilated") {
-		$modref or $self->warn ("Attribute outside of module declaration\n");
+		$modref or $self->error ("Attribute outside of module declaration\n");
 		#print "Lesswarn ",$modref->name(),"\n";
 		$modref->lesswarn(1);
 	    } else {
-		$self->warn ("Unknown attribute $attr\n");
+		$self->error ("Unknown attribute $attr\n");
 	    }
 	}
     }
@@ -257,7 +257,10 @@ sub cell_decl {
     if (!$modref) {
 	return $self->error ("SP_CELL_DECL outside of module definition", $instname);
     }
-    (my $instnamebase = $instname) =~ s/\[.*//;	# Strip any arrays
+    my $instnamebase = $instname;
+    if ($instnamebase =~ s/\[(.*)\]//) {	# Strip any arrays
+	$modref->_cellarray($instnamebase,$1);
+    }
     $modref->_celldecls($instnamebase,$submodname);
 }
 
@@ -317,8 +320,6 @@ sub signal {
 	     filename=>$self->filename, lineno=>$self->lineno,
 	     simple_type=>($inout eq "sp_traced"), type=>$type, array=>$array,
 	     comment=>undef, msb=>$msb, lsb=>$lsb,
-	     # we don't detect variable usage, so presume ok if declared
-	     _used_input=>1, _used_output=>1,	
 	     );
 	$self->{netref} = $net;
     }
@@ -391,7 +392,7 @@ sub error {
     my $token = shift;
 
     my $fileref = $self->{fileref};
-    # Call SystemC::Netlist::Subclass's error reporting, it will track # errors
+    # Call Verilog::Netlist::Subclass's error reporting, it will track # errors
     my $fileline = $self->filename.":".$self->lineno;
     $fileref->error ($self, "$text\n"
 		     ."%Error: ".(" "x length($fileline))
@@ -483,9 +484,8 @@ sub write {
     local $outputting = 1;
 
     if ($as_imp || $as_int) {
-	if ($as_int) {
-	    $tpl->printf("#ifndef _%s_H_\n#define _%s_H_ 1\n", uc $self->basename, uc $self->basename);
-	}
+	my $hc = ($as_int)?"H":"CPP";
+	$tpl->printf("#ifndef _%s_${hc}_\n#define _%s_${hc}_ 1\n", uc $self->basename, uc $self->basename);
 	$tpl->print("// This file generated automatically by $program\n");
 	$tpl->printf("#include \"%s.h\"\n", $self->basename) if $as_imp;
     }
@@ -525,11 +525,11 @@ sub write {
 
     if ($as_imp || $as_int) {
 	$tpl->print ("// This file generated automatically by $program\n");
-	$tpl->printf ("#endif /*_%s_H_*/\n", uc $self->basename) if $as_int;
+	$tpl->printf ("#endif /*guard*/\n");
     }
 
     # Write the file
-    $self->netlist->dependancy_out ($filename);
+    $self->netlist->dependency_out ($filename);
     $tpl->write( filename=>$filename, );
 }
 

@@ -1,6 +1,6 @@
 %option noyywrap align never-interactive prefix="sclex"
 %{
-/* $Id: sclex.l,v 1.23 2001/09/26 14:51:01 wsnyder Exp $
+/* $Id: sclex.l,v 1.25 2001/09/27 17:41:34 wsnyder Exp $
  ******************************************************************************
  * DESCRIPTION: SystemC lexer
  * 
@@ -55,6 +55,7 @@ extern void sclex_ppline (const char *line);
 
 char *   str_bufp = NULL;
 unsigned str_buf_size = 0;
+const char *   sclex_include_from = NULL;
 
 static void yyerror(const char* msg)
 {
@@ -114,11 +115,15 @@ FLOATNUM	[0-9]+"."*[0-9]*[eE][0-9]+
 	LINENO++;}
 {WHITESPACE}*"/*AUTO"[^*]+"*/"	{ return(AUTO); }
 <INITIAL><<EOF>>	{
+#ifdef FLEX_DEBUG
+    fprintf(stderr,"EOF %s\n",ScParserLex.filename);
+#endif
     if (--sclex_include_stack_ptr<0) {
 	yyleng=0; yyterminate(); /* Else NUL added to EOF*/
     } else {
-	yy_delete_buffer (YY_CURRENT_BUFFER);
+	YY_BUFFER_STATE oldbuffer = YY_CURRENT_BUFFER;
 	yy_switch_to_buffer (sclex_includes[sclex_include_stack_ptr].buffer);
+	yy_delete_buffer (oldbuffer);
 	scparse_set_filename (sclex_includes[sclex_include_stack_ptr].filename,
 			      sclex_includes[sclex_include_stack_ptr].lineno);
     }
@@ -215,26 +220,52 @@ void sclex_ppline (const char* line) {
     }
 }
 
+int sclex_open  (const char* filename)
+{
+    FILE* newin;
+    newin = fopen (filename, "r");
+    if (!newin) {
+	/* Presume user does -r before calling us */
+	return 0;
+    }
+    scparse_set_filename(filename,1);
+    yy_switch_to_buffer( yy_new_buffer( newin, YY_BUF_SIZE ) );
+    return 1;
+}
+
 void sclex_include (const char* filename) {
     if (sclex_include_stack_ptr >= SCLEX_MAX_INCLUDE_DEPTH ) {
 	yyerror("Includes nested too deeply");
 	return;
     }
 
-    sclex_includes[sclex_include_stack_ptr].buffer = YY_CURRENT_BUFFER;
-    sclex_includes[sclex_include_stack_ptr].lineno = ScParserLex.lineno;
-    sclex_includes[sclex_include_stack_ptr].filename = ScParserLex.filename;
-    sclex_include_stack_ptr++;
-
-    yyin = fopen (filename, "r");
-    if (!yyin) {
-	yyerror("Cannot open include file");
+    if (sclex_include_from) {
+	yyerror("Two includes specified before parser restarted");
 	return;
     }
+    sclex_include_from = strdup(filename);
+}
 
-    scparse_set_filename (filename, 1);
-    yy_switch_to_buffer(
-	yy_create_buffer( yyin, YY_BUF_SIZE ) );
+void sclex_include_switch () {
+    FILE* newin;
+    if (sclex_include_from) {
+	const char* filename = sclex_include_from;
+	sclex_include_from = NULL;
+
+	sclex_includes[sclex_include_stack_ptr].buffer = YY_CURRENT_BUFFER;
+	sclex_includes[sclex_include_stack_ptr].lineno = ScParserLex.lineno;
+	sclex_includes[sclex_include_stack_ptr].filename = ScParserLex.filename;
+
+	newin = fopen (filename, "r");
+	if (!newin) {
+	    yyerror("Cannot open include file");
+	    return;
+	}
+
+	sclex_include_stack_ptr++;
+	scparse_set_filename (filename, 1);
+	yy_switch_to_buffer( yy_new_buffer( newin, YY_BUF_SIZE ) );
+    }
 }
 
 /*###################################################################

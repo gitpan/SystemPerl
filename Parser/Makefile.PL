@@ -1,4 +1,4 @@
-# $Id: Makefile.PL,v 1.9 2001/05/21 13:32:27 wsnyder Exp $
+# $Id: Makefile.PL,v 1.10 2001/09/27 15:38:32 wsnyder Exp $
 # DESCRIPTION: Perl ExtUtils: Type 'perl Makefile.PL' to create a Makefile for this package
 
 use ExtUtils::MakeMaker;
@@ -8,6 +8,9 @@ sub MY::postamble {
 LEX = flex
 YACC = bison
 CFLAGS += -Wall
+
+#CFLAGS += -DFLEX_DEBUG
+#LEXFLAGS += -d -L
 
 sclex.c: sclex.l  scgrammer.h scparse.h
 	${LEX} ${LEXFLAGS} -Psclex -o$@ $<

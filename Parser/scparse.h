@@ -1,4 +1,4 @@
-/* $Id: scparse.h,v 1.8 2001/09/26 14:51:01 wsnyder Exp $
+/* $Id: scparse.h,v 1.10 2001/09/27 17:41:34 wsnyder Exp $
  ******************************************************************************
  * DESCRIPTION: SystemC parser header file
  * 
@@ -58,11 +58,13 @@ extern char *sclextext;
 #ifdef SCPARSE_C
 ScParserLex_t ScParserLex;
 #endif
+extern int sclex_open  (const char* filename);
 extern void sclex_include (const char* filename);
+extern void sclex_include_switch (void);
 
 /* Yacc */
 extern void scgrammererror(const char *s);
-extern int scgrammerlex();
+extern int scgrammerlex(void);
 extern int scgrammerparse(void);
 
 /* Parser.xs */

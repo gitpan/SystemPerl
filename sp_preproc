@@ -1,5 +1,5 @@
 #!/usr/local/bin/perl -w
-#$Id: sp_preproc,v 1.21 2001/08/23 21:21:48 wsnyder Exp $
+#$Id: sp_preproc,v 1.22 2001/10/26 17:34:15 wsnyder Exp $
 ######################################################################
 # Unpublished Work Copyright (C) 2000 Wilson Snyder
 # All Rights Reserved.                                                      
@@ -73,7 +73,7 @@ if (! GetOptions (
 }
 
 my $nl = new SystemC::Netlist (options=>$opt,
-			       allow_output_tracing=>
+			       sp_allow_output_tracing=>
 			       ($ENV{PROJECT}
 				|| -r "$ENV{SYSTEMC}/systemperl_patched"),
 			       );
@@ -119,13 +119,13 @@ if ($opt_inline) {
     }
 }
 if ($opt_makedeps) {
-    $nl->dependancy_write($opt_makedeps);
+    $nl->dependency_write($opt_makedeps);
 }
 
 #----------------------------------------------------------------------
 
 sub usage {
-    print '$Id: sp_preproc,v 1.21 2001/08/23 21:21:48 wsnyder Exp $ ', "\n";
+    print '$Id: sp_preproc,v 1.22 2001/10/26 17:34:15 wsnyder Exp $ ', "\n";
     $SIG{__WARN__} = sub{};	#pod2text isn't clean.
     pod2text($0);
     exit (1);
@@ -228,7 +228,7 @@ Shows which files are being written, or are the same.
 
 =item -M
 
-Makes the dependancy listing (similar to I<cpp -M>).
+Makes the dependency listing (similar to I<cpp -M>).
 
 =item -DI<var>=I<value>
 

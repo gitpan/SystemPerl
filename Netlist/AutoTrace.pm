@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Id: AutoTrace.pm,v 1.9 2001/08/23 18:49:02 wsnyder Exp $
+# $Id: AutoTrace.pm,v 1.14 2001/11/16 15:01:41 wsnyder Exp $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -25,7 +25,7 @@ package SystemC::Netlist::AutoTrace;
 use File::Basename;
 
 use SystemC::Netlist::Module;
-$VERSION = '0.430';
+$VERSION = '1.000';
 use strict;
 
 ######################################################################
@@ -86,27 +86,37 @@ sub _tracer_setup {
 	my $ignore = 0;
 	#$ignore = "Memory Vector" if $netref->array();
 	$ignore = "Unknown width" if !$netref->width();
-	$ignore = "Wide Memory Vector"  if ($netref->array() && (($netref->width()||0)>32));
+	$ignore = "Wide Memory Signal"  if (($netref->width()||0)>256);
+	$ignore = "Wide Memory Vector"  if ($netref->array()
+					    && ($netref->array=~/^[0-9]/)
+					    && (($netref->array()||0)>32));
 
-	my $accessor;	# Function call to get the value of the signal
-	$accessor = $nethier.'->'.$netref->name;
+	my $accessor = "";	# Function call to get the value of the signal
+	my $scbv = ($netref->type =~ /^sc_bv/);
+	if ($scbv) {
+	    $accessor .= "(((uint32_t*)";
+	}
+	$accessor .= $nethier.'->'.$netref->name;
 	if ($netref->array) {
 	    $accessor .= "[i]";
 	}
-	if (($netref->width||0) > 32) {
+	if (($netref->width||0) > 32 && !$scbv) {
 	    $accessor .= "[0]";
 	}
 	if (!$netref->simple_type) {
 	    if ($netref->port && $netref->port->direction eq "out") {
 		# This is nasty, and might even result in bad data
 		# It also requires a library patch
-		if (!$modref->netlist->{allow_output_tracing}) {
+		if (!$modref->netlist->{sp_allow_output_tracing}) {
 		    $ignore ||= "Can't read output ports";
 		} else {
 		    $accessor .= ".const_signal()->get_cur_value()";
 		}
 	    } else {
 		$accessor .= ".read()";
+	    }
+	    if ($scbv) {
+		$accessor .= ".data)[0])";
 	    }
 	}
 	my $code_inc = 0;
@@ -143,6 +153,7 @@ sub _write_tracer_trace {
     $fileref->print
 	("void ${mod}::trace (SpTraceFile* tfp, int levels, int options=0)\n",
 	 "{\n",
+	 "    if(0 && options) {}  // Prevent unused\n",
 	 "    tfp->spTrace()->addCallback (&${mod}::traceInit, &${mod}::traceChange, this);\n",);
     $fileref->print ("    if (levels > 0) {\n",);
     foreach my $cellref ($self->cells_sorted) {
@@ -166,6 +177,7 @@ sub _write_tracer_init {
     $fileref->print("void ${mod}::traceInit (SpTraceVcd* vcdp, void* userthis, uint32_t code)\n");
     $fileref->print("{\n");
     $fileref->print("  // Callback from vcd->open()\n");
+    $fileref->print("  if (0 && vcdp && userthis && code) {}  // Prevent unused\n");
     if ($#tracevars >= 0) {
 	$fileref->print("  int c=code;\n");
 	$fileref->print("  ${mod}* t=(${mod}*)userthis;\n");
@@ -182,7 +194,7 @@ sub _write_tracer_init {
 	    $fileref->printf("${indent}vcdp->module(prefix+\"%s\");  // Is-a %s\n"
 			     , $tref->{modhier}, $modref->name);
 	}
-	if ($netref->array) {
+	if ($netref->array && !$tref->{ignore}) {
 	    $fileref->printf("${indent}  for (int i=0; i<%s; ++i) {\n"
 			     ,$netref->array);
 	    $indent .= "  ";
@@ -215,7 +227,7 @@ sub _write_tracer_init {
 	}
 	$fileref->printf("); c+=%s;}",$tref->{code_inc});
 	$fileref->printf(" // Is-a: %s\n", $netref->type);
-	if ($netref->array) {
+	if ($netref->array && !$tref->{ignore}) {
 	    $indent = "  "x$tref->{level};
 	    $fileref->printf("${indent}  }\n");
 	}
@@ -233,6 +245,7 @@ sub _write_tracer_change {
     $fileref->print("void ${mod}::traceChange (SpTraceVcd* vcdp, void* userthis, uint32_t code)\n");
     $fileref->print("{\n");
     $fileref->print("  // Callback from vcd->dump()\n");
+    $fileref->print("  if (0 && vcdp && userthis && code) {}  // Prevent unused\n");
     if ($#tracevars >= 0) {
 	$fileref->print("  int c=code;\n");
 	$fileref->print("  ${mod}* t=(${mod}*)userthis;\n");

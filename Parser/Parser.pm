@@ -1,4 +1,4 @@
-#$Id: Parser.pm,v 1.16 2001/09/26 14:51:01 wsnyder Exp $
+#$Id: Parser.pm,v 1.18 2001/11/16 15:01:41 wsnyder Exp $
 ######################################################################
 #
 # This program is Copyright 2001 by Wilson Snyder.
@@ -29,7 +29,7 @@ require DynaLoader;
 use strict;
 use vars qw($VERSION);
 
-$VERSION = '0.430';
+$VERSION = '1.000';
 
 ######################################################################
 #### Configuration Section

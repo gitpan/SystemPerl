@@ -23,7 +23,7 @@ to SystemC.  It provides sp_preproc, extending the language for
 AUTOmatic connection of hiearchy like my Verilog-Mode, trace files and
 netlist linting.  Its netlist and parsing utilities are general enough
 for writing your own tools.  Two additional tools provide for speeding
-up GCC compiles and dependancy correction.  You can download SystemC
+up GCC compiles and dependency correction.  You can download SystemC
 from the link off of http://www.veripool.com/systemperl.html
 
 Description
@@ -43,7 +43,7 @@ SystemC coding, just as the author's /*AUTO*/ comments did for the
 Verilog language.  See `man SystemPerl' after installation.
 
    sp_include shows a technique for speeding up SystemC compiles using
-GCC.  sp_makecheck allows for cleaning up dependancy files when
+GCC.  sp_makecheck allows for cleaning up dependency files when
 dependancies have been removed or changed.
 
    Finally, the src directory contains useful C++ utilities for
@@ -131,7 +131,11 @@ Supported Systems
 
    * i386-linux
 
-   It should run on any system with Perl and a C compiler.
+   It should run on any system with Perl, a C compiler, bison, and flex.
+
+   SystemC must be installed to get the complete function.  Currently
+1.2.1beta is the version supported for tracing, other versions should
+work without tracing.
 
 Installation
 ============

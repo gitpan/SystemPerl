@@ -1,5 +1,5 @@
 #!/usr/local/bin/perl -w
-#$Id: sp_makecheck,v 1.1 2001/05/17 20:48:04 wsnyder Exp $
+#$Id: sp_makecheck,v 1.2 2001/10/26 16:02:12 wsnyder Exp $
 ######################################################################
 # Unpublished Work Copyright (C) 2001 Wilson Snyder
 # All Rights Reserved.                                                      
@@ -55,7 +55,7 @@ depend_cleanup();
 #----------------------------------------------------------------------
 
 sub usage {
-    print '$Id: sp_makecheck,v 1.1 2001/05/17 20:48:04 wsnyder Exp $ ', "\n";
+    print '$Id: sp_makecheck,v 1.2 2001/10/26 16:02:12 wsnyder Exp $ ', "\n";
     $SIG{__WARN__} = sub{};	#pod2text isn't clean.
     pod2text($0);
     exit (1);
@@ -101,7 +101,7 @@ sub dfile_read {
 		}
 	    }
 	} else {
-	    die "%Error: $filename:$.: Strange dependancy line: $line\n";
+	    die "%Error: $filename:$.: Strange dependency line: $line\n";
 	}
 	$line = "";
     }
@@ -151,7 +151,7 @@ __END__
 
 =head1 NAME
 
-sp_makecheck - Read dependancy files and check for missing dependancies
+sp_makecheck - Read dependency files and check for missing dependancies
 
 =head1 SYNOPSIS
 
@@ -159,7 +159,7 @@ C<sp_makecheck> *.d
 
 =head1 DESCRIPTION
 
-A common technique with make is to use GCC to generate .d dependancy files
+A common technique with make is to use GCC to generate .d dependency files
 using the -MMD switch.  This creates a files similar to foo.d:
 
     foo.o foo.d: foo.cc foo.h
@@ -167,7 +167,7 @@ using the -MMD switch.  This creates a files similar to foo.d:
 The problem is if a header file is removed, then make will complain that
 there is no rule to build foo.h.
 
-sp_makecheck reads the specified dependancy files, and checks for the
+sp_makecheck reads the specified dependency files, and checks for the
 existance of all dependancies in the file.  If a file does not exist, it
 simply removes all of the targets.
 

@@ -1,4 +1,4 @@
-# $Id: Makefile_obj,v 1.10 2001/09/26 13:42:11 wsnyder Exp $ -*- Makefile -*-
+# $Id: Makefile_obj,v 1.13 2001/11/16 14:53:55 wsnyder Exp $ -*- Makefile -*-
 # DESCRIPTION: SystemPerl: Example makefile
 #
 # This is executed in the "test_dir", not in this directory
@@ -6,12 +6,12 @@
 
 # Sigh... SystemC should provide a program to determine this
 TARGET_ARCH = linux
-SYSTEMPERL = ../src
+SYSTEMPERL = ..
 
 CC = g++
-INCDIR += -I. -I$(SYSTEMPERL) -I$(SYSTEMC)/include -I../example
-LIBDIR += -L. -L$(SYSTEMPERL) -L$(SYSTEMC)/lib-$(TARGET_ARCH)
-VPATH += ../example $(SYSTEMPERL)
+INCDIR += -I. -I$(SYSTEMPERL)/src -I$(SYSTEMC)/include -I../example
+LIBDIR += -L. -L$(SYSTEMPERL)/src -L$(SYSTEMC)/lib-$(TARGET_ARCH)
+VPATH += ../example $(SYSTEMPERL)/src
 MAKEFILES += ../example/Makefile_obj
 LIBS   =  -lsystemc -lnumeric_bit -lqt -lm $(EXTRA_LIBS)
 
