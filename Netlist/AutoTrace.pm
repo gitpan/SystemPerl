@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Revision: #36 $$Date: 2003/05/06 $$Author: wsnyder $
+# $Revision: #38 $$Date: 2003/07/15 $$Author: wsnyder $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -23,7 +23,7 @@ package SystemC::Netlist::AutoTrace;
 use File::Basename;
 
 use SystemC::Netlist::Module;
-$VERSION = '1.140';
+$VERSION = '1.141';
 use strict;
 
 use vars qw ($Setup_Ident_Code);	# Local use for recursion only
@@ -137,7 +137,8 @@ sub _net_ignore {
     my $netref = shift;
     my $modref = shift;
     # Return a reason for ignoring this signal, or undef
-    return "Leading _" if ($netref->name =~ /^_/);	# Skip leading _ signals
+    return "Leading _" if ($netref->name =~ /^_/ 	# Skip leading _ signals
+			   && $netref->name !~ /^__PVT__/);
     return "Unknown width of type ".$netref->type() if !$netref->width();
     return "Wide Memory Signal"  if (($netref->width()||0)>256);
     return "Wide Memory Vector"  if ($netref->array()
@@ -175,7 +176,6 @@ sub _tracer_setup {
 	    
     my %our_codes;
     foreach my $netref ($modref->nets_sorted()) {
-	next if ($netref->name =~ /^_/);	# Skip leading _ signals
 	my $ignore = _net_ignore($netref,$modref);
 
 	my $accessor = "";	# Function call to get the value of the signal
@@ -415,6 +415,7 @@ sub _write_tracer_init_recurse {
 	my $arraynum = ($netref->array ? " i":"-1");
 	$fileref->printf("");
 	(my $name = $netref->name()) =~ s/__DOT__/./g;
+	$name =~ s/__PVT__//g;
 	if (!$doident) {
 	    if ($width == 1) {
 		$fileref->printf("vcdp->declBit  (${c},\"%s\",%s,&(%s)"

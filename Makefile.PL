@@ -1,4 +1,4 @@
-# $Revision: #28 $$Date: 2002/11/03 $$Author: wsnyder $
+# $Revision: #29 $$Date: 2003/06/18 $$Author: wsnyder $
 # DESCRIPTION: Perl ExtUtils: Type 'perl Makefile.PL' to create a Makefile for this package
 
 require 5.005;
@@ -62,7 +62,9 @@ WriteMakefile(
 			},
 	      );
 
-if (!-r "$ENV{SYSTEMC}/systemperl_patched") {
+if (!$ENV{SYSTEMC}) {
+    warn "-Info: SystemC isn't in the enviornment, 'make test' won't work\n";
+} elsif (!-r "$ENV{SYSTEMC}/systemperl_patched") {
     warn "-Info: Your SystemC disctribution has NOT been patched to allow sc_bv\n";
     warn "       tracing.  Type 'make sc_patch' to attempt the edits.\n";
     warn "       See the README file for details.\n"

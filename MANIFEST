@@ -58,6 +58,7 @@ t/05_template.out
 t/05_template.t
 t/10_netlist.t
 t/20_example.t
+t/30_makecheck.t
 t/50_spp_inline.t
 t/60_spp_pre.t
 t/70_trace.t

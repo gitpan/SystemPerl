@@ -6,6 +6,15 @@ The contributors that suggested a given feature is shown in [].
 This uses outline mode in Emacs.  See C-h m [M-x describe-mode].
 
 
+* Changes in SystemC 1.141 7/15/2002
+
+***	Allow "sp use .cell.subcell.subsubcell" to include entire paths.
+
+****	Fix whitespace in sp preprocessor directives, "# sp use ...".
+
+****	Fix some RedHat 9.0 warnings
+
+
 * Changes in SystemC 1.140 4/6/2003
 
 ***	Allow "sp use DEFINE" where DEFINE is a symbol like ALIAS_CELL
@@ -172,7 +181,7 @@ This uses outline mode in Emacs.  See C-h m [M-x describe-mode].
 
 
 ----------------------------------------------------------------------
-$Revision: #60 $$Date: 2003/05/06 $$Author: wsnyder $
+$Revision: #62 $$Date: 2003/07/15 $$Author: wsnyder $
 ----------------------------------------------------------------------
 Copyright information:
 

@@ -1,4 +1,4 @@
-#$Revision: #25 $$Date: 2002/12/13 $$Author: lab $
+#$Revision: #26 $$Date: 2003/06/16 $$Author: wsnyder $
 ######################################################################
 #
 # This program is Copyright 2001 by Wilson Snyder.
@@ -378,8 +378,10 @@ required for linking against the includer.  (Just like perl's package and
 use statements.)
 
 In addition to specifing an exact string like with #include, you may also
-specify a define symbol.  The value of the definition will be used as the
-file to be included.
+specify a define symbol or a cell search path.  The value of a definition
+will be substituted to find the file to be included.  If a name of the form
+.cell.subcell is used, it will include both the header for the module for
+"cell", and for "subcell" underneath "cell".
 
 =back
 

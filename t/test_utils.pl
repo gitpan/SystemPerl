@@ -1,5 +1,5 @@
 #!/usr/local/bin/perl -w
-# $Revision: #6 $$Date: 2002/08/14 $$Author: wsnyder $
+# $Revision: #7 $$Date: 2003/06/13 $$Author: wsnyder $
 #DESCRIPTION: Perl ExtUtils: Common routines required by package tests
 
 use IO::File;
@@ -42,6 +42,15 @@ sub files_identical {
 	}
     }
     return 1;
+}
+
+sub write_file {
+    my $filename = shift;
+    my $text = join('',@_);
+    # Write text to specified filename
+    my $fh = IO::File->new ($filename,"w") or die "%Error: $! writing $filename,";
+    print $fh $text;
+    $fh->close;
 }
 
 1;

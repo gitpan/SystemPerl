@@ -1,4 +1,4 @@
-/* $Revision: #16 $$Date: 2002/11/06 $$Author: wsnyder $
+/* $Revision: #17 $$Date: 2003/07/15 $$Author: wsnyder $
  ************************************************************************
  *
  * THIS MODULE IS PUBLICLY LICENSED
@@ -56,6 +56,7 @@ extern "C" {
 #include <fstream>
 #include <string>
 #include <sys/types.h>
+using namespace std;
 
 //**********************************************************************
 // Echo a stream to two output streams, one to screen and one to a logfile

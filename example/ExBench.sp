@@ -1,4 +1,4 @@
-// $Revision: #14 $$Date: 2003/03/11 $$Author: wsnyder $
+// $Revision: #17 $$Date: 2003/06/17 $$Author: wsnyder $
 // DESCRIPTION: SystemPerl: Example main()
 
 #sp interface
@@ -39,6 +39,8 @@ SC_MODULE (__MODULE__) {
 //######################################################################
 #sp implementation
 /*AUTOSUBCELL_INCLUDE*/
+# sp use  .mod.suba
+# sp use  .ExBench.mod.suba	// Same thing...
 
 SP_CTOR_IMP(__MODULE__)
 {

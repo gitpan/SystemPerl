@@ -1,6 +1,6 @@
 ;; systemc-mode.el --- major mode for editing SystemC files
 ;;
-;; $Revision: #9 $$Date: 2003/03/11 $$Author: wsnyder $
+;; $Revision: #10 $$Date: 2003/06/16 $$Author: wsnyder $
 
 ;; Author          : Wilson Snyder <wsnyder@wsnyder.org>
 ;; Keywords        : languages
@@ -88,7 +88,7 @@
 	  (list
 	   ;;
 	   ;; Fontify filenames in #include <...> preprocessor directives as strings.
-	   '("^#\\s *\\(sp\\s +use\\)\\s *\\([\"][^\"\n]*[\"]?\\)"
+	   '("^#\\s *\\(sp\\s +use\\)\\s *\\([\"]?[^\"\n]*[\"]?\\)"
 	     nil nil (1 font-lock-builtin-face) (2 font-lock-string-face))
 	   ;; Fontify preprocessor directive names.
 	   '("^#\\s *\\(sp\\s +[^\n]*\\)" 1 'font-lock-builtin-face)

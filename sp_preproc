@@ -1,5 +1,5 @@
 #!/usr/local/bin/perl -w
-#$Revision: #36 $$Date: 2003/03/28 $$Author: wsnyder $
+#$Revision: #37 $$Date: 2003/06/16 $$Author: wsnyder $
 ######################################################################
 #
 # This program is Copyright 2000 by Wilson Snyder.
@@ -50,10 +50,12 @@ $Debug = 0;
 my $opt_preproc = 0;
 my $opt_inline;
 my $opt_autos = 1;
-my @sp_files_lib = ();
-my @sp_files_nolib = ();
+my @sp_files_lib;
+my @sp_files_nolib;
+my @sp_libs;
 my $opt_libcell = 0;
-my $opt_tree = 0;
+my $opt_libfile;
+my $opt_tree;
 my $opt_trace_duplicates = 0;
 
 my $opt = new Verilog::Getopt(gcc_style=>1, vcs_style=>0);
@@ -70,6 +72,7 @@ if (! GetOptions (
 		  "libcell!"	=> \$opt_libcell,
 		  "preproc!"	=> \$opt_preproc,
 		  "inline!"	=> \$opt_inline,
+		  "libfile=s"	=> \$opt_libfile,
 		  "tree=s"	=> \$opt_tree,
 		  "trace-duplicates!" => \$opt_trace_duplicates,
 		  "<>"		=> \&parameter,
@@ -77,10 +80,21 @@ if (! GetOptions (
     usage();
 }
 
+# Compatibility hack so that verilator can just specify --tree and get
+# libfiles only if user has the latest sp_preproc.  Can be removed ~2003/08
+# by adding --libfile to verilated.mk.in
+if (!$opt_libfile && $opt_tree && $opt_tree=~/^(.*)\.sp_tree$/) {
+    $opt_libfile = "$1.sp_lib";
+}
+
 my $nl = new SystemC::Netlist (options=>$opt,
 			       link_read=>1,
 			       strip_autos=>1,
 			       );
+
+foreach my $file (@sp_libs) {
+    $nl->read_cell_library(filename=>$file);
+}
 
 foreach my $file (@sp_files_nolib) {
     $nl->read_file (filename=>$file,
@@ -96,6 +110,7 @@ foreach my $file (@sp_files_lib) {
 $nl->link();
 $nl->autos();
 tree_report($nl, $opt_tree) if ($opt_tree);
+$nl->write_cell_library(filename=>$opt_libfile) if $opt_libfile;
 $nl->lint();
 our_rulecheck($nl);
 $nl->dump() if $Debug;
@@ -131,7 +146,7 @@ if ($opt_makedeps) {
 #----------------------------------------------------------------------
 
 sub usage {
-    print '$Revision: #36 $$Date: 2003/03/28 $$Author: wsnyder $ ', "\n";
+    print '$Revision: #37 $$Date: 2003/06/16 $$Author: wsnyder $ ', "\n";
     $SIG{__WARN__} = sub{};	#pod2text isn't clean.
     pod2text($0);
     exit (1);
@@ -155,6 +170,8 @@ sub parameter {
 	} else {
 	    push @sp_files_nolib, $param;
 	}
+    } elsif ($param =~ /\.(sp_lib)$/) {
+	push @sp_libs, $param;
     } elsif ($param =~ /sp_preproc$/) {
 	# Ignore ourself in case user passed all dependencies including this program
     } else {
@@ -216,10 +233,12 @@ sub tree_recurse {
     my $next_indent = shift;
     my $cellname = shift;
 
+    my $cmt = "";
+    $cmt = "[LIBCELL] " if $modref->is_libcell;
     if (!$modref) {
-	printf $fh "# %-40s %-30s %s\n",$cellname,$this_indent."?","?";
+	printf $fh "# %-40s %-30s %s\n",$cellname,$this_indent."?",$cmt."?";
     } else {
-	printf $fh "# %-40s %-30s %s\n",$cellname,$this_indent.$modref->name,$modref->filename;
+	printf $fh "# %-40s %-30s %s\n",$cellname,$this_indent.$modref->name,$cmt.($modref->filename||"");
 	my @cells = ($modref->cells_sorted);
 	my $ncell = 0;
 	foreach my $subcell (@cells) {

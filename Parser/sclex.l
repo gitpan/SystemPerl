@@ -1,6 +1,6 @@
 %option noyywrap align never-interactive prefix="sclex"
 %{
-/* $Revision: #34 $$Date: 2003/03/14 $$Author: wsnyder $
+/* $Revision: #36 $$Date: 2003/07/15 $$Author: wsnyder $
  ******************************************************************************
  * DESCRIPTION: SystemC lexer
  * 
@@ -78,8 +78,8 @@ FLOATNUM	[0-9]+"."*[0-9]*[eE][0-9]+
 %%
 
 "#line".*\n	{ scparser_EmitPrefix(); sclex_ppline(yytext); }
-"#sp".*\n	{ LINENO++; return(SP); }
 "#include"	{ return(PP); }
+"#"{WHITESPACE}*"sp".*\n	{ LINENO++; return(SP); }
 
 	/* Special macros we recognise */
 "SC_MODULE"	{ return(SC_MODULE); }
@@ -215,6 +215,10 @@ FLOATNUM	[0-9]+"."*[0-9]*[eE][0-9]+
 
 	/**************************************************************/
 %%
+
+#ifndef yy_new_buffer	// Flex 2.5.31 Experimental release is broken...
+# define yy_new_buffer sclex_create_buffer
+#endif
 
 void sclex_ppline (const char* line) {
     /* Passed string which looks like #line {##} "{filename}" */

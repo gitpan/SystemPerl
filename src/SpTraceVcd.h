@@ -1,4 +1,4 @@
-// $Revision: #15 $$Date: 2003/03/27 $$Author: wsnyder $ -*- SystemC -*-
+// $Revision: #16 $$Date: 2003/07/15 $$Author: wsnyder $ -*- SystemC -*-
 //=============================================================================
 //
 // THIS MODULE IS PUBLICLY LICENSED
@@ -35,6 +35,7 @@
 #include <string>
 #include <algorithm>
 #include <vector>
+using namespace std;
 #ifndef SPTRACEVCD_TEST
 # include <systemperl.h>
 #endif

@@ -1,4 +1,4 @@
-// $Revision: #23 $$Date: 2003/03/14 $$Author: wsnyder $ -*- SystemC -*-
+// $Revision: #24 $$Date: 2003/07/15 $$Author: wsnyder $ -*- SystemC -*-
 //********************************************************************
 //
 // THIS MODULE IS PUBLICLY LICENSED
@@ -25,7 +25,8 @@
 #define _SYSTEMPERL_H_
 
 /* Necessary includes */
-#include <ostream.h>	// For AUTOENUM
+#include <sstream>	// For AUTOENUM
+using namespace std;
 #ifdef SYSTEMC_LESSER
 # include <systemc_lesser.h>
 #else

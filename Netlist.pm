@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Revision: #37 $$Date: 2003/05/06 $$Author: wsnyder $
+# $Revision: #39 $$Date: 2003/07/15 $$Author: wsnyder $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -31,7 +31,7 @@ use Verilog::Netlist::Subclass;
 use strict;
 use vars qw($Debug $Verbose $VERSION);
 
-$VERSION = '1.140';
+$VERSION = '1.141';
 
 ######################################################################
 #### Error Handling
@@ -157,6 +157,55 @@ sub read_file {
     my $fileref = SystemC::Netlist::File::read
 	(netlist=>$self,
 	 @_);
+}
+
+######################################################################
+#### Library files
+
+sub write_cell_library {
+    my $self = shift;
+    my %params = (filename=>undef,
+		  @_);
+    $self->dependency_out($params{filename});
+    my $fh = IO::File->new($params{filename},"w") or die "%Error: $! $params{filename}\n";
+    foreach my $modref ($self->modules_sorted) {
+	print $fh "MODULE ",$modref->name,"\n";
+	foreach my $cellref ($modref->cells_sorted) {
+	    print $fh "  CELL ",$cellref->name," ",$cellref->submodname,"\n";
+	}
+    }
+    $fh->close;
+}
+
+sub read_cell_library {
+    my $self = shift;
+    my %params = (filename=>undef,
+		  @_);
+    $self->dependency_in($params{filename});
+    my $fh = IO::File->new($params{filename}) or die "%Error: $! $params{filename}\n";
+    my $modref;
+    while (defined (my $line = $fh->getline)) {
+	chomp $line;
+	$line =~ s/#.*$//;
+	$line =~ s/^\s+//;
+	$line =~ s/\s+$//;
+	if ($line =~ /^MODULE\s+(\S+)$/) {
+	    $modref = $self->find_module($1);
+	    if (!$modref) {
+		$modref = $self->new_module(name=>$1, is_libcell=>1,);
+	    }
+	}
+	elsif ($line =~ /^CELL\s+(\S+)\s+(\S+)$/) {
+	    my $cellref = $modref->find_cell($1);
+	    if (!$cellref) {
+		$cellref = $modref->new_cell(name=>$1, submodname=>$2,);
+	    }
+	}
+	else {
+	    die "%Error: $params{filename}:$.: Unknown line: $line\n";
+	}
+    }
+    $fh->close;
 }
 
 ######################################################################

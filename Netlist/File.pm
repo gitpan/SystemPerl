@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Revision: #105 $$Date: 2003/05/06 $$Author: wsnyder $
+# $Revision: #110 $$Date: 2003/07/15 $$Author: wsnyder $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -28,7 +28,7 @@ use SystemC::Template;
 use Verilog::Netlist::Subclass;
 @ISA = qw(SystemC::Netlist::File::Struct
 	Verilog::Netlist::Subclass);
-$VERSION = '1.140';
+$VERSION = '1.141';
 use strict;
 
 structs('new',
@@ -394,7 +394,7 @@ sub signal {
 sub preproc_sp {
     my $self = shift;
     my $line = shift;
-    if ($line=~ /^\s*\#sp\s+(.*)$/) {
+    if ($line=~ /^\s*\#\s*sp\s+(.*)$/) {
 	my $cmd = $1; $cmd =~ s/\s+$//;
 	$cmd =~ s!\s+//.*$!!;
 	if ($cmd =~ /^implementation$/) {
@@ -408,22 +408,32 @@ sub preproc_sp {
 			  $self->{fileref}, $line];
 	}
 	elsif ($cmd =~ /^use/) {
+	    my $origtext = "";
 	    my $incname;
+	    my $dotted;
 	    if ($cmd =~ m/^use\s+(\S+)$/ && $cmd !~ /\"/) {
-		$incname = $1;
+		$origtext = $1;
+		$incname = $origtext;
 		$incname = $self->{netlist}->remove_defines($incname);
+		$dotted = 1 if $incname =~ /^\./;
 	    } elsif ($cmd =~ m/^use\s+\"([^\" \n]+)\"$/) {
-		$incname = $1;
+		$origtext = $1;
+		$incname = $origtext;
 	    } else {
 		return $self->error("Badly formed sp use line", $line);
 	    }
-	    $incname =~ s/\.(h|sp)$//;
-	    ($incname !~ s/(\.[a-z]+)$//)
-		or $self->error("No $1 extensions on sp use filenames", $line);
+	    if (!$dotted) {
+		$incname =~ s/\.(h|sp)$//;
+		($incname !~ s/(\.[a-z]+)$//)
+		    or $self->error("No $1 extensions on sp use filenames", $line);
+	    }
 	    push @Text, [ 0, $self->filename, $self->lineno,
 			  \&SystemC::Netlist::File::_write_use,
-			  $self->{fileref}, $line, $incname];
-	    $self->{fileref}->_uses($incname,{name=>$incname, found=>0});
+			  $self->{fileref}, $line, $incname, $origtext,
+			  $self->filename, $self->lineno,
+			  ];
+	    $self->{fileref}->_uses($incname,{name=>$incname, found=>0})
+		if !$dotted;
 	}
 	elsif ($cmd =~ /^include/) {
 	    ($cmd =~ m/^include\s+\"([^\" \n]+)\"$/)
@@ -649,7 +659,8 @@ sub write {
 	    if (ref $func) {
 		# it contains a function and arguments to that func
 		#print "$func ($line->[1], $fh, $line->[2], );\n";
-		&{$func} ($line->[4],$line->[5],$line->[6],$line->[7],$line->[8],);
+		&{$func} ($line->[4],$line->[5],$line->[6],$line->[7],$line->[8],
+			  $line->[9],$line->[10],$line->[11],$line->[12],);
 	    } else {
 		my $text = $line->[3];
 		if (defined $text && $outputting) {
@@ -703,12 +714,66 @@ sub _write_interface {
     }
 }
 
+our $_Write_Use_Last_Filename = "";
+our $_Write_Use_Last_Lineno = 0;
+our %_Write_Use_Did_Includes;  #{include_filename}
+
 sub _write_use {
     my $self = shift;
     my $line = shift;
     my $incname = shift;
+    my $origtext = shift;
+    my $src_filename = shift;
+    my $src_lineno = shift;
+    return if !$SystemC::Netlist::File::outputting;
+
+    # Flush the duplicate #include cache any time include lines aren't adjacent
+    # This way it works if there are #ifdef's around the uses
+    if ($_Write_Use_Last_Filename ne $src_filename
+	|| ($_Write_Use_Last_Lineno != $src_lineno
+	    && ($_Write_Use_Last_Lineno+1) != $src_lineno)
+	) {
+	%_Write_Use_Did_Includes = ();
+    }
+    $_Write_Use_Last_Filename = $src_filename;
+    $_Write_Use_Last_Lineno = $src_lineno;
+
+    # Output it
     if ($as_imp || $as_int) {
-	$self->print ("#include \"$incname.h\"\n");
+	if ($incname =~ /^\./) {
+	    my $line = $incname;
+	    my $curmodref = (values %{$self->_modules})[0];
+	    my $path = "";
+	    my $top = 1;
+	    while ($line =~ s/^\.([^.]+)//) {
+		my $subname = $1;
+		$path .= ".".$subname;
+		#print "xxxx $subname\n";
+		my $subcell = $curmodref && $curmodref->find_cell($subname);
+		$top = 0 if $subcell;
+		if ($top) {
+		    # Look for a top level module with same name
+		    $curmodref = $self->netlist->find_module($subname);
+		}
+		if (!$curmodref || (!$top && !$subcell)) {
+		    # We put out a #error for C++ to complain about instead
+		    # of us erroring, so user #ifdefs can wrap around the error
+		    $self->printf("#error sp_preproc didnt find subcell of name '$subname' in sp use: $incname\n");
+		    return;
+		}
+		$curmodref = $subcell->submod if !$top;
+		$self->printf ("#include \"%-22s  // For sp use %s\n",
+			       $curmodref->name.'.h"', $path)
+		    if (!$_Write_Use_Did_Includes{$curmodref->name});
+		$_Write_Use_Did_Includes{$curmodref->name} = 1;
+		$top = 0;
+	    }
+	    $line eq "" or $self->error("Strange sp use line, leftover text '$line': $incname\n");
+	} else {
+	    $self->printf ("#include \"%-22s  // For sp use %s\n", $incname.'.h"', $origtext)
+		if (!$_Write_Use_Did_Includes{$incname});
+	    $_Write_Use_Did_Includes{$incname} = 1;
+	}
     } else {
         $self->print ($line);
     }
