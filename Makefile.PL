@@ -1,4 +1,4 @@
-# $Revision: #33 $$Date: 2004/01/27 $$Author: wsnyder $
+# $Revision: #36 $$Date: 2004/03/10 $$Author: wsnyder $
 # DESCRIPTION: Perl ExtUtils: Type 'perl Makefile.PL' to create a Makefile for this package
 #
 # Copyright 2001-2004 by Wilson Snyder.  This program is free software;
@@ -18,21 +18,27 @@ README: readme.texi
 dist: distcheck README
 
 install-local: manifypods
-	cp -R blib/man* /usr/local/common/man
-	cp -R sp_makecheck /usr/local/common/bin/sp_makecheck__notfound
-	cp systemc-mode.el /usr/local/common/site-lisp
+	cp -R blib/man*    \$(DIRPROJECT_PREFIX)/man
+	cp -R sp_makecheck \$(DIRPROJECT_PREFIX)/bin/sp_makecheck__notfound
+	cp systemc-mode.el \$(DIRPROJECT_PREFIX)/site-lisp
 
 sc_patch:
 	\$(PERL) patch.pl
 
 ## Maintainer use:
+preexist:
+	test ! -r \$(HOME)/src/kits/\$(DISTVNAME).tar.gz
+
 tag:
 	p4 label -d     \$(DISTNAME)_\$(VERSION_SYM) || true
 	p4 label        \$(DISTNAME)_\$(VERSION_SYM)
 	p4 labelsync -l \$(DISTNAME)_\$(VERSION_SYM) ...
-#	cvs tag -F \$(DISTNAME)_\$(VERSION_SYM) .
+#	cvs tag -F      \$(DISTNAME)_\$(VERSION_SYM) .
 
-maintainer-dist: dist tag
+maintainer-diff:
+	p4 diff     ...@\$(DISTNAME)_\$(VERSION_SYM) 
+
+maintainer-dist: preexist dist tag
 	cp \$(DISTVNAME).tar.gz \$(HOME)/src/kits
 	mv \$(DISTVNAME).tar.gz \$(HOME)/backpack
 	echo \"NOTE: Did you try a test without SYSTEMC set?\"

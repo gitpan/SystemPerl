@@ -5,20 +5,44 @@ use IO::File;
 BEGIN { require "t/test_utils.pl"; }
 use strict;
 
-if (-r "$ENV{SYSTEMC}/systemperl_patched") {
-    print "Patch already applied\n";
-    exit(0);
+if (!$ENV{SYSTEMC} || !-d $ENV{SYSTEMC}) {
+    die "%Error: The SYSTEMC environment variable needs to point to your SystemC distribution.\n";
 }
+$ENV{SYSTEMC_KIT} ||= $ENV{SYSTEMC};  # Where the source tree is
 
-if (!-r "$ENV{SYSTEMC}/src/systemc/datatypes/bit/sc_bv_base.h") {
+if (!-r "$ENV{SYSTEMC_KIT}/src/systemc/datatypes/bit/sc_bv_base.h") {
     die "%Error: Unknown version of SystemC,";
 }
 
-my $pfile = getcwd()."/patch-2-0-1.diff";
+patch ("patch-2-0-1", $ENV{SYSTEMC_KIT});
+if (-d "$ENV{SYSTEMC}/include") {	# May not exist if user hasn't installed systemc
+    patch ("patch-2-0-1-include");
+}
 
-run_system("cd $ENV{SYSTEMC} && pwd");
-run_system("cd $ENV{SYSTEMC} && patch -b -p0 <$pfile");
+if (-r "/usr/include/c++/3.2.2/backward/strstream") {
+    (-w "/usr/include/c++/3.2.2/backward/strstream")
+	or die "%Error: Can't create patch, you need to be running as root\n";
+    patch ("patch-2-0-1-gcc322");
+} else {
+    print "Patch patch-2-0-1-gcc322 unneeded\n";
+}
 
-IO::File->new("$ENV{SYSTEMC}/systemperl_patched","w")->close();  #touch
+sub patch {
+    my $pname = shift;
+    my $root = $ENV{SYSTEMC};
 
-print "Patch applied!\n";
+    my $pfile = getcwd()."/${pname}.diff";
+    my $patchedfile = "$ENV{SYSTEMC}/systemperl_patched_$pname";
+    $patchedfile = "$ENV{SYSTEMC}/systemperl_patched" if $pname eq "patch-2-0-1";
+
+    if (-r $patchedfile) {
+	print "Patch $pname already applied\n";
+	return; 
+    }
+
+    print "Patching using $pfile\n";
+    run_system("cd $root && pwd");
+    run_system("cd $root && patch -b -p0 <$pfile");
+
+    IO::File->new($patchedfile,"w")->close();    # Touch
+}

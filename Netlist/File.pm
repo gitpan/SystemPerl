@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Revision: #119 $$Date: 2004/01/27 $$Author: wsnyder $
+# $Revision: #121 $$Date: 2004/03/10 $$Author: wsnyder $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -23,7 +23,7 @@ use SystemC::Template;
 use Verilog::Netlist::Subclass;
 @ISA = qw(SystemC::Netlist::File::Struct
 	Verilog::Netlist::Subclass);
-$VERSION = '1.148';
+$VERSION = '1.149';
 use strict;
 
 structs('new',
@@ -850,6 +850,12 @@ sub _write_autoenum_global {
 	 ." { return (lhs.e_${enumtype} == rhs); }\n"
 	 ."${prefix}inline bool operator== (const ${class}::${enumtype} lhs, const ${class}& rhs)"
 	 ." { return (lhs == rhs.e_${enumtype}); }\n"
+	 ."${prefix}inline bool operator!= (const ${class}& lhs, const ${class}& rhs)"
+	 ." { return (lhs.e_${enumtype} != rhs.e_${enumtype}); }\n"
+	 ."${prefix}inline bool operator!= (const ${class}& lhs, const ${class}::${enumtype} rhs)"
+	 ." { return (lhs.e_${enumtype} != rhs); }\n"
+	 ."${prefix}inline bool operator!= (const ${class}::${enumtype} lhs, const ${class}& rhs)"
+	 ." { return (lhs != rhs.e_${enumtype}); }\n"
 	 ."${prefix}inline std::ostream& operator<< (std::ostream& lhs, const ${class}& rhs)"
 	 ." { return lhs << rhs.ascii(); }\n"
 	 ."${prefix}// End of SystemPerl automatic enumeration\n"

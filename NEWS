@@ -5,6 +5,10 @@ The contributors that suggested a given feature is shown in [].
 This uses outline mode in Emacs.  See C-h m [M-x describe-mode].
 
 
+* Changes in SystemC 1.149 3/10/2004
+
+***	Patch process fixes for Solaris.
+
 * Changes in SystemC 1.148 1/27/2004
 
 ****	Documentation fixes
@@ -210,7 +214,7 @@ This uses outline mode in Emacs.  See C-h m [M-x describe-mode].
 
 
 ----------------------------------------------------------------------
-$Revision: #73 $$Date: 2004/01/27 $$Author: wsnyder $
+$Revision: #74 $$Date: 2004/03/10 $$Author: wsnyder $
 ----------------------------------------------------------------------
 Copyright information:
 

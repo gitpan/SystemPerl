@@ -1,5 +1,5 @@
-*** src/systemc/datatypes/bit/sc_bv_base.h	Wed Mar 27 08:52:28 2002
---- src/systemc/datatypes/bit/sc_bv_base.h	Sun Nov  3 11:48:51 2002
+*** include/systemc/datatypes/bit/sc_bv_base.h	Wed Mar 27 08:52:28 2002
+--- include/systemc/datatypes/bit/sc_bv_base.h	Sun Nov  3 11:48:51 2002
 ***************
 *** 232,237 ****
 --- 232,239 ----

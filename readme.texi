@@ -1,5 +1,5 @@
 \input texinfo @c -*-texinfo-*-
-@c $Revision: #24 $$Date: 2004/01/27 $$Author: wsnyder $
+@c $Revision: #28 $$Date: 2004/03/10 $$Author: wsnyder $
 @c %**start of header
 @setfilename readme.info
 @settitle Perl SystemC Installation
@@ -7,6 +7,9 @@
 
 @c DESCRIPTION: TexInfo: DOCUMENT source run through texinfo to produce README file
 @c Use 'make README' to produce the output file
+@c
+@c Before release, run C-u C-c C-u C-a (texinfo-all-menus-update with a
+@c prefix arg).  This updates the node pointers, which texinfmt.el needs.
 
 @node Top, Copyright, (dir), (dir)
 
@@ -38,7 +41,7 @@ your own risk.
 
 The publicly licensed SystemPerl package provides several extensions to
 SystemC.  It provides sp_preproc, extending the language for AUTOmatic
-connection of hiearchy like my Verilog-Mode, trace files and netlist
+connection of hierarchy like my Verilog-Mode, trace files and netlist
 linting.  Its netlist and parsing utilities are general enough for
 writing your own tools.  Two additional tools provide for speeding up
 GCC compiles and dependency correction.  You can download SystemC from
@@ -52,7 +55,7 @@ understands how to read SystemC files, and extract tokens and such,
 similar to Verilog::Parser.
 
 SystemC::Netlist builds netlists out of SystemC files.  This allows easy
-scripts to determine things such as the hiearchy of SC_MODULEs.  The
+scripts to determine things such as the hierarchy of SC_MODULEs.  The
 netlist database may also be extended to support other languages.
 
 sp_preproc provides extensions to the SystemC language, called the
@@ -172,32 +175,44 @@ versions should work without tracing.
 
 @enumerate
 @item
-@code{cd} to the directory containing this README notice.
+@code{cd} to the directory containing this README notice.  Some files will
+permanently live in this directory, so make sure it's in a site wide area.
+
+@item
+Make sure the @code{SYSTEMC} environment variable points to your
+SystemC installed directory.  If using bash, this would consist of
+the line
+    @samp{export SYSTEMC=/path/to/systemc}
+in your @samp{~/.bashrc} file.
+
+If different then the above, make sure the @code{SYSTEMC_KIT}
+environment variable points to your original SystemC source code kit.
 
 @item
 Type @samp{perl Makefile.PL} to configure SystemPerl for your system.
 (Note this package will probably run slower if you are still using perl
 5.005.)
 
-@item
-Type @samp{patch <patch-2-0-1.diff} if you are using SystemC 2.0.1.
+You may get a warning message about needing Verilog::Netlist, if so you
+need to install or upgrade the @code{verilog-perl} package from CPAN.
 
 @item
-Type @samp{patch <patch-2-0-1-redhat9.diff} to fix the warnings in
-SystemC 2.0.1 if you are using Redhat 9.  (SystemC.org still needs to
-cleanup the libraries for Redhat 9; this mearly disables the warning
-message.)
-
-@item
-If you wish to trace sc_bv's, and you got a informational message when
-you did the above step, you must patch the SystemC library.  Type
+To trace sc_bv's, you must patch the SystemC library.  Type as root
 @samp{make sc_patch} and this will be done for you.  What this does is
 add an accessor function for getting at the raw data in the sc_bv
 class.  (Using the preexisting public functions would require too much
 computational overhead.)
 
+This will also patch SystemC to work with Redhat 9 distributions (GCC
+3.2.2).  If you were not able to compile SystemC due to compile
+errors, it may now work.
+
 @item
 Type @samp{make} to compile SystemPerl.
+
+If you get a error message ``y.tab.c: error: parse error before goto,'' there
+is a problem between Bison and GCC.  The simplest fix is to edit y.tab.c to
+comment out ``__attribute__ ((unused))''.
 
 @item
 Type @samp{make test} to check the compilation.
@@ -212,9 +227,12 @@ Type @samp{make install} to install the programs and any data files and
 documentation.
 
 @item
-Install @samp{src/systemperl.h} somewhere in your project's build path.
-The best place is probably the $SYSTEMC/include directory.
+Add a @samp{SYSTEMPERL} environment variable that points to the
+directory of this kit (the directory you typed ``make install''
+inside, not your site-perl directory.)  If using bash, this would
+consist of the line
+  @samp{export SYSTEMPERL=/path/to/systemperl}
+in your @samp{~/.bashrc} file.
 
 @end enumerate
-
 

@@ -1,5 +1,5 @@
 #!/usr/local/bin/perl -w
-# $Revision: #9 $$Date: 2004/01/27 $$Author: wsnyder $
+# $Revision: #10 $$Date: 2004/03/08 $$Author: wsnyder $
 # DESCRIPTION: Perl ExtUtils: Type 'make test' to test this package
 #
 # Copyright 2001-2004 by Wilson Snyder.  This program is free software;
@@ -16,7 +16,7 @@ if ($Use_SCL) {
 print "Building example...\n";
 if ($Config{archname} !~ /linux/
     || !$ENV{SYSTEMC}) {
-    skip("skip Not linux or missing SystemC",1);
+    skip("skip Harmless; Not linux or missing SystemC",1);
 } else {
     run_system ("cd $dir && make -j 3 -f ../example/Makefile_obj");
     ok(1);
@@ -26,9 +26,9 @@ print "Running example...\n";
 if (! -x "$dir/ex_main"
     || $Use_SCL  # For now...
     ) {
-    skip("skip Not linux or missing SystemC",1);
-    skip("skip Not linux or missing SystemC",1);
-    skip("skip Not linux or missing SystemC",1);
+    skip("skip Harmless; Not linux or missing SystemC",1);
+    skip("skip Harmless; Not linux or missing SystemC",1);
+    skip("skip Harmless; Not linux or missing SystemC",1);
 } else {
     run_system ("cd $dir && ./ex_main");
     ok(1);
