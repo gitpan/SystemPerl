@@ -1,4 +1,4 @@
-/* $Id: systemperl.h,v 1.7 2001/04/26 14:45:40 wsnyder Exp $
+/* $Id: systemperl.h,v 1.9 2001/05/18 17:25:03 wsnyder Exp $
  ************************************************************************
  *
  * THIS MODULE IS PUBLICLY LICENSED
@@ -29,7 +29,11 @@
 
 /* Necessary includes */
 #include <ostream.h>	// For AUTOENUM
+#ifdef SYSTEMC_LESSER
+#include <systemc_lesser.h>
+#else
 #include <systemc.h>
+#endif
 
 /**********************************************************************/
 /* Macros */
@@ -59,6 +63,22 @@ inline const char *sp_cell_sprintf(const char *fmt...) {
     char* buf = new char[strlen(fmt) + 20];
     va_list ap; va_start(ap,fmt); vsprintf(buf,fmt,ap); va_end(ap);
     return(buf);
+}
+
+/**********************************************************************/
+/* sp_log.h has whole thing... This one function may be used everywhere */
+
+#ifndef UTIL_ATTR_PRINTF
+# ifdef __GNUC__
+#  define UTIL_ATTR_PRINTF(fmtArgNum) __attribute__ ((format (printf, fmtArgNum, fmtArgNum+1)))
+# else
+#  define UTIL_ATTR_PRINTF(fmtArgNum) 
+# endif
+#endif
+
+extern "C" {
+    /* Print to cout, but with C style arguments */
+    extern void sp_log_printf(const char *format, ...) UTIL_ATTR_PRINTF(1);
 }
 
 /**********************************************************************/

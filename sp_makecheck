@@ -1,0 +1,195 @@
+#!/usr/local/bin/perl -w
+#$Id: sp_makecheck,v 1.1 2001/05/17 20:48:04 wsnyder Exp $
+######################################################################
+# Unpublished Work Copyright (C) 2001 Wilson Snyder
+# All Rights Reserved.                                                      
+######################################################################
+#
+# This program is Copyright 2001 by Wilson Snyder.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of either the GNU General Public License or the
+# Perl Artistic License, with the exception that it cannot be placed
+# on a CD-ROM or similar media for commercial distribution without the
+# prior approval of the author.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# If you do not have a copy of the GNU General Public License write to
+# the Free Software Foundation, Inc., 675 Mass Ave, Cambridge, 
+# MA 02139, USA.
+#                                                                           
+######################################################################
+
+require 5.005;
+use Getopt::Long;
+use IO::File;
+use Pod::Text;
+use strict;
+use vars qw ($Debug %Depend %Targets %Checked);
+
+#======================================================================
+
+
+#======================================================================
+# main
+
+$Debug = 0;
+my @dfiles;
+if (! GetOptions (
+		  "help"	=> \&usage,
+		  "debug"	=> \&debug,
+		  "<>"		=> \&parameter,
+		  )) {
+    usage();
+}
+
+foreach my $file (@dfiles) {
+    dfile_read ($file);
+}
+depend_cleanup();
+
+#----------------------------------------------------------------------
+
+sub usage {
+    print '$Id: sp_makecheck,v 1.1 2001/05/17 20:48:04 wsnyder Exp $ ', "\n";
+    $SIG{__WARN__} = sub{};	#pod2text isn't clean.
+    pod2text($0);
+    exit (1);
+}
+
+sub debug {
+    $Debug = 1;
+}
+
+sub parameter {
+    my $param = shift;
+    if ($param =~ /\.d$/) {
+	push @dfiles, $param;
+    } else {
+	die "%Error: Unknown parameter: $param\n";
+    }
+}
+ 
+#######################################################################
+
+sub dfile_read {
+    my $filename = shift;
+    my $fh = IO::File->new($filename) or die "%Error: $! $filename\n";
+    my $line = "";
+    while (defined (my $thisline = $fh->getline())) {
+	chomp $thisline;
+	$line .= $thisline;
+	next if ($line =~ s/\\s*$/ /);
+	next if ($line =~ /^\s*$/);
+	if ($line =~ /^([^:]+):([^:]*)$/) {
+	    my $tgtl = $1;  my $depl = $2;
+	    my @tgts = ($filename);
+	    foreach my $tgt (split /\s+/,"$tgtl ") {
+		next if $tgt eq "";
+		push @tgts, $tgt;
+	    }
+	    foreach my $dep (split /\s+/,"$depl ") {
+		next if $dep eq "";
+		foreach my $tgt (@tgts) {
+		    $Depend{$tgt}{$dep} = 1;
+		    $Targets{$dep}{$tgt} = 1;
+		    print "DEP $tgt $dep\n" if $Debug;
+		}
+	    }
+	} else {
+	    die "%Error: $filename:$.: Strange dependancy line: $line\n";
+	}
+	$line = "";
+    }
+    $fh->close;
+}
+
+sub depend_cleanup {
+    foreach my $dep (keys %Targets) {
+	depend_cleanup_one($dep, 0);
+    }
+}
+
+sub depend_cleanup_one {
+    my $dep = shift;
+    my $force_remove = shift;
+    if ($force_remove) {
+	file_rm ($dep);
+    }
+    if ($force_remove || !file_exists($dep)) {
+	foreach my $tgt (keys %{$Targets{$dep}}) {
+	    print "dep_removed $force_remove $dep\t$tgt\n" if $Debug;
+	    depend_cleanup_one ($tgt,$force_remove+1);
+	}
+    }
+}
+
+sub file_exists {
+    my $filename = shift;
+    if (!defined $Checked{$filename}) {
+	$Checked{$filename} = -r $filename;
+    }
+    return $Checked{$filename};
+}
+sub file_rm {
+    my $filename = shift;
+    return if !file_exists($filename);
+    print "rm $filename\n" if $Debug;
+    unlink $filename;
+    $Checked{$filename} = 0;
+}
+
+
+#######################################################################
+__END__
+
+=pod
+
+=head1 NAME
+
+sp_makecheck - Read dependancy files and check for missing dependancies
+
+=head1 SYNOPSIS
+
+C<sp_makecheck> *.d
+
+=head1 DESCRIPTION
+
+A common technique with make is to use GCC to generate .d dependancy files
+using the -MMD switch.  This creates a files similar to foo.d:
+
+    foo.o foo.d: foo.cc foo.h
+
+The problem is if a header file is removed, then make will complain that
+there is no rule to build foo.h.
+
+sp_makecheck reads the specified dependancy files, and checks for the
+existance of all dependancies in the file.  If a file does not exist, it
+simply removes all of the targets.
+
+=head1 ARGUMENTS
+
+=over 4
+
+=item --help
+
+Displays this message and program version and exits.
+
+=back
+
+=head1 SEE ALSO
+
+=head1 AUTHORS
+
+Wilson Snyder <wsnyder@wsnyder.org>
+
+=cut
+
+######################################################################
+### Local Variables:
+### compile-command: "./sp_makecheck "
+### End:

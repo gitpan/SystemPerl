@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Id: Module.pm,v 1.10 2001/04/24 14:20:21 wsnyder Exp $
+# $Id: Module.pm,v 1.13 2001/05/18 21:48:17 wsnyder Exp $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -46,6 +46,8 @@ structs('SystemC::Netlist::Module::Struct'
 	   _celldecls	=> '%',		# hash of declared cells (for autocell only)
 	   _autosignal	=> '$', #'	# Module has /*AUTOSIGNAL*/ in it
 	   _autosubcells=> '$', #'	# Module has /*AUTOSUBCELLS*/ in it
+	   _autotrace	=> '$', #'	# Module has /*AUTOTRACE*/ in it
+	   is_libcell	=> '$', #'	# Module is a library cell
 	   ]);
 
 sub modulename_from_filename {
@@ -84,6 +86,18 @@ sub ports_sorted {
 sub cells_sorted {
     my $self = shift;
     return (sort {$a->name() cmp $b->name()} (values %{$self->cells}));
+}
+sub nets_and_ports_sorted {
+    my $self = shift;
+    my @list = ((values %{$self->nets}), (values %{$self->ports}), );
+    my @outlist; my $last = "";
+    # Eliminate duplicates
+    foreach my $e (sort {$a->name() cmp $b->name()} (@list)) {
+	next if $e eq $last;
+	push @outlist, $e;
+	$last = $e;
+    }
+    return (@outlist);
 }
 
 sub new_net {
@@ -190,9 +204,9 @@ sub _write_autosubcells {
     my $prefix = shift;
     return if !$SystemC::Netlist::File::outputting;
     $fileref->_write_print ("${prefix}// Beginning of SystemPerl automatic subcells\n");
-    my %todo = ();
     foreach my $cellref ($self->cells_sorted) {
 	my $name = $cellref->name; my $bra = "";
+	next if ($self->_celldecls($name));
 	if ($name =~ /^(.*?)\[(.*)\]/) {
 	    $name = $1; $bra = $2;
 	    next if ($self->_celldecls($name));
@@ -204,6 +218,54 @@ sub _write_autosubcells {
 				 ,$prefix,$cellref->submodname.",",$name);
     }
     $fileref->_write_print ("${prefix}// End of SystemPerl automatic subcells\n");
+}
+
+sub _write_autodecls {
+    my $self = shift;
+    my $fileref = shift;
+    my $prefix = shift;
+    return if !$SystemC::Netlist::File::outputting;
+    $fileref->_write_print ("${prefix}// Beginning of SystemPerl automatic declarations\n");
+    if ($self->_autotrace()) {
+	$fileref->_write_print ("${prefix}void trace (sc_trace_file *tf,",
+				" const sc_string& prefix, int levels, int options=0);\n");
+    }
+    $fileref->_write_print ("${prefix}// End of SystemPerl automatic declarations\n");
+}
+
+sub _write_autotrace {
+    my $self = shift;
+    my $fileref = shift;
+    my $prefix = shift;
+    return if !$SystemC::Netlist::File::outputting;
+    $fileref->_write_print
+	("${prefix}// Beginning of SystemPerl automatic trace file routine\n",
+	 "${prefix}void ",$self->name(),"::trace (sc_trace_file *tf, const sc_string& prefix, int levels, int options=0) {\n",
+	 );
+    foreach my $netref ($self->nets_and_ports_sorted) {
+	next if $netref->direction eq 'out';
+	my $width = $netref->width;
+	$fileref->_write_printf ("${prefix}    sc_trace(tf, this->%-20s prefix+\"%s\"",
+				 $netref->name.".read(),", $netref->name);
+	if ($width) {
+	    $fileref->_write_printf (", %d);\n",$width);
+	} else {
+	    $fileref->_write_printf (");\n");
+	}
+    }
+    $fileref->_write_print ("${prefix}    if (levels > 0) {\n",);
+    foreach my $cellref ($self->cells_sorted) {
+	my $name = $cellref->name;
+	#if ($name =~ /^(.*?)\[(.*)\]/);
+	if ($cellref->submod->_autotrace()) {
+	    $fileref->_write_printf ("${prefix}         this->${name}->trace (tf, prefix+\"%s.\", levels-1, options);\n",
+				     $name);
+	}
+    }
+    $fileref->_write_print ("${prefix}    }\n",
+			    "${prefix}}\n",
+			    "${prefix}// End of SystemPerl automatic trace file routine\n",
+			    );
 }
 
 ######################################################################

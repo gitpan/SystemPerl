@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Id: Net.pm,v 1.5 2001/04/03 21:26:01 wsnyder Exp $
+# $Id: Net.pm,v 1.6 2001/05/07 15:40:18 wsnyder Exp $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -44,6 +44,15 @@ structs('SystemC::Netlist::Net::Struct'
 	   ]);
 
 sub _link {}
+sub direction {return 'net';}	# Sometimes we treat a net as a port
+
+sub width {
+    my $self = shift;
+    # Return bit width (if known)
+    return 32 if $self->type eq "uint32_t";
+    return 1 if $self->type eq "bool";
+    return undef;
+}
 
 sub lint {
     my $self = shift;

@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Id: File.pm,v 1.26 2001/04/24 14:20:21 wsnyder Exp $
+# $Id: File.pm,v 1.30 2001/05/18 21:48:17 wsnyder Exp $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -37,6 +37,7 @@ structs('SystemC::Netlist::File::Struct'
 	   netlist	=> '$', #'	# Netlist is a member of
 	   #
 	   text		=> '$',	#'	# ARRAYREF: Lines of text
+	   is_libcell	=> '$',	#'	# True if is a library cell
 	   # For special procedures
 	   _write_var	=> '%',		# For write() function info passing
 	   _enums	=> '$', #'	# For autoenums
@@ -69,6 +70,7 @@ sub module {
     print "Module $module\n" if $SystemC::Netlist::Debug;
     $self->{modref} = $netlist->new_module
 	(name=>$module,
+	 is_libcell=>$fileref->is_libcell(),
 	 filename=>$self->filename, lineno=>$self->lineno);
 }
 
@@ -118,6 +120,22 @@ sub auto {
 	push @Text, [ 1, $self->filename, $self->lineno,
 		      \&SystemC::Netlist::File::_write_autoenum_global,
 		      $self->{fileref}, $class, $enumtype, $prefix,];
+    }
+    elsif ($line =~ /^(\s*)\/\*AUTODECLS\*\//) {
+	my $prefix = $1;
+	push @Text, [ 1, $self->filename, $self->lineno,
+		      \&SystemC::Netlist::Module::_write_autodecls,
+		      $modref, $self->{fileref}, $prefix];
+    }
+    elsif ($line =~ /^(\s*)\/\*AUTOTRACE\(([a-zA-Z0-9_]+)\)\*\//) {
+	my $prefix = $1; my $modname = $2;
+	$modname = $self->{fileref}->basename if $modname eq "__MODULE__";
+	my $mod = $self->{netlist}->find_module ($modname);
+	$mod or $self->warn ("Declaration for module not found: $modname\n");
+	$mod->_autotrace(1);
+	push @Text, [ 1, $self->filename, $self->lineno,
+		      \&SystemC::Netlist::Module::_write_autotrace,
+		      $mod, $self->{fileref}, $prefix,];
     }
     else {
 	return $self->error ("Unknown AUTO command", $line);
@@ -274,7 +292,9 @@ sub read {
     (-r $filename) or die "%Error: Cannot open $filename\n";
 
     my $netlist = $params{netlist} or croak ("Call SystemC::Netlist::read_file instead,");
-    my $fileref = $netlist->new_file (name=>$filename,);
+    my $fileref = $netlist->new_file (name=>$filename,
+				      is_libcell=>$params{is_libcell}||0,
+				      );
 
     my $parser = SystemC::Netlist::File::Parser->new
 	( modref=>undef,	# Module being parsed now
@@ -286,6 +306,7 @@ sub read {
 	  );
     # For speed, we don't use the accessor function
     local @SystemC::Netlist::File::Parser::Text = ();
+    $netlist->dependancy_in ($filename);
     $parser->read (filename=>$filename,);
     $fileref->text(\@SystemC::Netlist::File::Parser::Text);
     return $fileref;
@@ -434,6 +455,7 @@ sub write {
     }
 
     # Write the file
+    $self->netlist->dependancy_out ($filename);
     if (!$keepstamp
 	|| (join ('',@oldtext) ne join ('',@write_newtext))) {
 	print "Write $filename\n" if $SystemC::Netlist::Verbose;

@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Id: Cell.pm,v 1.9 2001/04/03 21:26:01 wsnyder Exp $
+# $Id: Cell.pm,v 1.10 2001/05/10 17:38:47 dcampane Exp $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -58,7 +58,16 @@ sub new_pin {
 
 sub _link {
     my $self = shift;
-    $self->submod($self->netlist->find_module ($self->submodname())) if $self->submodname();
+    if ($self->submodname()) {
+	my $name = $self->submodname();
+	my $sm = $self->netlist->find_module ($self->submodname());
+	if (!$sm) {
+	    # Try a name conversion so FOO_BAR defined as foo_bar will work
+	    $name = lc $name;
+	    $sm = $self->netlist->find_module ($name);
+	}
+	$self->submod($sm);
+    }
     foreach my $pinref (values %{$self->pins}) {
 	$pinref->_link();
     }

@@ -1,5 +1,5 @@
 #!/usr/local/bin/perl -w
-#$Id: sp_preproc,v 1.10 2001/04/03 22:16:54 wsnyder Exp $
+#$Id: sp_preproc,v 1.14 2001/05/18 21:48:14 wsnyder Exp $
 ######################################################################
 # Unpublished Work Copyright (C) 2000 Wilson Snyder
 # All Rights Reserved.                                                      
@@ -23,25 +23,6 @@
 # MA 02139, USA.
 #                                                                           
 ######################################################################
-#FIX
-#
-#VREGS_VARIABLE (R_FOO, VariableName32Bits);
-#VREGS_VARIABLE (R_FOO[bit:bit], VariableNameSomeBits);
-#VREGS_VARIABLE (R_FOO_FIELD, FieldVariableName);
-#
-#Connect the register field or bit range to the given variable.
-#This will provide a function to direct read & write the value of
-#the register, and a function to set it.  (Allow user bound check?)
-#
-#Standard functions
-#clock()
-#
-#check_config()
-#
-#Called at end of vregs function
-#
-#direct_write
-#direct_read
 
 require 5.005;
 use Getopt::Long;
@@ -56,7 +37,7 @@ use lib "$RealBin/blib/arch";
 use lib "$RealBin/..";
 use SystemC::Netlist;
 
-use vars qw ($Debug $Opt_Makedeps $Opt_Lint $Exit_Status %Error_Unlink);
+use vars qw ($Debug $opt_makedeps $Opt_Lint $Exit_Status %Error_Unlink);
 
 #======================================================================
 $Opt_Lint = 1;
@@ -68,14 +49,18 @@ $Debug = 0;
 my $opt_preproc = 0;
 my $opt_inline;
 my $opt_autos = 1;
-my @sp_files = ();
+my @sp_files_lib = ();
+my @sp_files_nolib = ();
+my $opt_libcell = 0;
 if (! GetOptions (
 		  "help"	=> \&usage,
 		  "verbose"	=> \&verbose,
 		  "debug"	=> \&debug,
-		  "M!"		=> \$Opt_Makedeps,
+		  "M:s"		=> \$opt_makedeps,
+		  "MMD:s"	=> \$opt_makedeps,
 		 # "lint!"	=> \$Opt_Lint,
 		  "autos!"	=> \$opt_autos,
+		  "libcell!"	=> \$opt_libcell,
 		  "preproc!"	=> \$opt_preproc,
 		  "inline!"	=> \$opt_inline,
 		  "<>"		=> \&parameter,
@@ -85,9 +70,14 @@ if (! GetOptions (
 
 my $nl = new SystemC::Netlist ();
 
-foreach my $file (@sp_files) {
-  $nl->read_file (filename=>$file,
-		  strip_autos=>1);
+foreach my $file (@sp_files_nolib) {
+    $nl->read_file (filename=>$file,
+		    strip_autos=>1);
+}
+foreach my $file (@sp_files_lib) {
+    $nl->read_file (filename=>$file,
+		    strip_autos=>0,
+		    is_libcell=>1,);
 }
 
 $nl->link();
@@ -101,6 +91,7 @@ $nl->exit_if_error();
 
 if ($opt_preproc) {
     foreach my $fileref ($nl->files()) {
+	next if $fileref->is_libcell();
 	my $filename_c = $fileref->basename() . ".cpp";
 	my $filename_h = $fileref->basename() . ".h";
 	$fileref->write( filename=> $filename_c,
@@ -113,16 +104,20 @@ if ($opt_preproc) {
 }
 if ($opt_inline) {
     foreach my $fileref ($nl->files()) {
+	next if $fileref->is_libcell();
 	$fileref->write( filename=>$fileref->name(),
 			 expand_autos=>$opt_autos,
 			 keep_timestamp=>1,);
     }
 }
+if ($opt_makedeps) {
+    $nl->dependancy_write($opt_makedeps);
+}
 
 #----------------------------------------------------------------------
 
 sub usage {
-    print '$Id: sp_preproc,v 1.10 2001/04/03 22:16:54 wsnyder Exp $ ', "\n";
+    print '$Id: sp_preproc,v 1.14 2001/05/18 21:48:14 wsnyder Exp $ ', "\n";
     $SIG{__WARN__} = sub{};	#pod2text isn't clean.
     pod2text($0);
     exit (1);
@@ -134,13 +129,18 @@ sub verbose {
 
 sub debug {
     verbose();
+    $SystemC::Netlist::Debug = 1;
     $Debug = 1;
 }
 
 sub parameter {
     my $param = shift;
     if ($param =~ /\.(cc|cpp|h|hh|sp)$/) {
-	push @sp_files, $param;
+	if ($opt_libcell) {
+	    push @sp_files_lib, $param;
+	} else {
+	    push @sp_files_nolib, $param;
+	}
     } elsif ($param =~ /sp_preproc$/) {
 	# Ignore ourself in case user passed all dependancies including this program
     } else {
@@ -198,6 +198,13 @@ Displays this message and program version and exits.
 
 Edit the existing source code "inline".  Similar to the Verilog-mode AUTOs.
 Use --inline --noautos to remove the expanded automatics.
+
+=item --libcell
+
+Files listed before --libcell will be preprocessed or inlined as
+appropriate.  Files after noexpand will only be used for resolving
+references, they will not be linked, linted, or otherwise checked.
+--nolibcell can be used to reenable checking of subsequent files.
 
 =item --preproc
 

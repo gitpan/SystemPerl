@@ -1,9 +1,9 @@
-# $Id: Makefile.PL,v 1.9 2001/04/11 17:47:36 wsnyder Exp $
+# $Id: Makefile.PL,v 1.14 2001/05/21 13:34:54 wsnyder Exp $
 # DESCRIPTION: Perl ExtUtils: Type 'perl Makefile.PL' to create a Makefile for this package
 
+require 5.005;
 use ExtUtils::MakeMaker;
 use Carp;
-require 5.005;
 
 sub MY::postamble {
 "
@@ -18,6 +18,7 @@ dist: distcheck README
 
 install-local: manifypods
 	cp -R blib/man* /usr/local/common/man
+	cp -R sp_makecheck /usr/local/common/bin/sp_makecheck__notfound
 
 tag:
 	cvs tag -F \$(DISTNAME)_\$(VERSION_SYM) .
@@ -30,7 +31,7 @@ WriteMakefile(
 	      AUTHOR	=> 'Wilson Snyder <wsnyder@wsnyder.org>',
 	      ABSTRACT  => 'SystemC Netlist Utilities and Parsing',
 	      VERSION_FROM  => 'Netlist.pm',
-	      EXE_FILES => [qw( sp_preproc )],
+	      EXE_FILES => [qw( sp_preproc sp_includer sp_makecheck )],
 	      'clean'	=> {FILES => qw ( ),},
 	      'dist'    => {COMPRESS => 'gzip -9f',
 			    SUFFIX   => '.gz', 

@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Id: Port.pm,v 1.6 2001/04/03 21:26:02 wsnyder Exp $
+# $Id: Port.pm,v 1.7 2001/05/07 15:40:18 wsnyder Exp $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -44,6 +44,14 @@ structs('SystemC::Netlist::Port::Struct'
 
 sub _link {}
 sub lint {}
+
+sub width {
+    my $self = shift;
+    # Return bit width (if known)
+    return 32 if $self->type eq "uint32_t";
+    return 1 if $self->type eq "bool";
+    return undef;
+}
 
 sub print {
     my $self = shift;

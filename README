@@ -15,12 +15,15 @@ author.
    This code is provided with no warranty of any kind, and is used
 entirely at your own risk.
 
+Summary
+=======
+
 Description
 ===========
 
-   This package provides four major sub-packages.  The SystemC::Parser
-understands how to read SystemC files, and extract tokens and such,
-similar to Verilog::Parser.
+   This package provides several major sub-packages.  The
+SystemC::Parser understands how to read SystemC files, and extract
+tokens and such, similar to Verilog::Parser.
 
    SystemC::Netlist builds netlists out of SystemC files.  This allows
 easy scripts to determine things such as the hiearchy of SC_MODULEs.
@@ -30,6 +33,10 @@ The netlist database may also be extended to support other languages.
 SystemPerl language.  This allows most of the Tedium to be removed from
 SystemC coding, just as the author's /*AUTO*/ comments did for the
 Verilog language.  See `man SystemPerl' after installation.
+
+   sp_include shows a technique for speeding up SystemC compiles using
+GCC.  sp_makecheck allows for cleaning up dependancy files when
+dependancies have been removed or changed.
 
    Finally, the src directory contains useful C++ utilities for
 simulation, such as changing cout to send to both the screen and a file.
@@ -76,6 +83,30 @@ simulation, such as changing cout to send to both the screen and a file.
                  show_hier ($cell->submod, $indent."  ".$cell->name."  ");
              }
          }
+
+SystemPerl Example
+==================
+
+     SC_MODULE(mod) {
+         /*AUTOSIGNAL*/
+         SC_CTOR(mod) {
+     	SP_CELL (sub, submod);
+     	  /*AUTOINST*/
+
+   Becomes:
+
+     SC_MODULE(mod) {
+         /*AUTOSUBCELLS*/
+         // Beginning of SystemPerl automatic signals
+         sc_signal<bool>             a;       // For submod
+         // End of SystemPerl automatic signals
+     
+         SC_CTOR(mod) {
+     	SP_CELL (sub, submod);
+     	  /*AUTOINST*/
+               // Beginning of SystemPerl automatic pins
+     	  SP_PIN (sub, a,	a);
+               // End of SystemPerl automatic pins
 
 Obtaining Distribution
 ======================

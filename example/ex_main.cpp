@@ -1,4 +1,4 @@
-// $Id: ex_main.cpp,v 1.4 2001/04/03 17:08:07 wsnyder Exp $
+// $Id: ex_main.cpp,v 1.5 2001/05/07 15:40:18 wsnyder Exp $
 // DESCRIPTION: SystemPerl: Example main()
 
 #include <systemperl.h>
@@ -18,8 +18,7 @@ int sc_main (int argc, char *argv[])
     //((vcd_trace_file *)tf)->sc_set_vcd_time_unit(-9);
 	
     sc_trace(tf, clk, "clk");
-    sc_trace(tf, bench->in, "in");
-    sc_trace(tf, bench->out, "out");
+    bench->trace(tf,"bench.",999);
 	
     cout << "Starting\n";
     sc_start(-1);

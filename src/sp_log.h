@@ -1,4 +1,4 @@
-/* $Id: sp_log.h,v 1.9 2001/04/28 22:57:29 jdutton Exp $
+/* $Id: sp_log.h,v 1.10 2001/05/18 17:25:03 wsnyder Exp $
  ************************************************************************
  *
  * THIS MODULE IS PUBLICLY LICENSED
@@ -28,7 +28,11 @@
 #define _SP_LOG_H_ 1
 
 #ifndef UTIL_ATTR_PRINTF
-#define UTIL_ATTR_PRINTF(fmtArgNum) __attribute__ ((format (printf, fmtArgNum, fmtArgNum+1)))
+# ifdef __GNUC__
+#  define UTIL_ATTR_PRINTF(fmtArgNum) __attribute__ ((format (printf, fmtArgNum, fmtArgNum+1)))
+# else
+#  define UTIL_ATTR_PRINTF(fmtArgNum) 
+# endif
 #endif
 
 #include <stdio.h>

@@ -1,0 +1,129 @@
+#!/usr/local/bin/perl -w
+#$Id: sp_includer,v 1.1 2001/05/11 13:30:15 wsnyder Exp $
+######################################################################
+# Unpublished Work Copyright (C) 2000 Wilson Snyder
+# All Rights Reserved.                                                      
+######################################################################
+#
+# This program is Copyright 2000 by Wilson Snyder.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of either the GNU General Public License or the
+# Perl Artistic License, with the exception that it cannot be placed
+# on a CD-ROM or similar media for commercial distribution without the
+# prior approval of the author.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# If you do not have a copy of the GNU General Public License write to
+# the Free Software Foundation, Inc., 675 Mass Ave, Cambridge, 
+# MA 02139, USA.
+#                                                                           
+######################################################################
+
+require 5.005;
+use Getopt::Long;
+use IO::File;
+use Pod::Text;
+use strict;
+
+use vars qw ($Debug);
+
+#======================================================================
+# main
+
+$Debug = 0;
+my @params;
+if (! GetOptions (
+		  "help"	=> \&usage,
+		  "debug"	=> \&debug,
+		  "<>"		=> \&parameter,
+		  )) {
+    usage();
+}
+
+foreach my $param (@params) {
+    print "#include \"$param\"\n"
+}
+
+#----------------------------------------------------------------------
+
+sub usage {
+    print '$Id: sp_includer,v 1.1 2001/05/11 13:30:15 wsnyder Exp $ ', "\n";
+    $SIG{__WARN__} = sub{};	#pod2text isn't clean.
+    pod2text($0);
+    exit (1);
+}
+
+sub debug {
+    $Debug = 1;
+}
+
+sub parameter {
+    my $param = shift;
+    push @params, $param;
+}
+ 
+#######################################################################
+__END__
+
+=pod
+
+=head1 NAME
+
+sp_includer - Form include statements
+
+=head1 SYNOPSIS
+
+C<sp_includer> I<file1.cpp> I<file2.cpp> ...
+
+=head1 DESCRIPTION
+
+sp_includer simply takes all of the arguments on the command line and
+prints #include statements for each argument.
+
+This allows multiple files to be compiled in one pass; rather then using
+    gcc file1.cpp
+    gcc file2.cpp
+    gcc file3.cpp
+
+or the equivelently slow
+
+    gcc file1.cpp file2.cpp file3.cpp
+
+this program allows
+
+    sp_includer file1.cpp file2.cpp file3.cpp > file_CONCAT.cpp
+    gcc file_CONCAT.cpp
+
+where any headers all files require will be read only once.  With the
+SystemC headers, this saves ~5 seconds per file, many minutes across an
+entire large project.
+
+=head1 ARGUMENTS
+
+=over 4
+
+=item --help
+
+Displays this message and program version and exits.
+
+=back
+
+=head1 SEE ALSO
+
+C<SystemPerl>
+
+=head1 AUTHORS
+
+Wilson Snyder <wsnyder@wsnyder.org>
+
+=cut
+
+######################################################################
+### Local Variables:
+### compile-command: "./sp_includer a.cpp b.cpp c.cpp"
+### End:

@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Id: Netlist.pm,v 1.13 2001/05/04 18:14:24 wsnyder Exp $
+# $Id: Netlist.pm,v 1.16 2001/05/18 21:48:14 wsnyder Exp $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -23,6 +23,7 @@
 
 package SystemC::Netlist;
 use Carp;
+use IO::File;
 
 use SystemC::Netlist::Module;
 use SystemC::Netlist::File;
@@ -31,7 +32,7 @@ use SystemC::Netlist::Subclass;
 use strict;
 use vars qw($Debug $Verbose $VERSION);
 
-$VERSION = '0.400';
+$VERSION = '0.410';
 
 ######################################################################
 #### Error Handling
@@ -58,18 +59,21 @@ sub new {
 sub link {
     my $self = shift;
     foreach my $modref ($self->modules) {
+	next if $modref->is_libcell();
 	$modref->link();
     }
 }
 sub lint {
     my $self = shift;
     foreach my $modref ($self->modules_sorted) {
+	next if $modref->is_libcell();
 	$modref->lint();
     }
 }
 sub autos {
     my $self = shift;
     foreach my $modref ($self->modules) {
+	next if $modref->is_libcell();
 	$modref->autos();
     }
 }
@@ -149,6 +153,37 @@ sub read_file {
     my $fileref = SystemC::Netlist::File::read
 	(netlist=>$self,
 	 @_);
+}
+
+######################################################################
+#### Dependancies
+
+sub dependancy_in {
+    my $self = shift;
+    my $filename = shift;
+    $self->{_depend_in}{$filename} = 1;
+}
+sub dependancy_out {
+    my $self = shift;
+    my $filename = shift;
+    $self->{_depend_out}{$filename} = 1;
+}
+
+sub dependancy_write {
+    my $self = shift;
+    my $filename = shift;
+
+    my $fh = IO::File->new(">$filename") or die "%Error: $! $filename\n";
+    print $fh "$filename";
+    foreach my $dout (sort (keys %{$self->{_depend_out}})) {
+	print $fh " $dout";
+    }
+    print $fh " :";
+    foreach my $din (sort (keys %{$self->{_depend_in}})) {
+	print $fh " $din";
+    }
+    print $fh "\n";
+    $fh->close();
 }
 
 ######################################################################
@@ -283,6 +318,10 @@ the filename=> parameter, parsing all instantiations, ports, and signals,
 and creating SystemC::Netlist::Module structures.  The optional
 preserve_autos=> parameter prevents default ripping of /*AUTOS*/ out for
 later recomputation.
+
+=item $netlist->dependancy_write($name)
+
+Writes a dependancy file for make, listing all input and output files.
 
 =back
 

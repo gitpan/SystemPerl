@@ -5,6 +5,15 @@ The contributors that suggested a given feature is shown in [].
 	
 This uses outline mode in Emacs.  See C-h m [M-x describe-mode].
 
+* Changes in SystemC 0.410 5/21/2001
+
+**	Added AUTOTRACE for creating trace statements for all signals.
+
+**	Added sp_includer and sp_makecheck for faster SystemC compiles.
+
+***	Added sp_preproc --libcell for cells that are not to be expanded.
+	This is useful for hierarchical sp_preproc'essing.
+
 * Changes in SystemC 0.400 5/4/2001
 
 **	Added AUTOENUM_* for ascii displays of enum values.
@@ -37,7 +46,7 @@ This uses outline mode in Emacs.  See C-h m [M-x describe-mode].
 
 
 ----------------------------------------------------------------------
-$Id: NEWS,v 1.10 2001/05/04 18:12:16 wsnyder Exp $
+$Id: NEWS,v 1.15 2001/05/21 13:32:25 wsnyder Exp $
 ----------------------------------------------------------------------
 Copyright information:
 

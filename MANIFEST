@@ -28,6 +28,8 @@ example/ex_main.cpp
 example/ex_mod.sp
 example/ex_mod_sub.sp
 readme.texi
+sp_includer
+sp_makecheck
 sp_preproc
 src/sp_log.cpp
 src/sp_log.h

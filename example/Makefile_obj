@@ -1,4 +1,4 @@
-# $Id: Makefile_obj,v 1.5 2001/04/09 19:38:08 wsnyder Exp $ -*- Makefile -*-
+# $Id: Makefile_obj,v 1.6 2001/05/17 15:33:57 wsnyder Exp $ -*- Makefile -*-
 # DESCRIPTION: SystemPerl: Example makefile
 #
 # This is executed in the "test_dir", not in this directory
@@ -32,10 +32,10 @@ SP_OBJS   := $(addsuffix .o,$(SP_SP_BASE))
 build:	preproc ex_main
 
 # Setup as a "always" rule; we don't check for enough sp_preproc dependancies
-# In a user example where you were'nt editing sp_preproc, you could have:
+# In a user example where you weren't editing sp_preproc, you could have:
 #preproc $(SP_CPP) $(SP_H): $(SP_SP)
 preproc $(SP_CPP) $(SP_H):
-	../sp_preproc --preproc $(SP_SP)
+	../sp_preproc -M sp_preproc.d --preproc $(SP_SP)
 
 ex_main:	$(OBJS)
 	$(CC) $(CFLAGS) $(INCDIR) $(LIBDIR) -o $@ $^ $(LIBS) 2>&1 | c++filt
