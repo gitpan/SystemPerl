@@ -1,4 +1,4 @@
-// $Revision: #16 $$Date: 2003/07/15 $$Author: wsnyder $ -*- SystemC -*-
+// $Revision: #17 $$Date: 2003/07/16 $$Author: wsnyder $ -*- SystemC -*-
 //=============================================================================
 //
 // THIS MODULE IS PUBLICLY LICENSED
@@ -47,10 +47,11 @@ class SpTraceVcdSig {
 protected:
     friend class SpTraceVcd;
     uint32_t		m_code;		// Code number
-    const uint32_t*	m_valp;		// Pointer to where value comes from
+    const void*		m_valp;		// Pointer to where value comes from
     int			m_bits;		// Size of value
-    SpTraceVcdSig (uint32_t code, const uint32_t* valp, int bits)
-	: m_code(code), m_valp(valp), m_bits(bits) {}
+    int			m_storage;	// Storage size of value
+    SpTraceVcdSig (uint32_t code, const void* valp, int bits, int storage)
+	: m_code(code), m_valp(valp), m_bits(bits), m_storage(storage) {}
 };
 
 //=============================================================================
@@ -92,8 +93,8 @@ private:
     void printStr (const char* str);
     void printInt (int n);
     void declare (uint32_t code, const char* name, int arraynum,
-		  const uint32_t* valp,
-		  int msb, int lsb, bool isBit);
+		  const void* valp,
+		  int msb, int lsb, bool isBit, int storage);
     void dumpPrep (double timestamp);
     void dumpDone ();
     inline void printCode (uint32_t code) {
@@ -128,8 +129,10 @@ public:
     void init ();
     void definitions ();
     void module (const string name);
-    void declBit   (uint32_t code, const char* name, int arraynum, const uint32_t* valp);
     void declBit   (uint32_t code, const char* name, int arraynum, const bool* valp);
+    void declBit   (uint32_t code, const char* name, int arraynum, const uint8_t* valp);
+    void declBit   (uint32_t code, const char* name, int arraynum, const uint32_t* valp);
+    void declBus   (uint32_t code, const char* name, int arraynum, const uint8_t* valp, int msb, int lsb);
     void declBus   (uint32_t code, const char* name, int arraynum, const uint32_t* valp, int msb, int lsb);
     void declArray (uint32_t code, const char* name, int arraynum, const uint32_t* valp, int msb, int lsb);
     //	... other module_start for submodules (based on cell name)
@@ -140,9 +143,28 @@ public:
     void dumpFull (double timestamp);
 
     // Quick dumping
+    inline void dumpValueBit (uint32_t code, const bool& newval) {
+	m_sigs_oldval[code] = newval;
+	*m_writep++=(newval?'1':'0'); printCode(code); *m_writep++='\n';
+	bufferCheck();
+    }
+    inline void dumpValueBit (uint32_t code, const uint8_t& newval) {
+	m_sigs_oldval[code] = newval;
+	*m_writep++=(newval?'1':'0'); printCode(code); *m_writep++='\n';
+	bufferCheck();
+    }
     inline void dumpValueBit (uint32_t code, const uint32_t& newval) {
 	m_sigs_oldval[code] = newval;
 	*m_writep++=(newval?'1':'0'); printCode(code); *m_writep++='\n';
+	bufferCheck();
+    }
+    inline void dumpValueBus (uint32_t code, const uint8_t& newval, int bits) {
+	m_sigs_oldval[code] = newval;
+	*m_writep++='b';
+	for (int bit=bits-1; bit>=0; --bit) {
+	    *m_writep++=((newval&(1L<<bit))?'1':'0');
+	}
+	*m_writep++=' '; printCode(code); *m_writep++='\n';
 	bufferCheck();
     }
     inline void dumpValueBus (uint32_t code, const uint32_t& newval, int bits) {
@@ -166,8 +188,17 @@ public:
 	bufferCheck();
     }
 
+    inline void dumpBit (uint32_t code, const bool& newval) {
+	if (m_sigs_oldval[code] != newval) { dumpValueBit (code, newval); }
+    }
+    inline void dumpBit (uint32_t code, const uint8_t& newval) {
+	if (m_sigs_oldval[code] != newval) { dumpValueBit (code, newval); }
+    }
     inline void dumpBit (uint32_t code, const uint32_t& newval) {
 	if (m_sigs_oldval[code] != newval) { dumpValueBit (code, newval); }
+    }
+    inline void dumpBus (uint32_t code, const uint8_t& newval, int bits) {
+	if (m_sigs_oldval[code] != newval) { dumpValueBus (code, newval, bits); }
     }
     inline void dumpBus (uint32_t code, const uint32_t& newval, int bits) {
 	if (m_sigs_oldval[code] != newval) { dumpValueBus (code, newval, bits); }

@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Revision: #39 $$Date: 2003/07/15 $$Author: wsnyder $
+# $Revision: #40 $$Date: 2003/07/16 $$Author: wsnyder $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -31,7 +31,7 @@ use Verilog::Netlist::Subclass;
 use strict;
 use vars qw($Debug $Verbose $VERSION);
 
-$VERSION = '1.141';
+$VERSION = '1.142';
 
 ######################################################################
 #### Error Handling
@@ -63,7 +63,7 @@ sub new {
 sub sc_version {
     my $self = shift;
     # Return version of SystemC in use
-    if (!$self->{sc_version}) {
+    if (!$self->{sc_version} && $ENV{SYSTEMC}) {
 	my $fh;
 	foreach my $fn ("$ENV{SYSTEMC}/include/systemc/kernel/sc_ver.h",
 			"$ENV{SYSTEMC}/include/sc_ver.h") {
@@ -87,7 +87,7 @@ sub _set_features {
     my $self = shift;
     # Determine what features are in this SystemC version
     my $ver = $self->sc_version;
-    my $patched = (-r "$ENV{SYSTEMC}/systemperl_patched");
+    my $patched = ($ENV{SYSTEMC} && -r "$ENV{SYSTEMC}/systemperl_patched");
     if (!defined $self->{sp_allow_bv_tracing}) {
 	$self->{sp_allow_bv_tracing} = $patched;
     }

@@ -1,5 +1,5 @@
 #!/usr/local/bin/perl -w
-# $Revision: #4 $$Date: 2002/07/16 $$Author: wsnyder $
+# $Revision: #5 $$Date: 2003/07/16 $$Author: wsnyder $
 # DESCRIPTION: Perl ExtUtils: Type 'make test' to test this package
 
 use strict;
@@ -26,7 +26,7 @@ if (1) {
 
 if ($Config{archname} !~ /linux/) {
     print "Skipping: Not linux\n";
-    skip(1,1);
+    skip("skip Not Linux",1);
 } else {
     run_system ("cd sclite/src && make");
     ok(-r "sclite/lib-linux/libsystemc.a");

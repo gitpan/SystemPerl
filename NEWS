@@ -6,6 +6,10 @@ The contributors that suggested a given feature is shown in [].
 This uses outline mode in Emacs.  See C-h m [M-x describe-mode].
 
 
+* Changes in SystemC 1.142 7/16/2002
+
+****	Support tracing of uint8_t's  
+
 * Changes in SystemC 1.141 7/15/2002
 
 ***	Allow "sp use .cell.subcell.subsubcell" to include entire paths.
@@ -181,7 +185,7 @@ This uses outline mode in Emacs.  See C-h m [M-x describe-mode].
 
 
 ----------------------------------------------------------------------
-$Revision: #62 $$Date: 2003/07/15 $$Author: wsnyder $
+$Revision: #63 $$Date: 2003/07/16 $$Author: wsnyder $
 ----------------------------------------------------------------------
 Copyright information:
 

@@ -1,6 +1,6 @@
 %option noyywrap align never-interactive prefix="sclex"
 %{
-/* $Revision: #36 $$Date: 2003/07/15 $$Author: wsnyder $
+/* $Revision: #37 $$Date: 2003/07/16 $$Author: wsnyder $
  ******************************************************************************
  * DESCRIPTION: SystemC lexer
  * 
@@ -70,6 +70,7 @@ WHITESPACE	[ \t\r\f]
 NEWLINE		[\n]
 QUOTE		['"]
 SYMBOL		[a-zA-Z_][a-zA-Z0-9_$]*
+Z9		[0-9]*
 DECNUM		[0-9]+U?L?L?
 BASENUM		0x[0-9a-fA-F_]+U?L?L?
 FLOATNUM	[0-9]+"."*[0-9]*[eE][0-9]+
@@ -90,15 +91,15 @@ FLOATNUM	[0-9]+"."*[0-9]*[eE][0-9]+
 [S][PC]"_PIN"		{ return(SP_PIN); }
 [S][PC]"_TRACED"	{ return(SP_TRACED); }
 "SC_CTOR"	{ return(SC_CTOR); }
-"VL_SIG"	{ return(VL_SIG); }
+"VL_SIG"{Z9}	{ return(VL_SIG); }
 "VL_SIGW"	{ return(VL_SIGW); }
-"VL_PORT"	{ return(VL_INOUT); }
+"VL_PORT"{Z9}	{ return(VL_INOUT); }
 "VL_PORTW"	{ return(VL_INOUTW); }
-"VL_INOUT"	{ return(VL_INOUT); }
+"VL_INOUT"{Z9}	{ return(VL_INOUT); }
 "VL_INOUTW"	{ return(VL_INOUTW); }
-"VL_IN"		{ return(VL_IN); }
+"VL_IN"{Z9}	{ return(VL_IN); }
 "VL_INW"	{ return(VL_INW); }
-"VL_OUT"	{ return(VL_OUT); }
+"VL_OUT"{Z9}	{ return(VL_OUT); }
 "VL_OUTW"	{ return(VL_OUTW); }
 "VL_PIN_NOP"	{ return(SP_PIN); }
 "sc_main"	{ return(SC_MAIN); }

@@ -1,4 +1,4 @@
-# $Revision: #29 $$Date: 2003/06/18 $$Author: wsnyder $
+# $Revision: #30 $$Date: 2003/07/16 $$Author: wsnyder $
 # DESCRIPTION: Perl ExtUtils: Type 'perl Makefile.PL' to create a Makefile for this package
 
 require 5.005;
@@ -31,6 +31,7 @@ tag:
 maintainer-dist: dist tag
 	cp \$(DISTVNAME).tar.gz \$(HOME)/src/kits
 	mv \$(DISTVNAME).tar.gz \$(HOME)/backpack
+	echo \"NOTE: Did you try a test without SYSTEMC set?\"
 
 maintainer-clean: distclean
 	-rm README Makefile

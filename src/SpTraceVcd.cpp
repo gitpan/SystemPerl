@@ -1,4 +1,4 @@
-// $Revision: #20 $$Date: 2003/03/27 $$Author: wsnyder $ -*- SystemC -*-
+// $Revision: #21 $$Date: 2003/07/16 $$Author: wsnyder $ -*- SystemC -*-
 //=============================================================================
 //
 // THIS MODULE IS PUBLICLY LICENSED
@@ -251,23 +251,30 @@ void SpTraceVcd::module (string name) {
 //}
 
 void SpTraceVcd::declBit (uint32_t code, const char* name, int arraynum,
-			  const uint32_t* valp)
-{  declare (code, name, arraynum, valp, 0, 0, true); }
-void SpTraceVcd::declBit (uint32_t code, const char* name, int arraynum,
 			  const bool* valp)
-{  declare (code, name, arraynum, (uint32_t*)valp, 0, 0, true); }
+{  declare (code, name, arraynum, valp, 0, 0, true, sizeof(*valp)); }
+void SpTraceVcd::declBit (uint32_t code, const char* name, int arraynum,
+			  const uint8_t* valp)
+{  declare (code, name, arraynum, valp, 0, 0, true, sizeof(*valp)); }
+void SpTraceVcd::declBit (uint32_t code, const char* name, int arraynum,
+			  const uint32_t* valp)
+{  declare (code, name, arraynum, valp, 0, 0, true, sizeof(*valp)); }
+void SpTraceVcd::declBus (uint32_t code, const char* name, int arraynum,
+			  const uint8_t* valp, int msb, int lsb)
+{  declare (code, name, arraynum, valp, msb, lsb, false, sizeof(*valp)); }
 void SpTraceVcd::declBus (uint32_t code, const char* name, int arraynum,
 			  const uint32_t* valp, int msb, int lsb)
-{  declare (code, name, arraynum, valp, msb, lsb, false); }
+{  declare (code, name, arraynum, valp, msb, lsb, false, sizeof(*valp)); }
 void SpTraceVcd::declArray (uint32_t code, const char* name, int arraynum,
 			    const uint32_t* valp, int msb, int lsb)
-{  declare (code, name, arraynum, valp, msb, lsb, false); }
+{  declare (code, name, arraynum, valp, msb, lsb, false, sizeof(*valp)); }
 
 void SpTraceVcd::declare (uint32_t code, const char* name,
 			  int arraynum,
-			  const uint32_t* valp,
+			  const void* valp,
 			  int msb, int lsb,
-			  bool isBit)
+			  bool isBit,
+			  int storage)
 {
     if (!code) { cerr<<"%Error: internal trace problem, code 0 is illegal\n"; abort(); }
     printIndent(0);
@@ -278,7 +285,7 @@ void SpTraceVcd::declare (uint32_t code, const char* name,
 	m_sigs.reserve(code*2);	// Power-of-2 allocation speeds things up
 	m_sigs_oldval.reserve(code*2);
     }
-    SpTraceVcdSig sig = SpTraceVcdSig(code, valp, (msb-lsb+1));
+    SpTraceVcdSig sig = SpTraceVcdSig(code, valp, (msb-lsb+1), storage);
     m_sigs.push_back(sig);
 
     // Print reference
@@ -337,13 +344,25 @@ void SpTraceVcd::dumpFull (double timestamp) {
     for (uint32_t ent = 0; ent< m_sigs.size(); ent++) {
 	uint32_t code = m_sigs[ent].m_code;
 	int bits = m_sigs[ent].m_bits;
-	const uint32_t* valp = m_sigs[ent].m_valp;
-	if (bits==1) {
-	    dumpValueBit  (code, *valp);
-	} else if (bits<=32) {
-	    dumpValueBus  (code, *valp, bits);
+	int storage = m_sigs[ent].m_storage;
+	if (storage==4) {
+	    const uint32_t* valp = (const uint32_t*)m_sigs[ent].m_valp;
+	    if (bits==1) {
+		dumpValueBit  (code, *valp);
+	    } else if (bits<=32) {
+		dumpValueBus  (code, *valp, bits);
+	    } else {
+		dumpValueArray(code, valp, bits);
+	    }
 	} else {
-	    dumpValueArray(code, valp, bits);
+	    const uint8_t* valp = (const uint8_t*)m_sigs[ent].m_valp;
+	    if (bits==1) {
+		dumpValueBit  (code, *valp);
+	    } else if (bits<=32) {
+		dumpValueBus  (code, *valp, bits);
+	    } else {
+		abort(); // Unsupported
+	    }
 	}
     }
     dumpDone ();
@@ -489,13 +508,15 @@ void SpTraceFile::trace (const unsigned int &, const sc_string &, const char **)
 
 #if SPTRACEVCD_TEST
 uint32_t v1, v2, s1, s2[3];
+uint8_t ch;
 double timestamp = 1;
 
 void dump (SpTraceVcd* vcdp, void* userthis, uint32_t code) {
     vcdp->dumpBus  (0x2, v1,5);
     vcdp->dumpBus  (0x3, v2,7);
     vcdp->dumpBit  (0x4, s1);
-    vcdp->dumpArray(0x5, &s2[0], 38);
+    vcdp->dumpBus  (0x5, ch,2);
+    vcdp->dumpArray(0x6, &s2[0], 38);
     // Note need to add 3 for next code.
 }
 
@@ -505,13 +526,15 @@ void init (SpTraceVcd* vcdp, void* userthis, uint32_t code) {
      vcdp->declBus (0x3, "v2",-1,&v2, 6,0);
      vcdp->module ("top.sub1");
       vcdp->declBit (0x4, "s1",-1,&s1);
+      vcdp->declBit (0x5, "ch",-1,&ch);
      vcdp->module ("top.sub2");
-      vcdp->declArray (0x5, "s2",-1,&s2[0], 40,3);
+      vcdp->declArray (0x6, "s2",-1,&s2[0], 40,3);
 }
 
 main() {
     v1 = v2 = s1 = 0;
     s2[0] = s2[1] = s2[2] = 0;
+    ch = 0;
   
     SpTraceVcd* vcdp = new SpTraceVcd;
     vcdp->addCallback (&init, &dump, 0);
@@ -524,6 +547,7 @@ main() {
     v2 = 0x1;
     s2[1] = 2;
     vcdp->dump(timestamp++);
+    ch = 2;
     vcdp->dump(timestamp++);
     vcdp->close();
 }
