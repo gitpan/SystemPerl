@@ -1,4 +1,4 @@
-#$Revision: 1.33 $$Date: 2005-03-03 11:33:15 -0500 (Thu, 03 Mar 2005) $$Author: wsnyder $
+#$Revision: 1.33 $$Date: 2005-03-17 11:21:50 -0500 (Thu, 17 Mar 2005) $$Author: wsnyder $
 ######################################################################
 #
 # Copyright 2001-2005 by Wilson Snyder.  This program is free software;
@@ -151,6 +151,27 @@ For example:
 
     SC_MODULE (__MODULE__) {
       ...
+
+=item /*AUTOCTOR*/
+
+AUTOCTOR creates signal and port name initializers for SC_CTOR's.
+
+For example:
+
+    SC_MODULE(submod) {
+	sc_in_clk   clk;
+	...
+    
+    SC_MODULE(mod) {
+	SC_CTOR(mod) /*AUTOCTOR*/ {
+
+Becomes:
+
+    SC_MODULE(mod) {
+	SC_CTOR(mod)
+	      // Beginning of SystemPerl automatic constructor
+	      : clk("clk")
+	      // End of SystemPerl automatic constructor
 
 =item /*AUTOENUM_I<CLASS|GLOBAL>(I<enum>)*/
 
@@ -385,6 +406,13 @@ Example:
 SP_AUTO_CTOR should be called first in every constructor.  It will call
 internal functions needed for coverage analysis, and other possible future
 enhancements.
+
+=item SP_CTOR_IMP
+
+SP_CTOR_IMP provides the implementation function corresponding to SC_CTOR.
+This allows the header to use "SC_CTOR;" and the body of the constructor
+to be moved into the implementation file.   This greatly decreases the number
+of includes needed in the header file, and thus speeds compilation.
 
 =item #sp include
 

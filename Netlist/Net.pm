@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Revision: 1.52 $$Date: 2005-03-14 12:12:29 -0500 (Mon, 14 Mar 2005) $$Author: wsnyder $
+# $Revision: 1.52 $$Date: 2005-03-21 09:43:43 -0500 (Mon, 21 Mar 2005) $$Author: wsnyder $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -20,25 +20,25 @@ use Class::Struct;
 use Verilog::Netlist;
 use SystemC::Netlist;
 @ISA = qw(Verilog::Netlist::Net);
-$VERSION = '1.180';
+$VERSION = '1.190';
 use strict;
 
 # List of basic C++ types and their sizes
 use vars qw (%TypeInfo);
 %TypeInfo = (bool=>	{ msb=>0,  lsb=>0, cast_type=>undef, },
 	     sc_clock=>	{ msb=>0,  lsb=>0, cast_type=>'bool', },
-#	     int8_t=>	{ msb=>7,  lsb=>0, cast_type=>undef, },
-#	     int16_t=>	{ msb=>15, lsb=>0, cast_type=>undef, },
+	     int8_t=>	{ msb=>7,  lsb=>0, cast_type=>undef, },
+	     int16_t=>	{ msb=>15, lsb=>0, cast_type=>undef, },
 	     int32_t=>	{ msb=>31, lsb=>0, cast_type=>undef, },
 	     int64_t=>	{ msb=>63, lsb=>0, cast_type=>undef, },
 #	     int =>	{ msb=>31, lsb=>0, cast_type=>undef, },
-#	     uint8_t=>	{ msb=>7,  lsb=>0, cast_type=>undef, },
-#	     uint16_t=>	{ msb=>15, lsb=>0, cast_type=>undef, },
+	     uint8_t=>	{ msb=>7,  lsb=>0, cast_type=>undef, },
+	     uint16_t=>	{ msb=>15, lsb=>0, cast_type=>undef, },
 	     uint32_t=>	{ msb=>31, lsb=>0, cast_type=>undef, },
 	     uint64_t=>	{ msb=>63, lsb=>0, cast_type=>undef, },
 #	     uint =>	{ msb=>0,  lsb=>0, cast_type=>undef, },
-#	     nint8_t=> 	{ msb=>7,  lsb=>0, cast_type=>undef, },
-#	     nint16_t=>	{ msb=>15, lsb=>0, cast_type=>undef, },
+	     nint8_t=> 	{ msb=>7,  lsb=>0, cast_type=>undef, },
+	     nint16_t=>	{ msb=>15, lsb=>0, cast_type=>undef, },
 	     nint32_t=>	{ msb=>31, lsb=>0, cast_type=>undef, },
 	     nint64_t=>	{ msb=>63, lsb=>0, cast_type=>undef, },
 	 );
@@ -61,6 +61,16 @@ sub is_enum_type {
     return defined $self->module->netlist->{_enum_classes}{$self->type};    
 }
 
+sub inherited {
+    $_[0]->attributes("_sp_inherited", $_[1]) if exists $_[1];
+    return $_[0]->attributes("_sp_inherited")||0;
+}
+
+sub _decl_order {
+    $_[0]->attributes("_sp_decl_order", $_[1]) if exists $_[1];
+    return $_[0]->attributes("_sp_decl_order")||0;
+}
+
 ######################################################################
 # Methods
 
@@ -79,6 +89,7 @@ sub _link {
 	}
     }
     $self->SUPER::_link();
+    return $self;
 }
 
 sub lint {

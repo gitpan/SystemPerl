@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Revision: 1.45 $$Date: 2005-03-14 12:12:29 -0500 (Mon, 14 Mar 2005) $$Author: wsnyder $
+# $Revision: 1.45 $$Date: 2005-03-21 09:43:43 -0500 (Mon, 21 Mar 2005) $$Author: wsnyder $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -24,7 +24,7 @@ use SystemC::Netlist::Net;
 use SystemC::Netlist::Cell;
 use SystemC::Netlist::Module;
 @ISA = qw(Verilog::Netlist::Pin);
-$VERSION = '1.180';
+$VERSION = '1.190';
 use strict;
 
 ######################################################################
@@ -32,17 +32,22 @@ use strict;
 
 sub _autos {
     my $self = shift;
-    if ($self->module->_autosignal) {
+    if (my $decl_start = $self->module->_autosignal) {
 	if (!$self->net && $self->port) {
 	    my $net = $self->module->find_net ($self->netname);
-	    $net or $net = $self->module->new_net
-		(name=>$self->netname,
-		 filename=>$self->module->filename,
-		 lineno=>$self->lineno . ':(AUTOSIGNAL)',
-		 type=>$self->port->type,
-		 comment=>" For ".$self->submod->name, #.".".$self->name, 
-		 module=>$self->module, sp_autocreated=>1,)
-		->_link;
+	    if (!$net) {
+		$net = $self->module->new_net
+		    (name=>$self->netname,
+		     filename=>$self->module->filename,
+		     lineno=>$self->lineno . ':(AUTOSIGNAL)',
+		     type=>$self->port->type,
+		     comment=>" For ".$self->submod->name, #.".".$self->name, 
+		     module=>$self->module, sp_autocreated=>1,)
+		    ->_link;
+		# We need to track where we insert this, so we can insert
+		# constructors in proper order
+		$net->_decl_order($decl_start);
+	    }
 	}
     }
 }

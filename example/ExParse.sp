@@ -1,4 +1,4 @@
-// $Revision: 1.5 $$Date: 2005-03-01 17:59:56 -0500 (Tue, 01 Mar 2005) $$Author: wsnyder $
+// $Revision: 1.5 $$Date: 2005-03-16 14:04:22 -0500 (Wed, 16 Mar 2005) $$Author: wsnyder $
 // DESCRIPTION: SystemPerl: Example source module for parser testing
 // This module used for parsing testing, and isn't a good generic example
 //
@@ -36,7 +36,7 @@ struct __MODULE__ : public InhModule, public InhModule2 {
 #sp implementation
 /*AUTOSUBCELL_INCLUDE*/
 
-SP_CTOR_IMP(__MODULE__) {
+SP_CTOR_IMP(__MODULE__) /*AUTOCTOR*/ {
 }
 
 #ifdef NEVER_JUST_CHECKING_PARSER

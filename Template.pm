@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Revision: 1.34 $$Date: 2005-03-14 12:12:29 -0500 (Mon, 14 Mar 2005) $$Author: wsnyder $
+# $Revision: 1.34 $$Date: 2005-03-21 09:43:43 -0500 (Mon, 21 Mar 2005) $$Author: wsnyder $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -18,6 +18,7 @@ package SystemC::Template;
 use Class::Struct;
 use IO::File;
 use File::Basename;
+use File::Spec;
 use Carp;
 
 use Verilog::Netlist::Subclass;
@@ -26,7 +27,7 @@ use Verilog::Netlist::Subclass;
 use strict;
 use vars qw ($Debug $Default_Self $VERSION);
 
-$VERSION = '1.180';
+$VERSION = '1.190';
 
 structs('_new_base',
 	'SystemC::Template::Struct'
@@ -181,7 +182,9 @@ sub write {
 		# Note no $src_lineno++, we don't want the src line number to change
 		if (defined $src_filename && $gcc_filename ne $src_filename) {
 		    $gcc_filename = $src_filename;
-		    push @gen_text, "\n#line ${gcc_lineno} \"${gcc_filename}\"\n";
+		    my $abs_filename = $gcc_filename;
+		    $abs_filename = File::Spec->rel2abs($abs_filename) if $params{absolute_filenames};
+		    push @gen_text, "\n#line ${gcc_lineno} \"${abs_filename}\"\n";
 		    $gen_lineno+=2;
 		} else {
 		    push @gen_text, "\n#line ${gcc_lineno}\n";

@@ -2,6 +2,10 @@ Revision history for Perl extension SystemC::Netlist
 
 The contributors that suggested a given feature are shown in [].
 
+* SystemC 1.190 3/21/2005
+
+**	Add AUTOCTOR for constructing port names in SC_CTORs.
+
 * SystemC 1.180 3/14/2005
 
 **	Add SP_TEMPLATE for wildcarding AUTOINST signals.  [Bryce Denney]
@@ -259,7 +263,7 @@ The contributors that suggested a given feature are shown in [].
 
 
 ----------------------------------------------------------------------
-$Revision: 1.2 $$Date: 2005-03-14 12:12:29 -0500 (Mon, 14 Mar 2005) $$Author: wsnyder $
+$Revision: 1.2 $$Date: 2005-03-21 09:43:43 -0500 (Mon, 21 Mar 2005) $$Author: wsnyder $
 ----------------------------------------------------------------------
 
 This uses outline mode in Emacs.  See C-h m [M-x describe-mode].

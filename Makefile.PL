@@ -1,4 +1,4 @@
-# $Revision: 1.41 $$Date: 2005-03-14 11:19:09 -0500 (Mon, 14 Mar 2005) $$Author: wsnyder $
+# $Revision: 1.41 $$Date: 2005-03-17 11:29:38 -0500 (Thu, 17 Mar 2005) $$Author: wsnyder $
 # DESCRIPTION: Perl ExtUtils: Type 'perl Makefile.PL' to create a Makefile for this package
 #
 # Copyright 2001-2005 by Wilson Snyder.  This program is free software;
@@ -60,7 +60,7 @@ WriteMakefile(
 	      VERSION_FROM  => 'Netlist.pm',
 	      NO_META	=> 1,
 	      PREREQ_PM => {'Verilog::Getopt' => 2.211,
-			    'Verilog::Netlist' => 2.314,
+			    'Verilog::Netlist' => 2.315,
 			},
 	      EXE_FILES => [qw( sp_preproc sp_includer sp_makecheck vcoverage )],
 	      'clean'	=> {FILES => qw ( ),},

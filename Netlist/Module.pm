@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Revision: 1.71 $$Date: 2005-03-14 12:12:29 -0500 (Mon, 14 Mar 2005) $$Author: wsnyder $
+# $Revision: 1.71 $$Date: 2005-03-21 09:43:43 -0500 (Mon, 21 Mar 2005) $$Author: wsnyder $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -27,9 +27,10 @@ use SystemC::Netlist::AutoCover;
 use SystemC::Netlist::AutoTrace;
 
 @ISA = qw(Verilog::Netlist::Module);
-$VERSION = '1.180';
+$VERSION = '1.190';
 use strict;
 
+# Constructors
 sub new_net {
     my $self = shift;
     # @_ params
@@ -64,6 +65,14 @@ sub new_pin_template {
     my $templref = new SystemC::Netlist::PinTemplate (@_,);
     push @{$self->_pintemplates}, $templref;
     return $templref;
+}
+
+######################################################################
+# Accessors
+
+sub _decl_max {
+    $_[0]->attributes("_sp_decl_max", $_[1]) if exists $_[1];
+    return $_[0]->attributes("_sp_decl_max")||0;
 }
 
 ######################################################################
@@ -127,6 +136,7 @@ sub _autos1_recurse_inherits {
 		     comment	=> " From INHERITED(".$fromref->name.")",
 		     array	=> $portref->array,
 		     );
+		$newport->inherited(1);
 	    }
 	    foreach my $netref ($fromref->nets_sorted) {
 		my $newnet = $self->new_net
@@ -139,6 +149,7 @@ sub _autos1_recurse_inherits {
 		     comment	=> " From INHERITED(".$fromref->name.")",
 		     array	=> $netref->array,
 		     );
+		$newnet->inherited(1);
 	    }
 	    # Recurse its children
 	    $self->_autos1_recurse_inherits($self->netlist->{_class_inherits}{$inh});
@@ -153,6 +164,25 @@ sub autos2 {
 	$cellref->_autos();
     }
     $self->link();
+}
+
+sub _write_autoctor {
+    my $self = shift;
+    my $fileref = shift;
+    my $prefix = shift;
+    return if !$SystemC::Netlist::File::outputting;
+    $fileref->print ("${prefix}// Beginning of SystemPerl automatic constructor\n");
+    my $sep = ":";
+    foreach my $netref (sort {($a->_decl_order <=> $b->_decl_order
+			       || $a->name cmp $b->name)   # AUTOSIGNALS appear in name order
+			      } $self->ports) {
+	if (!$netref->inherited) { # If ever do nets, need this: !$netref->simple_type
+	    my $vec = $netref->array || "";
+	    $fileref->print ($prefix,$sep,$netref->name,'("',$netref->name,'")',"\n");
+	    $sep = ",";
+	}
+    }
+    $fileref->print ("${prefix}// End of SystemPerl automatic constructor\n");
 }
 
 sub _write_autosignal {
@@ -223,7 +253,8 @@ sub _write_autodecls {
     if (!$self->_ctor()) {
 	$fileref->print("${prefix}SC_CTOR(",$self->name,");\n");
     }
-    if ($self->_autotrace('on')) {
+    if ($self->_autotrace('on')
+	&& $self->netlist->tracing) {
 	$fileref->print
 	    ("#if WAVES\n",
 	     "${prefix}void trace (SpTraceFile *tfp, int levels, int options=0);\n",

@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Revision: 1.130 $$Date: 2005-03-14 12:12:29 -0500 (Mon, 14 Mar 2005) $$Author: wsnyder $
+# $Revision: 1.130 $$Date: 2005-03-21 09:43:43 -0500 (Mon, 21 Mar 2005) $$Author: wsnyder $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -23,7 +23,7 @@ use SystemC::Template;
 use Verilog::Netlist::Subclass;
 @ISA = qw(SystemC::Netlist::File::Struct
 	Verilog::Netlist::Subclass);
-$VERSION = '1.180';
+$VERSION = '1.190';
 use strict;
 
 structs('new',
@@ -127,11 +127,20 @@ sub auto {
 
     my $modref = $self->{modref};
     my $cellref = $self->{cellref};
-    if ($line =~ /^(\s*)\/\*AUTOSIGNAL\*\//) {
+    if ($line =~ /^(\s*)\/\*AUTOCTOR\*\//) {
+	if (!$modref) {
+	    return $self->error ("AUTOCTOR outside of module definition", $line);
+	}
+	push @Text, [ 1, $self->filename, $self->lineno,
+		      \&SystemC::Netlist::Module::_write_autoctor,
+		      $modref, $self->{fileref}, $1];
+    }
+    elsif ($line =~ /^(\s*)\/\*AUTOSIGNAL\*\//) {
 	if (!$modref) {
 	    return $self->error ("AUTOSIGNAL outside of module definition", $line);
 	}
-	$modref->_autosignal(1);
+	$modref->_autosignal($modref->_decl_max + 10);
+	$modref->_decl_max(100000000+$modref->_decl_max);  # Leave space for autos
 	push @Text, [ 1, $self->filename, $self->lineno,
 		      \&SystemC::Netlist::Module::_write_autosignal,
 		      $modref, $self->{fileref}, $1];
@@ -422,6 +431,7 @@ sub signal {
 	     type=>$type, array=>$array,
 	     comment=>undef, msb=>$msb, lsb=>$lsb,
 	     );
+	$net->_decl_order($modref->_decl_max(1+$modref->_decl_max));
 	$self->{netref} = $net;
     }
     elsif ($inout =~ /vl_(inout|in|out)/) {
@@ -447,6 +457,7 @@ sub signal {
 	     filename=>$self->filename, lineno=>$self->lineno,
 	     direction=>$dir, type=>$type,
 	     array=>$array, comment=>undef,);
+	$net->_decl_order($modref->_decl_max(1+$modref->_decl_max));
 	$self->{netref} = $net;
     }
     else {
@@ -544,7 +555,6 @@ sub _class_recurse_inherits {
 	} else {
 	    _class_recurse_inherits($self,$self->{netlist}{_class_inherits}{$inh});  # Inh->inh
 	    # Clone cells/pinouts from lower modules
-	    
 	}
     }
 }
@@ -753,7 +763,10 @@ sub write {
 
     # Write the file
     $self->netlist->dependency_out ($filename);
-    $tpl->write( filename=>$filename, );
+    $tpl->write( filename=>$filename,
+		 # Bug in NCSC 05.40-p004
+		 absolute_filenames => $self->netlist->{ncsc},
+		 );
 }
 
 sub _write_implementation {

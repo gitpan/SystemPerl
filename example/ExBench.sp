@@ -1,4 +1,4 @@
-// $Revision: 1.20 $$Date: 2005-03-02 10:35:46 -0500 (Wed, 02 Mar 2005) $$Author: wsnyder $
+// $Revision: 1.20 $$Date: 2005-03-16 14:04:22 -0500 (Wed, 16 Mar 2005) $$Author: wsnyder $
 // DESCRIPTION: SystemPerl: Example main()
 //
 // Copyright 2001-2005 by Wilson Snyder.  This program is free software;
@@ -47,7 +47,7 @@ SC_MODULE (__MODULE__) {
 # sp use  .mod.suba
 # sp use  .ExBench.mod.suba	// Same thing...
 
-SP_CTOR_IMP(__MODULE__)
+SP_CTOR_IMP(__MODULE__) /*AUTOCTOR*/
 {
     SC_METHOD(clock);
     sensitive_pos(clk);

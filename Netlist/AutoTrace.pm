@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Revision: 1.60 $$Date: 2005-03-14 12:12:29 -0500 (Mon, 14 Mar 2005) $$Author: wsnyder $
+# $Revision: 1.60 $$Date: 2005-03-21 09:43:43 -0500 (Mon, 21 Mar 2005) $$Author: wsnyder $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -18,7 +18,7 @@ package SystemC::Netlist::AutoTrace;
 use File::Basename;
 
 use SystemC::Netlist::Module;
-$VERSION = '1.180';
+$VERSION = '1.190';
 use strict;
 
 use vars qw ($Setup_Ident_Code);	# Local use for recursion only
@@ -33,6 +33,7 @@ sub _write_autotrace {
     my $fileref = shift;
     my $prefix = shift;
     return if !$SystemC::Netlist::File::outputting;
+    return if !$self->netlist->tracing;
     if ($self->_autotrace('manual')) {
 	$fileref->print
 	    ("${prefix}// Beginning of SystemPerl automatic trace file routine\n",

@@ -1,4 +1,4 @@
-// $Revision: 1.13 $$Date: 2005-03-03 11:33:15 -0500 (Thu, 03 Mar 2005) $$Author: wsnyder $
+// $Revision: 1.13 $$Date: 2005-03-16 14:04:22 -0500 (Wed, 16 Mar 2005) $$Author: wsnyder $
 // DESCRIPTION: SystemPerl: Example source module
 //
 // Copyright 2001-2005 by Wilson Snyder.  This program is free software;
@@ -28,7 +28,7 @@ SC_MODULE (__MODULE__) {
 #sp implementation
 /*AUTOSUBCELL_INCLUDE*/
 
-SP_CTOR_IMP(__MODULE__) {
+SP_CTOR_IMP(__MODULE__) /*AUTOCTOR*/ {
     SP_AUTO_CTOR;
 
     SC_METHOD(clock);

@@ -1,4 +1,4 @@
-// $Revision: 1.11 $$Date: 2005-03-01 17:59:56 -0500 (Tue, 01 Mar 2005) $$Author: wsnyder $
+// $Revision: 1.11 $$Date: 2005-03-16 14:04:22 -0500 (Wed, 16 Mar 2005) $$Author: wsnyder $
 // DESCRIPTION: SystemPerl: Example "null" module
 //
 // Copyright 2001-2005 by Wilson Snyder.  This program is free software;
@@ -26,7 +26,7 @@ SC_MODULE (__MODULE__) {
 #sp implementation
 /*AUTOSUBCELL_INCLUDE*/
 
-SP_CTOR_IMP(__MODULE__)
+SP_CTOR_IMP(__MODULE__) /*AUTOCTOR*/
 {
 #ifdef NEVER
     out.write(0);

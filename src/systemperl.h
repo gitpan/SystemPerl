@@ -1,4 +1,4 @@
-// $Revision: 1.34 $$Date: 2005-03-03 11:33:15 -0500 (Thu, 03 Mar 2005) $$Author: wsnyder $ -*- SystemC -*-
+// $Revision: 1.34 $$Date: 2005-03-17 08:16:52 -0500 (Thu, 17 Mar 2005) $$Author: wsnyder $ -*- SystemC -*-
 //********************************************************************
 //
 // THIS MODULE IS PUBLICLY LICENSED
@@ -46,6 +46,10 @@ using namespace std;
 
 #if VM_TRACE		// Verilator tracing requested
 # define WAVES 1	// So, trace in SystemC too
+#endif
+
+#ifndef SYSTEMPERL
+# define SYSTEMPERL 1
 #endif
 
 //********************************************************************

@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Revision: 1.41 $$Date: 2005-03-14 12:12:29 -0500 (Mon, 14 Mar 2005) $$Author: wsnyder $
+# $Revision: 1.41 $$Date: 2005-03-21 09:43:43 -0500 (Mon, 21 Mar 2005) $$Author: wsnyder $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -20,8 +20,21 @@ use Class::Struct;
 use Verilog::Netlist;
 use SystemC::Netlist;
 @ISA = qw(Verilog::Netlist::Port);
-$VERSION = '1.180';
+$VERSION = '1.190';
 use strict;
+
+######################################################################
+#### Accessors
+
+sub inherited {
+    $_[0]->attributes("_sp_inherited", $_[1]) if exists $_[1];
+    return $_[0]->attributes("_sp_inherited")||0;
+}
+
+sub _decl_order {
+    $_[0]->attributes("_sp_decl_order", $_[1]) if exists $_[1];
+    return $_[0]->attributes("_sp_decl_order")||0;
+}
 
 ######################################################################
 #### Package return
