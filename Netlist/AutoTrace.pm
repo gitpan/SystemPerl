@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Revision: #39 $$Date: 2003/07/16 $$Author: wsnyder $
+# $Revision: #41 $$Date: 2003/07/30 $$Author: wsnyder $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -23,7 +23,7 @@ package SystemC::Netlist::AutoTrace;
 use File::Basename;
 
 use SystemC::Netlist::Module;
-$VERSION = '1.142';
+$VERSION = '1.143';
 use strict;
 
 use vars qw ($Setup_Ident_Code);	# Local use for recursion only
@@ -293,7 +293,7 @@ sub _write_tracer_trace {
     
     my $mod = $self->name;
     $fileref->print
-	("void ${mod}::trace (SpTraceFile* tfp, int levels, int options=0) {\n",
+	("void ${mod}::trace (SpTraceFile* tfp, int levels, int options) {\n",
 	 "    if(0 && options) {}  // Prevent unused\n",
 	 "    tfp->spTrace()->addCallback (&${mod}::traceInit, &${mod}::traceChange, this);\n",);
     my $cmt = "";

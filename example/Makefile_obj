@@ -1,4 +1,4 @@
-# $Revision: #18 $$Date: 2003/03/28 $$Author: wsnyder $ -*- Makefile -*-
+# $Revision: #19 $$Date: 2003/07/27 $$Author: wsnyder $ -*- Makefile -*-
 # DESCRIPTION: SystemPerl: Example makefile
 #
 # This is executed in the "test_dir", not in this directory
@@ -44,7 +44,7 @@ build:	preproc ex_main
 # In a user example where you weren't editing sp_preproc, you could have:
 #preproc $(SP_CPP) $(SP_H): $(SP_SP)
 preproc $(SP_CPP) $(SP_H):
-	../sp_preproc $(INCDIR) -M sp_preproc.d --tree ex.tree --preproc $(SP_SP)
+	perl ../sp_preproc $(INCDIR) -M sp_preproc.d --tree ex.tree --preproc $(SP_SP)
 
 ex_main:	$(OBJS)
 	$(CC) $(CFLAGS) $(INCDIR) $(LIBDIR) -o $@ $^ $(LIBS) 2>&1 | c++filt

@@ -1,5 +1,5 @@
 #!/usr/local/bin/perl -w
-# $Revision: #2 $$Date: 2003/06/16 $$Author: wsnyder $
+# $Revision: #3 $$Date: 2003/07/27 $$Author: wsnyder $
 # DESCRIPTION: Perl ExtUtils: Type 'make test' to test this package
 
 use strict;
@@ -22,7 +22,7 @@ write_file ("test_dir/lostl2.d", "lostl2.o: lost.o\n");
 ok(1);
 
 # Run makecheck
-run_system ("cd test_dir && ../sp_makecheck --verbose *.d");
+run_system ("cd test_dir && ${PERL} ../sp_makecheck --verbose *.d");
 ok(1);
 
 # Did it keep the right files?
