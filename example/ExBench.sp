@@ -1,10 +1,10 @@
-// $Id: ExBench.sp,v 1.7 2001/11/14 03:21:36 wsnyder Exp $
+// $Id: ExBench.sp,v 1.10 2001/11/27 13:56:52 wsnyder Exp $
 // DESCRIPTION: SystemPerl: Example main()
 
 #sp interface
 
 #include <systemperl.h>
-#include "ExMod.h"
+#sp use  "ExEnum.h"
 /*AUTOSUBCELL_CLASS*/
 
 SC_MODULE (__MODULE__) {
@@ -25,7 +25,7 @@ SC_MODULE (__MODULE__) {
     VL_SIGW(m_unusedok2, 35,1,2);	// From Verilator: reg [35:1] m_unusedok2
     VL_SIGW(m_unusedok3[10], 35,1,2);	// From Verilator: reg [35:1] m_unusedok3[10]
 
-    /*AUTOSUBCELLS*/
+    /*AUTOSUBCELL_DECL*/
     /*AUTOSIGNAL*/
     void clock();
 
@@ -42,7 +42,7 @@ SC_MODULE (__MODULE__) {
 SP_CTOR_IMP(__MODULE__)
 {
     SC_METHOD(clock);
-    sensitive_pos << clk;
+    sensitive_pos(clk);
     
     SP_CELL (mod,ExMod);
     SP_PIN (mod,in,in);

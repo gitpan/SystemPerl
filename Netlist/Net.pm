@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Id: Net.pm,v 1.20 2001/11/16 15:01:41 wsnyder Exp $
+# $Id: Net.pm,v 1.27 2002/03/11 15:52:09 wsnyder Exp $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -27,7 +27,7 @@ use Class::Struct;
 use Verilog::Netlist;
 use SystemC::Netlist;
 @ISA = qw(Verilog::Netlist::Net);
-$VERSION = '1.000';
+$VERSION = '1.100';
 use strict;
 
 # List of basic C++ types and their sizes
@@ -65,6 +65,19 @@ sub _link {
     $self->SUPER::_link();
 }
 
+sub lint {
+    my $self = shift;
+    $self->SUPER::lint();
+    # We peek into simple sequential logic to see what symbols are referenced
+    if ((0 || !$self->module->lesswarn)
+	&& $self->_used_in() && !$self->_used_inout() && !$self->_used_out()
+	&& !$self->array
+	&& !defined $self->module->_code_symbols->{$self->name}) {
+	$self->warn("Signal has no drivers: ",$self->name(), "\n");
+	$self->dump_drivers(8);
+	$self->module->dump();
+    }
+}
 ######################################################################
 #### Package return
 1;

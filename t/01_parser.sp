@@ -5,7 +5,7 @@ enum myenum {
 };
 struct showmyenum {
     myenum en;
-    /*AUTOASCIIENUM(myenum)*/
+    /*AUTOENUM_CLASS(showmyenum.en)*/
     const char *ascii (void) {
 	switch (en) {
 	case IDLE: return "IDLE";
@@ -23,7 +23,7 @@ SC_MODULE (tte) {
     sc_in<bool>		reset;		//  system reset
     sc_in<bool*>	boolptr;	//  check pointer types
 
-    /*AUTOSUBCELLS*/
+    /*AUTOSUBCELL_DECL*/
    // Beginning of SystemPerl automatic foo
 rip this out please
    // End of SystemPerl automatic foo

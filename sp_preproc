@@ -1,5 +1,5 @@
 #!/usr/local/bin/perl -w
-#$Id: sp_preproc,v 1.22 2001/10/26 17:34:15 wsnyder Exp $
+#$Id: sp_preproc,v 1.31 2002/02/27 18:13:22 wsnyder Exp $
 ######################################################################
 # Unpublished Work Copyright (C) 2000 Wilson Snyder
 # All Rights Reserved.                                                      
@@ -25,7 +25,6 @@
 ######################################################################
 
 require 5.005;
-use Verilog::Getopt;
 use Getopt::Long;
 use IO::File;
 use Pod::Text;
@@ -36,6 +35,9 @@ use lib "$RealBin/lib";
 use lib "$RealBin/blib/lib";
 use lib "$RealBin/blib/arch";
 use lib "$RealBin/..";
+use lib "$RealBin/../Verilog/blib/lib";
+use lib "$RealBin/../Verilog/blib/arch";
+use Verilog::Getopt;
 use SystemC::Netlist;
 
 use vars qw ($Debug $opt_makedeps $Opt_Lint $Exit_Status %Error_Unlink);
@@ -46,6 +48,9 @@ $Opt_Lint = 1;
 #======================================================================
 # main
 
+autoflush STDOUT 1;
+autoflush STDERR 1;
+
 $Debug = 0;
 my $opt_preproc = 0;
 my $opt_inline;
@@ -53,8 +58,11 @@ my $opt_autos = 1;
 my @sp_files_lib = ();
 my @sp_files_nolib = ();
 my $opt_libcell = 0;
+my $opt_tree = 0;
+my $opt_trace_duplicates = 0;
 
 my $opt = new Verilog::Getopt(gcc_style=>1, vcs_style=>0);
+$opt->libext(".sp");
 @ARGV = $opt->parameter(@ARGV);	# Strip -D and -U flags
 if (! GetOptions (
 		  "help"	=> \&usage,
@@ -67,12 +75,17 @@ if (! GetOptions (
 		  "libcell!"	=> \$opt_libcell,
 		  "preproc!"	=> \$opt_preproc,
 		  "inline!"	=> \$opt_inline,
+		  "tree=s"	=> \$opt_tree,
+		  "trace-duplicates!" => \$opt_trace_duplicates,
 		  "<>"		=> \&parameter,
 		  )) {
     usage();
 }
 
 my $nl = new SystemC::Netlist (options=>$opt,
+			       link_read=>1,
+			       strip_autos=>1,
+			       sp_trace_duplicates=>$opt_trace_duplicates,
 			       sp_allow_output_tracing=>
 			       ($ENV{PROJECT}
 				|| -r "$ENV{SYSTEMC}/systemperl_patched"),
@@ -80,7 +93,8 @@ my $nl = new SystemC::Netlist (options=>$opt,
 
 foreach my $file (@sp_files_nolib) {
     $nl->read_file (filename=>$file,
-		    strip_autos=>1);
+		    strip_autos=>1,
+		    is_libcell=>0,);
 }
 foreach my $file (@sp_files_lib) {
     $nl->read_file (filename=>$file,
@@ -90,6 +104,7 @@ foreach my $file (@sp_files_lib) {
 
 $nl->link();
 $nl->autos();
+tree_report($nl, $opt_tree) if ($opt_tree);
 $nl->lint();
 our_rulecheck($nl);
 $nl->dump() if $Debug;
@@ -125,7 +140,7 @@ if ($opt_makedeps) {
 #----------------------------------------------------------------------
 
 sub usage {
-    print '$Id: sp_preproc,v 1.22 2001/10/26 17:34:15 wsnyder Exp $ ', "\n";
+    print '$Id: sp_preproc,v 1.31 2002/02/27 18:13:22 wsnyder Exp $ ', "\n";
     $SIG{__WARN__} = sub{};	#pod2text isn't clean.
     pod2text($0);
     exit (1);
@@ -175,6 +190,87 @@ sub our_rulecheck {
 }
 
 #######################################################################
+
+#######################################################################
+#######################################################################
+# Level selection
+
+sub tree_report {
+    my $netlist = shift;
+    my $filename = shift;
+    mod_levels($netlist);
+    my $fh = IO::File->new($filename,'w') or die "%Error: $! writing $filename\n";
+    foreach my $modref ($netlist->modules_sorted) {
+	if ($modref->userdata('level')==0
+	    && !$modref->is_libcell) {	# Not read by AUTOINOUT_MODULE
+	    tree_recurse($modref,$fh,"","",$modref->name);
+	    printf $fh "#\n";
+	}
+    }
+
+    printf $fh "#"x70,"\n";
+    printf $fh "#\n";
+    printf $fh "#Files:\n";
+    foreach my $fileref ($netlist->files_sorted) {
+	printf $fh "# %-40s\n", $fileref->name;
+    }
+
+    $fh->close();
+}
+
+sub tree_recurse {
+    my $modref = shift;	# May be null if unnamed cell
+    my $fh = shift;
+    my $this_indent = shift;
+    my $next_indent = shift;
+    my $cellname = shift;
+
+    if (!$modref) {
+	printf $fh "# %-40s %-30s %s\n",$cellname,$this_indent."?","?";
+    } else {
+	printf $fh "# %-40s %-30s %s\n",$cellname,$this_indent.$modref->name,$modref->filename;
+	my @cells = ($modref->cells_sorted);
+	my $ncell = 0;
+	foreach my $subcell (@cells) {
+	    my $cell_this_indent = $next_indent."|-";
+	    my $cell_next_indent = $next_indent."| ";
+	    if ($ncell++ == $#cells) {
+		$cell_this_indent = $next_indent."\\-";
+		$cell_next_indent = $next_indent."  ";
+	    }
+	    tree_recurse($subcell->submod,$fh,
+			 $cell_this_indent, $cell_next_indent,
+			 $cellname.".".$subcell->name);
+	}
+    }
+}
+
+sub mod_levels {
+    my $netlist = shift;
+    foreach my $modref ($netlist->modules_sorted) {
+	mod_levels_recurse($modref,0);
+    }
+}
+
+sub mod_levels_recurse {
+    my $modref = shift;
+    my $level = shift;
+    if ($level>=($modref->userdata('level')||0)) { 
+	$modref->userdata('level',$level);
+    }
+    if ($level>100) {
+	print "   In ".$modref->name."  $level\n";
+	if ($level>120) {
+	    $modref->error("Seems to have a cell that refers back to itself\n");
+	}
+    }
+    foreach my $subcell ($modref->cells_sorted) {
+	mod_levels_recurse($subcell->submod,$level+1) if $subcell->submod;
+    }
+}
+
+
+#######################################################################
 __END__
 
 =pod
@@ -217,6 +313,18 @@ references, they will not be linked, linted, or otherwise checked.
 =item --preproc
 
 Preprocess the code, writing to separate header and cpp files.
+
+=item --trace-duplicates
+
+Include code to trace submodule signals connected directly to a parent
+signal, generally for debugging interconnect.  Without this switch such
+signals will be presumed to have the value of their parent module's signal,
+speeding and compressing traces.
+
+=item --tree I<filename>
+
+Write a report showing the design hiearchy tree to the specified filename.
+This format may change, it should not be parsed by tools.
 
 =item --noautos
 

@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Id: File.pm,v 1.71 2001/11/16 15:01:41 wsnyder Exp $
+# $Id: File.pm,v 1.86 2002/03/11 15:52:09 wsnyder Exp $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -30,7 +30,7 @@ use SystemC::Template;
 use Verilog::Netlist::Subclass;
 @ISA = qw(SystemC::Netlist::File::Struct
 	Verilog::Netlist::Subclass);
-$VERSION = '1.000';
+$VERSION = '1.100';
 use strict;
 
 structs('new',
@@ -49,6 +49,7 @@ structs('new',
 	   _modules	=> '%',		# For autosubcell_include
 	   _intf_done	=> '$', #'	# For autointf, already inserted it
 	   _impl_done	=> '$', #'	# For autoimpl, already inserted it
+	   _uses	=> '%',		# For #sp use
 	   ]);
 	
 ######################################################################
@@ -62,21 +63,6 @@ use vars qw (@ISA);
 use vars qw (@Text);	# Local for speed while inside parser.
 @ISA = qw (SystemC::Parser);
 
-sub resolve_filename {
-    my $self = shift;
-    my $filename = shift;
-    my $from = shift;
-    if ($self->{netlist}{options}) {
-	$filename = $self->{netlist}{options}->file_path($filename);
-    }
-    if (!-r $filename) {
-	$from->error("Cannot open $filename") if $from;
-	die "%Error: Cannot open $filename\n";
-    }
-    $self->{netlist}->dependency_in ($filename);
-    return $filename;
-}
-
 sub new {
     my $class = shift;
     my %params = (@_);	# filename=>
@@ -88,7 +74,7 @@ sub new {
 				     modref=>undef,	# Module being parsed now
 				     cellref=>undef,	# Cell being parsed now
 				     );
-    $parser->{filename} = $parser->resolve_filename($params{filename});
+    $parser->{filename} = $parser->{netlist}->resolve_filename($params{filename});
     $parser->read (filename=>$parser->{filename});
     return $parser;
 }
@@ -119,11 +105,20 @@ sub module {
     my $netlist = $self->{netlist};
     $module = $fileref->basename if $module eq "__MODULE__";
     print "Module $module\n" if $SystemC::Netlist::Debug;
+    $self->endmodule();	  # May be previous module in file
     $self->{modref} = $netlist->new_module
 	(name=>$module,
 	 is_libcell=>$fileref->is_libcell(),
 	 filename=>$self->filename, lineno=>$self->lineno);
     $fileref->_modules($module, $self->{modref});
+}
+
+sub endmodule {
+    my $self = shift;
+    return if !$self->{modref};
+    my $modref = $self->{modref};
+    $modref->_code_symbols($self->symbols());
+    $self->{modref} = undef;
 }
 
 sub auto {
@@ -207,7 +202,8 @@ sub auto {
 	foreach my $attr (split (",", $attrs)) {
 	    if ($attr eq "verilated") {
 		$modref or $self->error ("Attribute outside of module declaration\n");
-		#print "Lesswarn ",$modref->name(),"\n";
+	    } elsif ($attr eq "no_undriven_warning") {
+		$modref or $self->error ("Attribute outside of module declaration\n");
 		$modref->lesswarn(1);
 	    } else {
 		$self->error ("Unknown attribute $attr\n");
@@ -228,12 +224,30 @@ sub auto {
 		      \&SystemC::Netlist::File::_write_autointf,
 		      $self->{fileref}, $prefix];
     }
+    elsif ($line =~ /^(\s*)SP_AUTO_CTOR/) {
+	my $prefix = $1;
+	push @Text, [ 1, $self->filename, $self->lineno,
+		      \&SystemC::Netlist::File::_write_autoctor,
+		      $self->{fileref}, $prefix, $modref];
+    }
     elsif ($line =~ /^(\s*)\/\*AUTOINOUT_MODULE\(([a-zA-Z0-9_,]+)\)\*\//) {
 	if (!$modref) {
 	    return $self->error ("AUTOINOUT_MODULE outside of module definition", $line);
 	}
 	$modref->_autoinoutmod($2);
 	# No push to @Text, we require AUTOSIGNAL to do that.
+    }
+    elsif ($line =~ /^(\s*)SP_AUTO_COVER(\d*)[_0-9]*\s*\( (\d+\s*,|) \s* \"([^\"]+)\" (\s*,\s* \"([^\"]+)\" \s*,\s* (\d+) |) \s*\)/x) {
+	my ($prefix,$fields,$_ignore_old_id,$cmt,$file,$line) = ($1,$2,$3,$4,$6,$7);
+	if (!$file || $fields =~ /1/) {
+	    $file = $self->filename; $line = $self->lineno;
+	}
+	$modref or return $self->error ("SP_AUTO_COVER outside of module definition", $line);
+	my $coverref = $modref->new_cover (filename=>$file, lineno=>$line, comment=>$cmt,);
+	# We simply replace the existing SP_AUTO instead of adding the comments.
+	my $last = pop @Text;
+	($last->[3] =~ /SP_AUTO/) or die "Internal %Error,"; # should have poped SP_AUTO we're replacing
+	push @Text, [ 0, $self->filename, $self->lineno, $coverref->call_text($prefix) ];
     }
     else {
 	return $self->error ("Unknown AUTO command", $line);
@@ -290,10 +304,22 @@ sub pin {
 
     my $cellref = $self->{cellref};
     if (!$cellref) {
-	return $self->error ("SP_PIN outside of cell definition", $net);
+	return $self->error ("SP_PIN outside of cell definition", $pin);
     }
-    $cellref->new_pin (name=>$pin,
+    my $pinref;
+    my $pinname = $pin;
+    if ($pinref = $cellref->find_pin($pin)) {
+	if (!defined $pinvec) {
+	    return $self->error ("SP_PIN previously declared, at line ".$pinref->lineno
+				 .": ".$pinref->name, $pinref->name);
+	} else {
+	    # Multiple pins are ok if a vector, so make name unique
+	    $pinname .= ";".$self->lineno;
+	}
+    }
+    $cellref->new_pin (name=>$pinname,
 		       filename=>$self->filename, lineno=>$self->lineno,
+		       portname=>$pin,
 		       netname=>$net, );
 }
 
@@ -315,13 +341,29 @@ sub signal {
 	|| $inout eq "sc_clock"
 	|| $inout eq "sp_traced"
 	) {
-	my $net = $modref->new_net
+	my $net = $modref->find_net ($netname);
+	$net or $net = $modref->new_net
 	    (name=>$netname,
 	     filename=>$self->filename, lineno=>$self->lineno,
 	     simple_type=>($inout eq "sp_traced"), type=>$type, array=>$array,
 	     comment=>undef, msb=>$msb, lsb=>$lsb,
 	     );
 	$self->{netref} = $net;
+    }
+    elsif ($inout eq "vl_port") {
+	my $net = $modref->find_net ($netname);
+	$net or $net = $modref->new_net
+	    (name=>$netname,
+	     filename=>$self->filename, lineno=>$self->lineno,
+	     simple_type=>1, type=>$type, array=>$array,
+	     comment=>undef, msb=>$msb, lsb=>$lsb,
+	     );
+	$self->{netref} = $net;
+	my $port = $modref->new_port
+	    (name=>$netname,
+	     filename=>$self->filename, lineno=>$self->lineno,
+	     direction=>'inout', type=>$type,
+	     array=>$array, comment=>undef,);
     }
     elsif ($inout =~ /sc_(inout|in|out)$/) {
 	my $dir = $1;
@@ -342,6 +384,7 @@ sub preproc_sp {
     my $line = shift;
     if ($line=~ /^\s*\#sp\s+(.*)$/) {
 	my $cmd = $1; $cmd =~ s/\s+$//;
+	$cmd =~ s!\s+//.*$!!;
 	if ($cmd =~ /^implementation$/) {
 	    push @Text, [ 0, $self->filename, $self->lineno,
 			  \&SystemC::Netlist::File::_write_implementation,
@@ -352,12 +395,24 @@ sub preproc_sp {
 			  \&SystemC::Netlist::File::_write_interface,
 			  $self->{fileref}, $line];
 	}
+	elsif ($cmd =~ /^use/) {
+	    ($cmd =~ m/^use\s+\"([^\" \n]+)\"$/)
+		or return $self->error("Badly formed sp use line", $line);
+	    my $incname = $1;
+	    $incname =~ s/\.(h|sp)$//;
+	    ($incname !~ s/(\.[a-z]+)$//)
+		or $self->error("No $1 extensions on sp use filenames", $line);
+	    push @Text, [ 0, $self->filename, $self->lineno,
+			  \&SystemC::Netlist::File::_write_use,
+			  $self->{fileref}, $line, $incname];
+	    $self->{fileref}->_uses($incname,{name=>$incname, found=>0});
+	}
 	elsif ($cmd =~ /^include/) {
 	    ($cmd =~ m/^include\s+\"([^\" \n]+)\"$/)
-		or $self->error("Badly formed sp include line", $line);
+		or return $self->error("Badly formed sp include line", $line);
 	    my $filename = $1;
 	    print "#include $filename\n" if $SystemC::Netlist::Debug;
-	    $filename = $self->resolve_filename($filename);
+	    $filename = $self->{netlist}->resolve_filename($filename);
 	    $self->read_include (filename=>$filename);
 	}
 	else {
@@ -402,6 +457,12 @@ sub error {
 package SystemC::Netlist::File;
 
 ######################################################################
+#### Accessors
+
+sub filename { return $_[0]->name(); }
+sub lineno { return 0; }
+
+######################################################################
 ######################################################################
 #### Functions
 
@@ -410,12 +471,9 @@ sub read {
 
     my $filename = $params{filename} or croak "%Error: ".__PACKAGE__."::read_file (filename=>) parameter required, stopped";
     my $netlist = $params{netlist} or croak ("Call SystemC::Netlist::read_file instead,");
+    $params{strip_autos} = $netlist->{strip_autos} if !exists $params{strip_autos};
 
-    my $filepath = $filename;
-    if ($netlist->{options}) {
-	$filepath = $netlist->{options}->file_path($filename);
-    }
-
+    my $filepath = $netlist->resolve_filename($filename);
     print __PACKAGE__."::read_file $filepath\n" if $SystemC::Netlist::Debug;
 
     my $fileref = $netlist->new_file (name=>$filepath,
@@ -431,13 +489,41 @@ sub read {
 	  strip_autos=>$params{strip_autos}||0,		# for ->read
 	  );
     $fileref->text(\@SystemC::Netlist::File::Parser::Text);
+    $parser->endmodule();
     return $fileref;
+}
+
+######################################################################
+######################################################################
+# Linking/Dumping
+
+sub _link {
+    my $self = shift;
+    foreach my $incref (values %{$self->_uses()}) {
+	if (!$incref->{fileref}) {
+	    print "FILE LINK $incref->{name}\n" if $SystemC::Netlist::Debug;
+	    my $filename = $self->netlist->resolve_filename($incref->{name},$self);
+	    $incref->{fileref} = $self->netlist->find_file($filename);
+	    if (!$incref->{fileref} && $self->netlist->{link_read}) {
+		print "  use_Link_Read ",$filename,"\n" if $Verilog::Netlist::Debug;
+		$incref->{fileref} = $self->netlist->read_file(filename=>$filename);
+		$incref->{fileref} or die;
+		$self->netlist->{_relink} = 1;
+	    }
+	}
+    }
 }
 
 sub dump {
     my $self = shift;
     my $indent = shift||0;
     print " "x$indent,"File:",$self->name(),"  Lines:",$#{@{$self->text}},"\n";
+}
+
+sub uses_sorted {
+    my $self = shift;
+    # Return all uses
+    return (sort {$a->name() cmp $b->name()} (values %{$self->{_uses}}));
 }
 
 ######################################################################
@@ -556,12 +642,33 @@ sub _write_interface {
     }
 }
 
+sub _write_use {
+    my $self = shift;
+    my $line = shift;
+    my $incname = shift;
+    if ($as_imp || $as_int) {
+	$self->print ("#include \"$incname.h\"\n");
+    } else {
+        $self->print ($line);
+    }
+}
+
 sub _write_autointf {
     my $self = shift;
     my $prefix = shift;
     return if !$SystemC::Netlist::File::outputting;
     $self->print ("${prefix}// Beginning of SystemPerl automatic interface\n");
     $self->print ("${prefix}// End of SystemPerl automatic interface\n");
+}
+
+sub _write_autoctor {
+    my $self = shift;
+    my $prefix = shift;
+    my $modref = shift;
+    return if !$SystemC::Netlist::File::outputting;
+    $self->print ("${prefix}// Beginning of SystemPerl automatic constructors\n");
+    SystemC::Netlist::AutoCover::_write_autocover_ctor($self,$prefix,$modref);
+    $self->print ("${prefix}// End of SystemPerl automatic constructors\n");
 }
 
 sub _write_autoimpl {
@@ -572,6 +679,9 @@ sub _write_autoimpl {
     foreach my $class (sort (keys %{$self->_autoenums()})) {
 	my $enumtype = $self->_autoenums($class);
 	$self->_write_autoenum_impl($prefix,$class,$enumtype);
+    }
+    foreach my $modref (values %{$self->_modules}) {
+	SystemC::Netlist::AutoCover::_write_autocover_impl($self,$prefix,$modref);
     }
     $self->print ("${prefix}// End of SystemPerl automatic implementation\n");
 }
@@ -681,13 +791,16 @@ sub _write_autosubcell_include {
     my $fileref = shift;
     my $prefix = shift;
     return if !$SystemC::Netlist::File::outputting;
-    $fileref->print ("${prefix}// Beginning of SystemPerl automatic subcell includes\n");
+    $fileref->print ("${prefix}// Beginning of SystemPerl automatic implementation includes\n");
+    foreach my $modref (values %{$fileref->_modules}) {
+	SystemC::Netlist::AutoCover::_write_autocover_incl($self,$prefix,$modref);
+    }
     foreach my $cellref ($fileref->_cells_in_file) {
 	$fileref->printf ("#include \"%-22s  // For %s.%s\n"
 			  ,$self->netlist->remove_defines($cellref->submodname).".h\""
 			  ,$cellref->module->name, $cellref->name);
     }
-    $fileref->print ("${prefix}// End of SystemPerl automatic subcell includes\n");
+    $fileref->print ("${prefix}// End of SystemPerl automatic implementation includes\n");
 }
 
 ######################################################################

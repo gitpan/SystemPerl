@@ -1,4 +1,5 @@
 #!/usr/local/bin/perl -w
+# $Id: test_utils.pl,v 1.4 2002/03/11 14:07:22 wsnyder Exp $
 #DESCRIPTION: Perl ExtUtils: Common routines required by package tests
 
 use vars qw($PERL);

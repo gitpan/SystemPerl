@@ -1,4 +1,4 @@
-# $Id: Makefile.PL,v 1.20 2001/11/16 15:01:38 wsnyder Exp $
+# $Id: Makefile.PL,v 1.22 2001/11/27 13:48:38 wsnyder Exp $
 # DESCRIPTION: Perl ExtUtils: Type 'perl Makefile.PL' to create a Makefile for this package
 
 require 5.005;
@@ -16,6 +16,7 @@ dist: distcheck README
 install-local: manifypods
 	cp -R blib/man* /usr/local/common/man
 	cp -R sp_makecheck /usr/local/common/bin/sp_makecheck__notfound
+	cp systemc-mode.el /usr/local/common/site-lisp
 
 ## Maintainer use:
 tag:
@@ -29,7 +30,7 @@ maintainer-clean: distclean
 	-rm README Makefile
 
 clean::
-	-rm -rf test_dir
+	-rm -rf test_dir test_scl
 ";
 }
 

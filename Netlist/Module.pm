@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Id: Module.pm,v 1.36 2001/11/16 15:01:41 wsnyder Exp $
+# $Id: Module.pm,v 1.41 2002/03/11 15:52:09 wsnyder Exp $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -30,10 +30,11 @@ use SystemC::Netlist::Port;
 use SystemC::Netlist::Net;
 use SystemC::Netlist::Cell;
 use SystemC::Netlist::Pin;
+use SystemC::Netlist::AutoCover;
 use SystemC::Netlist::AutoTrace;
 
 @ISA = qw(Verilog::Netlist::Module);
-$VERSION = '1.000';
+$VERSION = '1.100';
 use strict;
 
 sub new_net {
@@ -71,6 +72,11 @@ sub autos1 {
     if ($self->_autoinoutmod) {
 	my $frommodname = $self->_autoinoutmod;
 	my $fromref = $self->netlist->find_module ($frommodname);
+	if (!$fromref && $self->netlist->{link_read}) {
+	    print "  Link_Read_Auto ",$frommodname,"\n" if $Verilog::Netlist::Debug;
+	    $self->netlist->read_file(filename=>$frommodname, is_libcell=>1,);
+	    $fromref = $self->netlist->find_module ($frommodname);
+	}
 	if (!$fromref) {
 	    $self->warn ("AUTOINOUT_MODULE not found: $frommodname\n");
 	} else {
@@ -78,13 +84,13 @@ sub autos1 {
 	    foreach my $portref ($fromref->ports_sorted) {
 		my $newport = $self->new_port
 		    (name	=> $portref->name,
-		     filename	=> ($self->filename."AUTOINST("
+		     filename	=> ($self->filename.":AUTOINOUT_MODULE("
 				    .$portref->filename.":"
 				    .$portref->lineno.")"),
 		     lineno	=> $self->lineno,
 		     direction	=> $portref->direction,
 		     type	=> $portref->type,
-		     comment	=> " From AUTOINST(".$fromref->name.")",
+		     comment	=> " From AUTOINOUT_MODULE(".$fromref->name.")",
 		     array	=> $portref->array,
 		     sp_autocreated=>1,
 		     );
@@ -170,6 +176,7 @@ sub _write_autodecls {
 	     " (SpTraceVcd* vcdp, void* userthis, uint32_t code);\n",
 	     "#endif\n");
     }
+    SystemC::Netlist::AutoCover::_write_autocover_decl($fileref,$prefix,$self);
     $fileref->print ("${prefix}// End of SystemPerl automatic declarations\n");
 }
 

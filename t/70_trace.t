@@ -1,4 +1,5 @@
 #!/usr/local/bin/perl -w
+# $Id: 70_trace.t,v 1.3 2002/03/11 14:07:22 wsnyder Exp $
 # DESCRIPTION: Perl ExtUtils: Type 'make test' to test this package
 
 use strict;
@@ -19,5 +20,5 @@ if ($Config{archname} !~ /linux/
 		."&& g++ -DSPTRACEVCD_TEST ../src/SpTraceVcd.cpp -o SpTraceVcd "
 		."&& ./SpTraceVcd");
     ok(1);
-    ok(-r "test_dir/test.vcd")
+    ok(-r "test_dir/test.dump")
 }

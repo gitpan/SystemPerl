@@ -1,5 +1,5 @@
 #/* SystemC.xs -- SystemC Booter  -*- Mode: C -*-
-#* $Id: Parser.xs,v 1.14 2001/09/27 17:41:34 wsnyder Exp $
+#* $Id: Parser.xs,v 1.18 2001/11/26 20:42:27 wsnyder Exp $
 #*********************************************************************
 #*
 #* Vl SystemC perl utility library
@@ -40,54 +40,55 @@
 
 static struct {		/*Eventually a C++ class?? */
     SV* self;		/* Class called from */
-    int Errors;		/* Number of errors encountered */
+    int errors;		/* Number of errors encountered */
 
     struct {
-	SV* SVPrefix;	/* Commentary before the next token */
+	SV* prefixSV;	/* Commentary before the next token */
 	int lineno;	/* Starting linenumber of above text */
-    } Prefix;
+    } prefix;
 
-    int LastLineno;	/* Linenumber of last tolken sent to call back */
-} ScParserState;
+    int lastLineno;	/* Linenumber of last tolken sent to call back */
+    HV*	symbols;	/* Hash of all symbols found */
+} scParserState;
 
 
 #/**********************************************************************/
 
 void scparser_set_line (int lineno) {
-    ScParserState.LastLineno = lineno;
+    scParserState.lastLineno = lineno;
 }
 
 void scparser_PrefixCat (char *text, int len)
 {
     /* Add comments and other stuff to text that we can just save for later */
-    if (!ScParserState.Prefix.SVPrefix) {
-	ScParserState.Prefix.SVPrefix = newSVpvn (text, len);
-	ScParserState.Prefix.lineno = ScParserLex.lineno;
+    if (!scParserState.prefix.prefixSV) {
+	scParserState.prefix.prefixSV = newSVpvn (text, len);
+	scParserState.prefix.lineno = scParserLex.lineno;
     } else {
-	sv_catpvn (ScParserState.Prefix.SVPrefix, text, len);
+	sv_catpvn (scParserState.prefix.prefixSV, text, len);
     }
 }
 
 void scparser_EmitPrefix (void)
 {
     /* Call $self->text(text_received) */
-    scparser_set_line (ScParserState.Prefix.lineno);
-    if (ScParserState.Prefix.SVPrefix) {
+    scparser_set_line (scParserState.prefix.lineno);
+    if (scParserState.prefix.prefixSV) {
 	/* Emit text in prefix */
 	{
 	    dSP;			/* Initialize stack pointer */
 	    ENTER;			/* everything created after here */
 	    SAVETMPS;			/* ...is a temporary variable. */
 	    PUSHMARK(SP);		/* remember the stack pointer */
-	    XPUSHs(ScParserState.self);	/* $self-> */
-	    XPUSHs(ScParserState.Prefix.SVPrefix);	/* prefix */
+	    XPUSHs(scParserState.self);	/* $self-> */
+	    XPUSHs(scParserState.prefix.prefixSV);	/* prefix */
 	    PUTBACK;			/* make local stack pointer global */
 	    perl_call_method ("text", G_DISCARD | G_VOID);
 	    FREETMPS;			/* free that return value */
 	    LEAVE;			/* ...and the XPUSHed "mortal" args.*/
 	}
 	/* Not a memory leak; perl will free the SV when done with it */
-	ScParserState.Prefix.SVPrefix = NULL;
+	scParserState.prefix.prefixSV = NULL;
     }
 }
 
@@ -106,14 +107,14 @@ void scparser_call (
     }
 
     scparser_EmitPrefix();
-    scparser_set_line (ScParserLex.lineno);
+    scparser_set_line (scParserLex.lineno);
     va_start(ap, method);
     {
 	dSP;				/* Initialize stack pointer */
 	ENTER;				/* everything created after here */
 	SAVETMPS;			/* ...is a temporary variable. */
 	PUSHMARK(SP);			/* remember the stack pointer */
-	XPUSHs(ScParserState.self);	/* $self-> */
+	XPUSHs(scParserState.self);	/* $self-> */
 
 	while (params--) {
 	    char *text;
@@ -134,27 +135,42 @@ void scparser_call (
 
 /**********************************************************************/
 
+void scparser_symbol (
+    const char *key	/* Symbol detected */
+    )
+{
+    /* $self->symbols{$key} = 1 */
+    SV **svp;
+    svp = hv_fetch (scParserState.symbols, key, strlen(key), 1);
+    if (!SvOK(*svp)) {
+	sv_setiv (*svp, scParserLex.lineno);
+    }
+}
+
+/**********************************************************************/
+
 void scgrammererror (const char *s)
 {
     scparser_EmitPrefix ();	/* Dump previous stuff, so error location is obvious */
-    scparser_set_line (ScParserLex.lineno);
+    scparser_set_line (scParserLex.lineno);
     scparser_call (2,"error", s, sclextext);
-    ScParserState.Errors++;
+    scParserState.errors++;
 }
 
 void scparse_init (SV *CLASS, const char *filename, int strip)
 {
-    ScParserState.self = CLASS;
-    ScParserState.Errors = 0;
-    ScParserLex.stripAutos = strip;
+    scParserState.self = CLASS;
+    scParserState.errors = 0;
+    scParserState.symbols = newHV();
+    scParserLex.stripAutos = strip;
 
     sclextext = "";  /* In case we get a error in the open */
 }
 
 void scparse_set_filename (const char *filename, int lineno)
 {
-    ScParserLex.filename = strdup(filename);
-    ScParserLex.lineno = lineno;
+    scParserLex.filename = strdup(filename);
+    scParserLex.lineno = lineno;
     scparser_set_line (lineno);
 }
 
@@ -172,7 +188,7 @@ SV *CLASS
 PROTOTYPE: $
 CODE:
 {
-    RETVAL = ScParserState.LastLineno;
+    RETVAL = scParserState.lastLineno;
 }
 OUTPUT: RETVAL
 
@@ -185,7 +201,20 @@ SV *CLASS
 PROTOTYPE: $
 CODE:
 {
-    RETVAL = ScParserLex.filename;
+    RETVAL = scParserLex.filename;
+}
+OUTPUT: RETVAL
+
+#/**********************************************************************/
+#/* self->symbols() */
+
+HV *
+symbols (CLASS)
+SV *CLASS
+PROTOTYPE: $
+CODE:
+{
+    RETVAL = scParserState.symbols;
 }
 OUTPUT: RETVAL
 
@@ -228,7 +257,7 @@ CODE:
     /* Emit final tokens */
     scparser_EmitPrefix ();
 
-    if (ScParserState.Errors) {
+    if (scParserState.errors) {
 	in_parser = 0;
 	croak ("SystemC::Parser::read() detected parse errors");
     }

@@ -1,4 +1,4 @@
-/* $Id: sp_log.cpp,v 1.7 2001/05/29 19:19:34 wsnyder Exp $
+/* $Id: sp_log.cpp,v 1.8 2002/01/18 15:36:03 wsnyder Exp $
  ************************************************************************
  *
  * THIS MODULE IS PUBLICLY LICENSED
@@ -37,7 +37,7 @@ void sp_log_file::open (const char *filename)
     this->close();
     std::ofstream::open (filename);
     if (0/*FIX*/) {
-	//UTIL_FATAL("Can't write %s\n", filename);
+	//UFATAL("Can't write "<<filename<<endl);
 	printf ("Can't write %s\n", filename);
 	return;
     }

@@ -1,4 +1,4 @@
-// $Id: ExModNull.sp,v 1.5 2001/10/05 15:46:41 wsnyder Exp $
+// $Id: ExModNull.sp,v 1.7 2001/11/27 13:56:52 wsnyder Exp $
 // DESCRIPTION: SystemPerl: Example "null" module
 
 #sp interface
@@ -11,7 +11,7 @@ SC_MODULE (__MODULE__) {
     /*AUTOINOUT_MODULE(ExMod)*/
 
   private:
-    /*AUTOSUBCELLS*/
+    /*AUTOSUBCELL_DECL*/
     /*AUTOSIGNAL*/
 
   public:
@@ -24,6 +24,9 @@ SC_MODULE (__MODULE__) {
 
 SP_CTOR_IMP(__MODULE__)
 {
+#ifdef NEVER
+    out.write(0);
+#endif
 }
 
 /*AUTOTRACE(__MODULE__)*/

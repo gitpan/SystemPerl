@@ -1,6 +1,6 @@
 %option noyywrap align never-interactive prefix="sclex"
 %{
-/* $Id: sclex.l,v 1.25 2001/09/27 17:41:34 wsnyder Exp $
+/* $Id: sclex.l,v 1.28 2002/01/29 21:53:55 wsnyder Exp $
  ******************************************************************************
  * DESCRIPTION: SystemC lexer
  * 
@@ -48,7 +48,7 @@ int sclex_include_stack_ptr = 0;
 YYSTYPE scgrammerlval;
 #define yylval scgrammerlval
 
-#define LINENO (ScParserLex.lineno)
+#define LINENO (scParserLex.lineno)
 #define StashPrefix { scparser_PrefixCat (yytext, yyleng); }
 
 extern void sclex_ppline (const char *line);
@@ -93,6 +93,9 @@ FLOATNUM	[0-9]+"."*[0-9]*[eE][0-9]+
 "SC_CTOR"	{ return(SC_CTOR); }
 "VL_SIG"	{ return(VL_SIG); }
 "VL_SIGW"	{ return(VL_SIGW); }
+"VL_PORT"	{ return(VL_PORT); }
+"VL_PORTW"	{ return(VL_PORTW); }
+"VL_PIN_NOP"	{ return(SP_PIN); }
 "sc_main"	{ return(SC_MAIN); }
 "enum"		{ return(ENUM); }
 "class"		{ return(CLASS); }
@@ -110,13 +113,14 @@ FLOATNUM	[0-9]+"."*[0-9]*[eE][0-9]+
 
 	/* Automatic comments */
 {WHITESPACE}*"// Beginning of SystemPerl automatic".*\n	{
-	if (ScParserLex.stripAutos) {BEGIN(AUTOMODE); scparser_EmitPrefix();}
+	if (scParserLex.stripAutos) {BEGIN(AUTOMODE); scparser_EmitPrefix();}
 	else { StashPrefix; }
 	LINENO++;}
-{WHITESPACE}*"/*AUTO"[^*]+"*/"	{ return(AUTO); }
+{WHITESPACE}*"/*AUTO"[^*\n]+"*/"	{ return(AUTO); }
+{WHITESPACE}*"SP_AUTO_"[^;\n]+";"	{ return(AUTO); }
 <INITIAL><<EOF>>	{
 #ifdef FLEX_DEBUG
-    fprintf(stderr,"EOF %s\n",ScParserLex.filename);
+    fprintf(stderr,"EOF %s\n",scParserLex.filename);
 #endif
     if (--sclex_include_stack_ptr<0) {
 	yyleng=0; yyterminate(); /* Else NUL added to EOF*/
@@ -207,15 +211,15 @@ void sclex_ppline (const char* line) {
     while (*line && isspace(*line)) line++;
 
     if (isdigit (*line)) {
-	ScParserLex.lineno = atoi(line);
+	scParserLex.lineno = atoi(line);
 	while (*line && isdigit(*line)) line++;
 	while (*line && isspace(*line)) line++;
 	if (*line == '"') {
 	    char *cp;
 	    line++;
-	    free((void*)ScParserLex.filename);
-	    ScParserLex.filename = strdup(line);
-	    if (NULL!=(cp=strchr(ScParserLex.filename, '"'))) *cp = '\0';
+	    free((void*)scParserLex.filename);
+	    scParserLex.filename = strdup(line);
+	    if (NULL!=(cp=strchr(scParserLex.filename, '"'))) *cp = '\0';
 	}
     }
 }
@@ -253,8 +257,8 @@ void sclex_include_switch () {
 	sclex_include_from = NULL;
 
 	sclex_includes[sclex_include_stack_ptr].buffer = YY_CURRENT_BUFFER;
-	sclex_includes[sclex_include_stack_ptr].lineno = ScParserLex.lineno;
-	sclex_includes[sclex_include_stack_ptr].filename = ScParserLex.filename;
+	sclex_includes[sclex_include_stack_ptr].lineno = scParserLex.lineno;
+	sclex_includes[sclex_include_stack_ptr].filename = scParserLex.filename;
 
 	newin = fopen (filename, "r");
 	if (!newin) {

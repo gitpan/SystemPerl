@@ -1,4 +1,4 @@
-/* $Id: scparse.h,v 1.10 2001/09/27 17:41:34 wsnyder Exp $
+/* $Id: scparse.h,v 1.12 2001/11/26 20:42:27 wsnyder Exp $
  ******************************************************************************
  * DESCRIPTION: SystemC parser header file
  * 
@@ -49,14 +49,14 @@ typedef struct {
     int stripAutos;
     char *enumname;
 } ScParserLex_t ;
-extern ScParserLex_t ScParserLex;
+extern ScParserLex_t scParserLex;
 
 /* Lexer */
 extern FILE *sclexin;
 extern int sclexlex();
 extern char *sclextext;
 #ifdef SCPARSE_C
-ScParserLex_t ScParserLex;
+ScParserLex_t scParserLex;
 #endif
 extern int sclex_open  (const char* filename);
 extern void sclex_include (const char* filename);
@@ -72,4 +72,5 @@ extern int scparse (const char *filename);
 extern void scparser_PrefixCat (char *text, int len);
 extern void scparser_EmitPrefix (void);
 extern void scparser_call (int params, const char *method, ...);
+extern void scparser_symbol (const char *symbol);
 extern void scparse_set_filename (const char *filename, int lineno);

@@ -1,4 +1,4 @@
-#$Id: SystemPerl.pod,v 1.18 2001/09/26 14:50:59 wsnyder Exp $
+#$Id: SystemPerl.pod,v 1.21 2002/01/29 14:20:33 wsnyder Exp $
 ######################################################################
 #
 # This program is Copyright 2001 by Wilson Snyder.
@@ -302,7 +302,7 @@ SC_MODULE(mod) {
 Becomes:
 
 SC_MODULE(mod) {
-    /*AUTOSUBCELLS*/
+    /*AUTOSIGNAL*/
     // Beginning of SystemPerl automatic signals
     sc_signal<bool>             a;       // For submod
     // End of SystemPerl automatic signals
@@ -311,11 +311,14 @@ SC_MODULE(mod) {
 	SP_CELL (sub, submod);
 	  SP_PIN (sub, a,	a);
 
-=item /*AUTOTRACE(I<module>)*/
+=item /*AUTOTRACE(I<module>,I<recurse>)*/
 
 AUTOTRACE creates a routine to trace the ports and signals in the current
-module, and then call the tracing routine on all submodules.  AUTOMETHODS is
-also required in the declaration of the module.  
+module, and then call the tracing routine on all submodules.  AUTOMETHODS
+is also required in the declaration of the module.  A optional second
+argument of "recurse" indicates the trace code should include all
+submodules, leading to smaller trace files, but longer compile and link
+times.
 
 Note because of a SystemC limitation, output ports cannot be traced.  Also
 the hiearchy is not properly placed into the trace file; the hiearchy path
@@ -363,6 +366,14 @@ to protect against multiple inclusion.
 
 The Interface specifies the following code should be part of the cpp file.
 This allows a common .sp file to contain both .h and .cpp information.
+
+=item #sp use
+
+This specifies a file that must be #included at compile time.  In addition
+the file is a .sp file, which must be preprocessed by sp_preproc, and added
+to the link list.  Thus using #sp use automatically finds the objects
+required for linking against the includer.  (Just like perl's package and
+use statements.)
 
 =back
 

@@ -1,5 +1,5 @@
 %{
-/* $Id: scgrammer.y,v 1.31 2001/09/27 15:38:32 wsnyder Exp $
+/* $Id: scgrammer.y,v 1.35 2002/01/29 21:53:55 wsnyder Exp $
  ******************************************************************************
  * DESCRIPTION: SystemC bison parser
  *
@@ -54,12 +54,12 @@ int scgrammerlex() {
     int toke;
     sclex_include_switch ();
     toke = sclexlex();
-    if (toke != SP) {
+    if (toke != SP && toke != AUTO) {	// Strip #sp.... from text sections, AUTOs do it separately
 	scparser_PrefixCat(sclextext,sclexleng);
     }
 #ifdef FLEX_DEBUG
     if (sclex_flex_debug) {
-	fprintf(stderr,"ln%d: GOT %d: '%s'\n", ScParserLex.lineno, toke,
+	fprintf(stderr,"ln%d: GOT %d: '%s'\n", scParserLex.lineno, toke,
 		DENULL(sclextext));
     }
 #endif
@@ -92,6 +92,8 @@ int scgrammerlex() {
 %token		SP_TRACED
 %token		VL_SIG
 %token		VL_SIGW
+%token		VL_PORT
+%token		VL_PORTW
 %token		CLASS
 %token		ENUM
 %token		AUTO
@@ -146,14 +148,18 @@ exp:		auto
 		| class
 		| enum
 		| STRING	{ SCFree($1); }
-		| SYMBOL	{ SCFree($1); }
+		| SYMBOL	{ scparser_symbol($1); SCFree($1); }
 		| NUMBER	{ SCFree($1); }
 		| PP		{ }
 		| symbol
 ;
 
 auto:		AUTO
-			{ scparser_call(1,"auto",sclextext);}
+			{
+			  scparser_EmitPrefix();
+			  scparser_PrefixCat(sclextext,sclexleng);  /* Emit as independent TEXT */
+			  scparser_call(1,"auto",sclextext);
+			}
 
 module:		SC_MODULE '(' SYMBOL ')'
 			{ scparser_call(-1,"module",$3); }
@@ -227,19 +233,25 @@ traceable:	SP_TRACED SYMBOL SYMBOL vector ';'
 		| VL_SIGW '(' SYMBOL vector ',' NUMBER ',' NUMBER ',' vectorNum ')' ';'
  			{ scparser_call(6,"signal","sp_traced","uint32_t",$3,$4,$6,$8);
  			  SCFree($3); SCFree($4); SCFree($6); SCFree($8); SCFree($10);}
+		| VL_PORT '(' SYMBOL vector ',' NUMBER ',' NUMBER ')' ';'
+ 			{ scparser_call(6,"signal","vl_port","uint32_t",$3,$4,$6,$8);
+ 			  SCFree($3); SCFree($4); SCFree($6); SCFree($8);}
+		| VL_PORTW '(' SYMBOL vector ',' NUMBER ',' NUMBER ',' vectorNum ')' ';'
+ 			{ scparser_call(6,"signal","vl_port","uint32_t",$3,$4,$6,$8);
+ 			  SCFree($3); SCFree($4); SCFree($6); SCFree($8); SCFree($10);}
 
 //************************************
 // Enumerations
 
 enum:		ENUM enumSymbol '{' enumValList '}'
-  			{ SCFree (ScParserLex.enumname); }
+  			{ SCFree (scParserLex.enumname); }
 
-enumSymbol:	SYMBOL	{ ScParserLex.enumname = $1; }
-		|	{ ScParserLex.enumname = NULL; }
+enumSymbol:	SYMBOL	{ scParserLex.enumname = $1; }
+		|	{ scParserLex.enumname = NULL; }
 enumValList:	enumVal
  		| enumValList ',' enumVal ;
 enumVal:	SYMBOL	enumAssign  {
-			if (ScParserLex.enumname) scparser_call(2,"enum_value",ScParserLex.enumname,$1);
+			if (scParserLex.enumname) scparser_call(2,"enum_value",scParserLex.enumname,$1);
 			SCFree ($1); }
 enumAssign:	'=' NUMBER	{ SCFree ($2); }
  		| ;

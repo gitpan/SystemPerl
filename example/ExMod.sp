@@ -1,4 +1,4 @@
-// $Id: ExMod.sp,v 1.5 2001/10/05 15:46:41 wsnyder Exp $
+// $Id: ExMod.sp,v 1.8 2002/01/29 14:20:36 wsnyder Exp $
 // DESCRIPTION: SystemPerl: Example source module
 
 //error test:
@@ -20,7 +20,7 @@ SC_MODULE (__MODULE__) {
 
     SP_CELL_DECL (ExModSub, sub[MOD_CELLS]);
 
-    /*AUTOSUBCELLS*/
+    /*AUTOSUBCELL_DECL*/
     /*AUTOSIGNAL*/
 
   public:
@@ -54,6 +54,9 @@ SP_CTOR_IMP(__MODULE__)
     /*AUTOINST*/
 
     for (int i=0; i<MOD_CELLS; i++) out_array[i].write(i);
+#ifdef NEVER
+    out.write(0);
+#endif
 }
 
-/*AUTOTRACE(__MODULE__)*/
+/*AUTOTRACE(__MODULE__,recurse)*/

@@ -1,4 +1,4 @@
-// $Id: SpTraceVcd.h,v 1.6 2001/11/11 21:23:06 wsnyder Exp $ -*- SystemC -*-
+// $Id: SpTraceVcd.h,v 1.8 2002/02/26 15:50:58 wsnyder Exp $ -*- SystemC -*-
 //=============================================================================
 //
 // THIS MODULE IS PUBLICLY LICENSED
@@ -61,6 +61,8 @@ class SpTraceVcd {
 private:
     bool 		m_isOpen;	// True indicates open file
     std::ofstream	m_fp;		// File we're writing to
+    string		m_filename;	// Filename we're writing to (if open)
+    size_t		m_rolloverMB;	// MB of file size to rollover at
     int			m_modDepth;	// Depth of module hiearchy
     bool		m_fullDump;	// True indicates dump ignoring if changed
     uint32_t		m_nextCode;	// Next code number to assign
@@ -71,6 +73,7 @@ private:
     vector<SpTraceCallInfo*>	m_callbacks;	// Routines to perform dumping
 
     static const char* genId ();
+    void openNext();
     void printIndent (int levelchange);
     void declare (uint32_t code, const char* name, int arraynum,
 		  const uint32_t* valp,
@@ -86,13 +89,15 @@ private:
 
 public:
     // CREATORS
-    SpTraceVcd () : m_isOpen(false), m_modDepth(0), m_nextCode(0) {}
+    SpTraceVcd () : m_isOpen(false), m_rolloverMB(0), m_modDepth(0), m_nextCode(0) {}
 
     // ACCESSORS
     uint32_t nextCode() const {return m_nextCode;}
+    void rolloverMB(size_t rolloverMB) { m_rolloverMB=rolloverMB; };
 
     // METHODS
     void open (const char* filename);	// Open the file
+    void openNext (bool incFilename);	// Open next data-only file
     void close ();			// Close the file
 
     void addCallback (SpTraceCallback_t init, SpTraceCallback_t dump,
@@ -166,6 +171,8 @@ public:
 	sc_get_curr_simcontext()->add_trace_file(this);
     }
     void open (const char* filename) { m_sptrace.open(filename); }
+    void openNext (bool incFilename=true) { m_sptrace.openNext(incFilename); }
+    void rolloverMB(size_t rolloverMB) { m_sptrace.rolloverMB(rolloverMB); };
     void close () { m_sptrace.close(); }
     // Called by SystemC simulate()
     virtual void cycle (bool) { m_sptrace.dump(sc_time_stamp()); }

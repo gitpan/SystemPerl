@@ -5,6 +5,21 @@ The contributors that suggested a given feature is shown in [].
 	
 This uses outline mode in Emacs.  See C-h m [M-x describe-mode].
 
+* Changes in SystemC 1.100 3/11/2002
+
+**	Added Emacs mode in systemc-mode.el
+
+**	Added #sp use "filename", for determining link objects automatically.
+
+***	Allow modules not specified on the command line to be found
+	automatically by using the search path (ala Verilog.)
+
+****	SystemC::Parser now emits a separate text() callback for the text
+	of a AUTO.  This allows programs to more easily replace the text inline.
+
+****	Improve tracing to allow smaller files, rollover, inlining child traces.
+
+
 * Changes in SystemC 1.000 11/16/2001
 
 **	Moved Netlist guts into Verilog package,
@@ -111,7 +126,7 @@ This uses outline mode in Emacs.  See C-h m [M-x describe-mode].
 
 
 ----------------------------------------------------------------------
-$Id: NEWS,v 1.37 2001/11/16 15:01:38 wsnyder Exp $
+$Id: NEWS,v 1.43 2002/03/11 15:52:05 wsnyder Exp $
 ----------------------------------------------------------------------
 Copyright information:
 

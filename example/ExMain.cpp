@@ -1,10 +1,13 @@
-// $Id: ExMain.cpp,v 1.4 2001/11/11 19:59:22 wsnyder Exp $
+// $Id: ExMain.cpp,v 1.9 2002/02/26 15:50:58 wsnyder Exp $
 // DESCRIPTION: SystemPerl: Example main()
 
 #include <systemperl.h>
-#include "ExEnum.h"
 #include "ExBench.h"
 #include "SpTraceVcd.h"
+
+void sp_coverage_data (const char *hier, const char *what, const char *file, int lineno, uint32_t data) {
+    // Needed if any SP_COVERAGE statements in the model
+}
 
 int sc_main (int argc, char *argv[])
 {
@@ -30,7 +33,14 @@ int sc_main (int argc, char *argv[])
     // SystemPerl traces
     SpTraceFile* stp = new SpTraceFile;
     bench->trace(stp,999);
-    stp->open("sim_sp.vcd");
+    stp->open("sim_sp.dump");
+
+    // Alternative SystemPerl traces, allowing rollover
+    // After running, concat the two files to make the vcd file.
+    SpTraceFile* stp2 = new SpTraceFile;
+    stp2->rolloverMB(1);	// Rollover logfiles when size > 1MB
+    bench->trace(stp2,999);
+    stp2->open("sim_sp2.dump");
 
     cout << "Starting\n";
     sc_start(-1);

@@ -3,6 +3,7 @@ MANIFEST
 Makefile.PL
 NEWS
 Netlist.pm
+Netlist/AutoCover.pm
 Netlist/AutoTrace.pm
 Netlist/Cell.pm
 Netlist/File.pm

@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Id: Netlist.pm,v 1.27 2001/11/16 15:01:38 wsnyder Exp $
+# $Id: Netlist.pm,v 1.29 2002/03/11 15:52:05 wsnyder Exp $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -33,7 +33,7 @@ use Verilog::Netlist::Subclass;
 use strict;
 use vars qw($Debug $Verbose $VERSION);
 
-$VERSION = '1.000';
+$VERSION = '1.100';
 
 ######################################################################
 #### Error Handling
@@ -49,6 +49,7 @@ sub new {
     my $class = shift;
     my $self = $class->SUPER::new
 	(sp_allow_output_tracing => 0,
+	 sp_trace_duplicates => 0,
 	 @_);
     bless $self, $class;
     return $self;

@@ -1,28 +1,27 @@
-/* $Id: systemperl.h,v 1.12 2001/07/12 19:30:24 wsnyder Exp $
- ************************************************************************
- *
- * THIS MODULE IS PUBLICLY LICENSED
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of either the GNU General Public License or the
- * Perl Artistic License, with the exception that it cannot be placed
- * on a CD-ROM or similar media for commercial distribution without the
- * prior approval of the author.
- *
- * This is distributed in the hope that it will be useful, but WITHOUT ANY
- * WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
- * for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this module; see the file COPYING.  If not, write to
- * the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
- * Boston, MA 02111-1307, USA.
- *
- **********************************************************************
- * DESCRIPTION: SystemPerl: Overall header file
- **********************************************************************
- */
+// $Id: systemperl.h,v 1.19 2002/01/29 21:53:55 wsnyder Exp $ -*- SystemC -*-
+//********************************************************************
+//
+// THIS MODULE IS PUBLICLY LICENSED
+//
+// This program is free software; you can redistribute it and/or modify
+// it under the terms of either the GNU General Public License or the
+// Perl Artistic License, with the exception that it cannot be placed
+// on a CD-ROM or similar media for commercial distribution without the
+// prior approval of the author.
+//
+// This is distributed in the hope that it will be useful, but WITHOUT ANY
+// WARRANTY; without even the implied warranty of MERCHANTABILITY or
+// FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+// for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this module; see the file COPYING.  If not, write to
+// the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+// Boston, MA 02111-1307, USA.
+//
+//********************************************************************
+// DESCRIPTION: SystemPerl: Overall header file
+//********************************************************************
 
 #ifndef _SYSTEMPERL_H_
 #define _SYSTEMPERL_H_
@@ -34,10 +33,11 @@
 #else
 # include <systemc.h>
 #endif
-#include <stdint.h>      /*uint32_t*/
+#include <stdint.h>      // uint32_t
+#include <stdarg.h>      // ... vaargs
 
-/**********************************************************************/
-/* Macros */
+//********************************************************************
+// Macros
 
 // Allows constructor to be in implementation rather then the header
 #define SP_CTOR_IMP(name) name::name(sc_module_name)
@@ -55,16 +55,18 @@
 
 // Connection of a pin to a SC_CELL
 #define SP_PIN(instname,port,net) (instname->port(net))
+#define VL_PIN_NOP(instname,port,net) 
 
 // Tracing types
 #define SP_TRACED	// Just a NOP; it simply marks a declaration
 #ifndef VL_SIG
 # define VL_SIG(name, msb,lsb)	         uint32_t name
 # define VL_SIGW(name, msb,lsb, words)   uint32_t name[words]
-# define VL_SIGW_P(name, msb,lsb, words) uint32_t name[]
+# define VL_PORT(name, msb,lsb)	         uint32_t name
+# define VL_PORTW(name, msb,lsb, words)  uint32_t name[words]
 #endif
 
-/**********************************************************************/
+//********************************************************************
 // Functions
 // We'll ask systemC to have a sc_string creator to avoid this:
 // Note there is a mem leak here.  As only used for instance names, we'll live.
@@ -74,14 +76,23 @@ inline const char *sp_cell_sprintf(const char *fmt...) {
     return(buf);
 }
 
-/**********************************************************************/
-/* Classes so we can sometimes avoid header inclusion */
+//********************************************************************
+// Classes so we can sometimes avoid header inclusion
 
 class SpTraceFile;
 class SpTraceVcd;
 
-/**********************************************************************/
-/* sp_log.h has whole thing... This one function may be used everywhere */
+//********************************************************************
+// Simple classes.  If get bigger, move to optional include
+
+class UInt32Zeroed { public:
+    uint32_t m_l; 
+    UInt32Zeroed(): m_l(0) {};
+    inline operator const uint32_t () const { return m_l; };
+};
+
+//********************************************************************
+// sp_log.h has whole thing... This one function may be used everywhere
 
 #ifndef UTIL_ATTR_PRINTF
 # ifdef __GNUC__
@@ -92,10 +103,21 @@ class SpTraceVcd;
 #endif
 
 extern "C" {
-    /* Print to cout, but with C style arguments */
+    // Print to cout, but with C style arguments
     extern void sp_log_printf(const char *format, ...) UTIL_ATTR_PRINTF(1);
 }
 
-/**********************************************************************/
+//********************************************************************
+// SystemC Automatics
+
+#define SP_AUTO_CTOR
+
+// Multiple flavors as all compilers don't support variable define arguments
+#define SP_AUTO_COVER(cmt)
+#define SP_AUTO_COVER3(cmt,file,line)
+#define SP_AUTO_COVER1_4(id,cmt,file,line) {this->_sp_coverage[(id)].m_l++;}
+#define SP_AUTO_COVER4(id,cmt,file,line) {this->_sp_coverage[(id)].m_l++;}
+
+//********************************************************************
 
 #endif /*_SYSTEMPERL_H_*/

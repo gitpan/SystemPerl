@@ -1,4 +1,4 @@
-# $Id: Makefile_obj,v 1.13 2001/11/16 14:53:55 wsnyder Exp $ -*- Makefile -*-
+# $Id: Makefile_obj,v 1.15 2001/12/03 22:32:00 wsnyder Exp $ -*- Makefile -*-
 # DESCRIPTION: SystemPerl: Example makefile
 #
 # This is executed in the "test_dir", not in this directory
@@ -20,7 +20,7 @@ SP_SP = $(wildcard ../example/*.sp)
 CFLAGS += -DWAVES
 
 # List Objects in bottom-up order, that way lower modules get errors first
-OBJS = $(SP_OBJS) ExMain.o SpTraceVcd.cpp
+OBJS = $(SP_OBJS) ExMain.o Sp.cpp
 
 default: build
 
@@ -37,7 +37,7 @@ build:	preproc ex_main
 # In a user example where you weren't editing sp_preproc, you could have:
 #preproc $(SP_CPP) $(SP_H): $(SP_SP)
 preproc $(SP_CPP) $(SP_H):
-	../sp_preproc $(INCDIR) -M sp_preproc.d --preproc $(SP_SP)
+	../sp_preproc $(INCDIR) -M sp_preproc.d --tree ex.tree --preproc $(SP_SP)
 
 ex_main:	$(OBJS)
 	$(CC) $(CFLAGS) $(INCDIR) $(LIBDIR) -o $@ $^ $(LIBS) 2>&1 | c++filt

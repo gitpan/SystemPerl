@@ -1,4 +1,4 @@
-#$Id: Parser.pm,v 1.18 2001/11/16 15:01:41 wsnyder Exp $
+#$Id: Parser.pm,v 1.20 2002/03/11 15:52:09 wsnyder Exp $
 ######################################################################
 #
 # This program is Copyright 2001 by Wilson Snyder.
@@ -29,7 +29,7 @@ require DynaLoader;
 use strict;
 use vars qw($VERSION);
 
-$VERSION = '1.000';
+$VERSION = '1.100';
 
 ######################################################################
 #### Configuration Section
@@ -156,6 +156,13 @@ the filename passed on the command line, as #line directives are honored.
 
 Returns the line number at the beginning of the most recently returned
 object.
+
+=item $self->symbols()
+
+Returns hash reference to list of all symbols with line number the symbol
+first was encountered on.  (The hash is created instead of invoking a callback
+on each symbol for speed reasons.)  Keywords may also be placed into the symbol
+table, this behavior may change.
 
 =back
 

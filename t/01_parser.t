@@ -1,4 +1,5 @@
 #!/usr/local/bin/perl -w
+# $Id: 01_parser.t,v 1.7 2002/03/11 14:07:22 wsnyder Exp $
 # DESCRIPTION: Perl ExtUtils: Type 'make test' to test this package
 
 use strict;
@@ -26,8 +27,11 @@ sub _common {
 
 sub text {
     my $self = shift;
-    #print $::Fdump ("Parser.pm::TEXT: ",$self->filename,":",$self->lineno,
-    #	   ": '",join("','", @_),"'\n");
+    my $txt = $_[0];
+    # Edit text to make file smaller
+    $txt=~ s/\s+/ /g;
+    $txt=~ s/^(....................).*(....................)$/$1 ... $2/m;
+    _common('TEXT',$self,$txt);
     $self->writetext($_[0], 0);
 }
 
@@ -70,6 +74,16 @@ sub writetext {
     }
 }
 
+sub writesyms {
+    my $self = shift;
+    my $fh = shift;
+
+    my $syms = $self->symbols;
+    foreach my $sym (sort (keys %{$syms})) {
+	printf $fh "%s => %d\n", $sym, $syms->{$sym};
+    }
+}
+
 package main;
 ######################################################################
 
@@ -77,12 +91,15 @@ package main;
     # We'll write out all text, to make sure nothing gets dropped
     $::Fh = IO::File->new (">test_dir/01_parser.out");
     $::Fdump = IO::File->new (">test_dir/01_parser.parse");
+    $::Fsyms = IO::File->new (">test_dir/01_parser.syms");
     my $sp = Trialparser->new();
     $sp->{lastfile} = "t/01_parser.sp";
     $sp->{lastline} = 1;
     $sp->read (filename=>"t/01_parser.sp");
+    $sp->writesyms ($::Fsyms);
     $::Fh->close();
     $::Fdump->close();
+    $::Fsyms->close();
 }
 ok(1);
 
@@ -90,7 +107,7 @@ ok(1);
     # Ok, let's make sure the right data went through
     my $f1 = wholefile ("t/01_parser.sp") or die;
     my $f2 = wholefile ("test_dir/01_parser.out") or die;
-    $f1 =~ s/\/\*AUTOINCLUDE\*\//\/\*AUTOINCLUDE\*\/\/\*AUTO_FROM_INCLUDE\*\/\n/g;
+    $f1 =~ s/(\/\*)?AUTOINCLUDE(;|\*\/)/${1}AUTOINCLUDE${2}\/\*AUTO_FROM_INCLUDE\*\/\n/g;
     my @l1 = split ("\n", $f1);
     my @l2 = split ("\n", $f2);
     for (my $l=0; $l<($#l1 | $#l2); $l++) {

@@ -1,4 +1,4 @@
-// $Id: ExModSub.sp,v 1.3 2001/10/05 15:46:41 wsnyder Exp $
+// $Id: ExModSub.sp,v 1.6 2001/11/30 19:19:56 wsnyder Exp $
 // DESCRIPTION: SystemPerl: Example source module
 
 #sp interface
@@ -11,7 +11,7 @@ SC_MODULE (__MODULE__) {
     sc_out<bool>	out;
 
   private:
-    /*AUTOSUBCELLS*/
+    /*AUTOSUBCELL_DECL*/
     /*AUTOSIGNAL*/
     void clock (void);
 
@@ -26,10 +26,11 @@ SC_MODULE (__MODULE__) {
 SP_CTOR_IMP(__MODULE__)
 {
     SC_METHOD(clock);
-    sensitive_pos << clk;
+    sensitive_pos(clk);
 }
 
 void __MODULE__::clock (void) {
+    SP_AUTO_COVER("clocking");
     out.write(in.read());
 }
 

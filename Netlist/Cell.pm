@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Id: Cell.pm,v 1.19 2001/11/16 15:01:41 wsnyder Exp $
+# $Id: Cell.pm,v 1.21 2002/03/11 15:52:09 wsnyder Exp $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -27,7 +27,7 @@ use Class::Struct;
 use Verilog::Netlist;
 use SystemC::Netlist;
 @ISA = qw(Verilog::Netlist::Cell);
-$VERSION = '1.000';
+$VERSION = '1.100';
 use strict;
 
 ######################################################################
@@ -37,6 +37,7 @@ sub new_pin {
     # @_ params
     # Create a new pin under this cell
     my $pinref = new SystemC::Netlist::Pin (cell=>$self, @_);
+    $self->portname($self->name) if !$self->name;	# Back Version 1.000 compatibility
     $self->pins ($pinref->name(), $pinref);
     return $pinref;
 }
@@ -57,7 +58,7 @@ sub _autos {
 		    print "  AUTOINST connect ",$self->module->name,"."
 			,$self->name," (",$self->submod->name,") port ",$portref->name
 			    ,"\n" if $SystemC::Netlist::Debug;
-		    $self->new_pin (name=>$portref->name,
+		    $self->new_pin (name=>$portref->name, portname=>$portref->name,
 				    filename=>'AUTOINST('.$self->module->name.')', lineno=>$self->lineno,
 				    netname=>$portref->name, sp_autocreated=>1,)
 			->_link();

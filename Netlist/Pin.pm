@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Id: Pin.pm,v 1.19 2001/11/16 15:01:41 wsnyder Exp $
+# $Id: Pin.pm,v 1.21 2002/03/11 15:52:09 wsnyder Exp $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -31,7 +31,7 @@ use SystemC::Netlist::Net;
 use SystemC::Netlist::Cell;
 use SystemC::Netlist::Module;
 @ISA = qw(Verilog::Netlist::Pin);
-$VERSION = '1.000';
+$VERSION = '1.100';
 use strict;
 
 ######################################################################
@@ -41,12 +41,14 @@ sub _autos {
     my $self = shift;
     if ($self->module->_autosignal) {
 	if (!$self->net && $self->port) {
-	    $self->module->new_net (name=>$self->netname,
-				    filename=>$self->module->filename,
-				    lineno=>$self->lineno . ':(AUTOSIGNAL)',
-				    type=>$self->port->type,
-				    comment=>" For ".$self->submod->name, #.".".$self->name, 
-				    module=>$self->module, sp_autocreated=>1,)
+	    my $net = $self->module->find_net ($self->netname);
+	    $net or $net = $self->module->new_net
+		(name=>$self->netname,
+		 filename=>$self->module->filename,
+		 lineno=>$self->lineno . ':(AUTOSIGNAL)',
+		 type=>$self->port->type,
+		 comment=>" For ".$self->submod->name, #.".".$self->name, 
+		 module=>$self->module, sp_autocreated=>1,)
 		->_link;
 	}
     }
