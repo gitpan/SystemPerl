@@ -1,29 +1,24 @@
 # SystemC - SystemC Perl Interface
-# $Revision: #47 $$Date: 2003/08/19 $$Author: wsnyder $
+# $Revision: #49 $$Date: 2003/10/28 $$Author: wsnyder $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
-# This program is Copyright 2000 by Wilson Snyder.
-#
-# This program is free software; you can redistribute it and/or modify
-# it under the terms of either the GNU General Public License or the
-# Perl Artistic License.
+# Copyright 2001-2003 by Wilson Snyder.  This program is free software;
+# you can redistribute it and/or modify it under the terms of either the GNU
+# General Public License or the Perl Artistic License.
 # 
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 # 
-# If you do not have a copy of the GNU General Public License write to
-# the Free Software Foundation, Inc., 675 Mass Ave, Cambridge, 
-# MA 02139, USA.
 ######################################################################
 
 package SystemC::Netlist::AutoTrace;
 use File::Basename;
 
 use SystemC::Netlist::Module;
-$VERSION = '1.145';
+$VERSION = '1.146';
 use strict;
 
 use vars qw ($Setup_Ident_Code);	# Local use for recursion only
@@ -348,6 +343,13 @@ sub _write_tracer_init {
     $fileref->print("}\n");
 }
 
+sub _dedot {
+    my $dot = shift;
+    $dot =~ s/__PVT__//g;
+    $dot =~ s/__DOT__/./g;
+    return $dot;
+}
+
 sub _write_tracer_init_recurse {
     my $self = shift;
     my $fileref = shift;
@@ -364,7 +366,7 @@ sub _write_tracer_init_recurse {
     } else {
 	$fileref->printf("${indent}\{\n");
 	$fileref->printf("${indent} vcdp->module(prefix+\"%s\");  // Is-a %s\n"
-			 , $tracesref->{modhier}, $modref->name);
+			 , _dedot($tracesref->{modhier}), $modref->name);
     }
 
     foreach my $tref (@{$tracesref->{vars}}) {
@@ -411,8 +413,7 @@ sub _write_tracer_init_recurse {
 	my $width = $netref->width || 1;
 	my $arraynum = ($netref->array ? " i":"-1");
 	$fileref->printf("");
-	(my $name = $netref->name()) =~ s/__DOT__/./g;
-	$name =~ s/__PVT__//g;
+	my $name = _dedot($netref->name());
 	if (!$doident) {
 	    if ($width == 1) {
 		$fileref->printf("vcdp->declBit  (${c},\"%s\",%s"

@@ -1,5 +1,5 @@
 \input texinfo @c -*-texinfo-*-
-@c $Revision: #22 $$Date: 2003/08/12 $$Author: wsnyder $
+@c $Revision: #23 $$Date: 2003/09/22 $$Author: wsnyder $
 @c %**start of header
 @setfilename readme.info
 @settitle Perl SystemC Installation
@@ -25,10 +25,10 @@ This is the SystemC Perl Package, aka SystemPerl.
 @node Copyright, Summary, Top, Top
 @section Copyright
 
-This package is Copyright 2001 by Wilson Snyder @email{wsnyder@@wsnyder.org}.
+This package is Copyright 2001-2003 by Wilson Snyder @email{wsnyder@@wsnyder.org}.
 
 You may distribute under the terms of either the GNU General Public License
-or the Artistic License, as specified in the Perl README file.
+or the Perl Artistic License, as specified in the Perl README file.
 
 This code is provided with no warranty of any kind, and is used entirely at
 your own risk.

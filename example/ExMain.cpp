@@ -1,5 +1,9 @@
-// $Revision: #13 $$Date: 2003/08/12 $$Author: wsnyder $
+// $Revision: #14 $$Date: 2003/09/22 $$Author: wsnyder $
 // DESCRIPTION: SystemPerl: Example main()
+//
+// Copyright 2001-2003 by Wilson Snyder.  This program is free software;
+// you can redistribute it and/or modify it under the terms of either the GNU
+// General Public License or the Perl Artistic License.
 
 #include <systemperl.h>
 #include "sp_log.h"

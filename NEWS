@@ -1,9 +1,13 @@
 SystemC::Netlist NEWS --  history of user-visible changes.
-Copyright (C) 2001 Wilson Snyder.
 
 The contributors that suggested a given feature is shown in [].
 	
 This uses outline mode in Emacs.  See C-h m [M-x describe-mode].
+
+
+* Changes in SystemC 1.146 10/28/2003
+
+****	Support Verilator PVT cell names
 
 
 * Changes in SystemC 1.145 8/19/2003
@@ -199,11 +203,13 @@ This uses outline mode in Emacs.  See C-h m [M-x describe-mode].
 
 
 ----------------------------------------------------------------------
-$Revision: #68 $$Date: 2003/08/19 $$Author: wsnyder $
+$Revision: #70 $$Date: 2003/10/28 $$Author: wsnyder $
 ----------------------------------------------------------------------
 Copyright information:
 
-Copyright (C) 2001 Wilson Snyder
+   Copyright 2001-2003 by Wilson Snyder.  This program is free software;
+   you can redistribute it and/or modify it under the terms of either the GNU
+   General Public License or the Perl Artistic License.
 
    See the README file included with this file for licencing information.
 

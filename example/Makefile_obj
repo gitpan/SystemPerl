@@ -1,7 +1,11 @@
-# $Revision: #20 $$Date: 2003/08/12 $$Author: wsnyder $ -*- Makefile -*-
+# $Revision: #21 $$Date: 2003/09/22 $$Author: wsnyder $ -*- Makefile -*-
 # DESCRIPTION: SystemPerl: Example makefile
 #
 # This is executed in the "test_dir", not in this directory
+#
+# Copyright 2001-2003 by Wilson Snyder.  This program is free software;
+# you can redistribute it and/or modify it under the terms of either the GNU
+# General Public License or the Perl Artistic License.
 #
 
 # Sigh... SystemC should provide a program to determine this

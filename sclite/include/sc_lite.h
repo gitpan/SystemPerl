@@ -1,20 +1,14 @@
-// $Revision: #8 $$Date: 2002/11/03 $$Author: wsnyder $
+// $Revision: #10 $$Date: 2003/09/22 $$Author: wsnyder $
 //********************************************************************
 //
-// This program is Copyright 2001 by Wilson Snyder.
-//
-// This program is free software; you can redistribute it and/or modify
-// it under the terms of either the GNU General Public License or the
-// Perl Artistic License.
+// Copyright 2001-2003 by Wilson Snyder.  This program is free software;
+// you can redistribute it and/or modify it under the terms of either the GNU
+// General Public License or the Perl Artistic License.
 //
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
-//
-// If you do not have a copy of the GNU General Public License write to
-// the Free Software Foundation, Inc., 675 Mass Ave, Cambridge,
-// MA 02139, USA.
 //
 //********************************************************************
 // DESCRIPTION: SystemPerl: SystemC-like library with only most-trivial functions.
@@ -135,11 +129,12 @@ template <class T> class SclFunctorSpec : public SclFunctor {
 extern void scl_add_method (SclFunctor ftr);
 
 //=== Sensitivity
-class SclSensitive {
-  public:
-    template <class T>
-	SclSensitive& operator<<(const T& s) {return *this;}
-};
+#define SCL_EDGE_POS    1
+#define SCL_EDGE_NEG    2
+#define SCL_EDGE_EITHER 3
+#define sensitive(sig)       scl_add_sensitive(SCL_EDGE_EITHER,sig)
+#define sensitive_pos(sig)   scl_add_sensitive(SCL_EDGE_POS,sig)
+#define sensitive_neg(sig)   scl_add_sensitive(SCL_EDGE_NEG,sig)
 
 //=== Modules
 #define SC_MODULE(mod) struct mod : public sc_module
@@ -147,11 +142,10 @@ class SclSensitive {
 class sc_module {
     sc_string m_name;
   protected:
-    SclSensitive  sensitive_pos;
-    SclSensitive  sensitive_neg;
-    SclSensitive  sensitive;
+    template <class T>
+	static void scl_add_sensitive(int direction, T);
   public:
-    sc_string name() { return m_name; }
+    const char* name() const { return m_name.c_str(); }
     // FIX passing name from cell
     sc_module () : m_name("") {}
 };
