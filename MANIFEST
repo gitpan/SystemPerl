@@ -28,6 +28,7 @@ example/ExMain.cpp
 example/ExMod.sp
 example/ExModNull.sp
 example/ExModSub.sp
+example/ExParse.sp
 example/Makefile_obj
 readme.texi
 sclite/include/sc_lite.h

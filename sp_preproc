@@ -1,5 +1,5 @@
 #!/usr/local/bin/perl -w
-#$Revision: #33 $$Date: 2002/08/07 $$Author: wsnyder $
+#$Revision: #34 $$Date: 2002/08/14 $$Author: wsnyder $
 ######################################################################
 #
 # This program is Copyright 2000 by Wilson Snyder.
@@ -57,7 +57,7 @@ my $opt_tree = 0;
 my $opt_trace_duplicates = 0;
 
 my $opt = new Verilog::Getopt(gcc_style=>1, vcs_style=>0);
-$opt->libext(".sp");
+$opt->libext([".sp"]);
 @ARGV = $opt->parameter(@ARGV);	# Strip -D and -U flags
 if (! GetOptions (
 		  "help"	=> \&usage,
@@ -135,7 +135,7 @@ if ($opt_makedeps) {
 #----------------------------------------------------------------------
 
 sub usage {
-    print '$Revision: #33 $$Date: 2002/08/07 $$Author: wsnyder $ ', "\n";
+    print '$Revision: #34 $$Date: 2002/08/14 $$Author: wsnyder $ ', "\n";
     $SIG{__WARN__} = sub{};	#pod2text isn't clean.
     pod2text($0);
     exit (1);

@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Revision: #44 $$Date: 2002/08/07 $$Author: wsnyder $
+# $Revision: #45 $$Date: 2002/08/19 $$Author: wsnyder $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -32,7 +32,7 @@ use SystemC::Netlist::AutoCover;
 use SystemC::Netlist::AutoTrace;
 
 @ISA = qw(Verilog::Netlist::Module);
-$VERSION = '1.110';
+$VERSION = '1.120';
 use strict;
 
 sub new_net {

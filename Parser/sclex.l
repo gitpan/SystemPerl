@@ -1,6 +1,6 @@
 %option noyywrap align never-interactive prefix="sclex"
 %{
-/* $Revision: #31 $$Date: 2002/08/07 $$Author: wsnyder $
+/* $Revision: #32 $$Date: 2002/08/19 $$Author: wsnyder $
  ******************************************************************************
  * DESCRIPTION: SystemC lexer
  * 
@@ -98,6 +98,11 @@ FLOATNUM	[0-9]+"."*[0-9]*[eE][0-9]+
 "enum"		{ return(ENUM); }
 "class"		{ return(CLASS); }
 "struct"	{ return(CLASS); }
+"public"	{ return(PUBLIC); }
+"private"	{ return(PRIVATE); }
+"protected"	{ return(PROTECTED); }
+"const"		{ return(CONST); }
+"::"		{ return(COLONCOLON); }
 
 "sc_signal"	|
 "sc_in"		|

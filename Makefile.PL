@@ -1,4 +1,4 @@
-# $Revision: #26 $$Date: 2002/08/08 $$Author: wsnyder $
+# $Revision: #27 $$Date: 2002/08/19 $$Author: wsnyder $
 # DESCRIPTION: Perl ExtUtils: Type 'perl Makefile.PL' to create a Makefile for this package
 
 require 5.005;
@@ -47,7 +47,7 @@ WriteMakefile(
 	      AUTHOR	=> 'Wilson Snyder <wsnyder@wsnyder.org>',
 	      ABSTRACT  => 'SystemC Netlist Utilities and Parsing',
 	      VERSION_FROM  => 'Netlist.pm',
-	      PREREQ_PM => {'Verilog::Getopt' => 1.13,
+	      PREREQ_PM => {'Verilog::Getopt' => 2.211,
 			    'Verilog::Netlist' => 2.210,
 			},
 	      EXE_FILES => [qw( sp_preproc sp_includer sp_makecheck )],

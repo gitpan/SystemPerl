@@ -1,5 +1,5 @@
 %{
-/* $Revision: #40 $$Date: 2002/08/07 $$Author: wsnyder $
+/* $Revision: #41 $$Date: 2002/08/19 $$Author: wsnyder $
  ******************************************************************************
  * DESCRIPTION: SystemC bison parser
  *
@@ -37,12 +37,37 @@ int scgrammerdebug = 0;
 extern int sclexleng;
 
 /* Join two strings, return result */
-char *scstrjoin (char *a, char *b)
-{
+char *scstrjoin2ss (char *a, char *b) {
     int len = strlen(a)+strlen(b);
     char *cp=malloc(len+5);
     strcpy (cp,a); strcat(cp,b);
     SCFree (a); SCFree (b);
+    return (cp);
+}
+
+/* Join two strings, return result */
+char *scstrjoin2si (char *a, const char *b) {
+    int len = strlen(a)+strlen(b);
+    char *cp=malloc(len+5);
+    strcpy (cp,a); strcat(cp,b);
+    SCFree (a); /*SCFree (b);*/
+    return (cp);
+}
+
+/* Join three strings, middle one constant, return result */
+char *scstrjoin3sis (char *a, const char *b, char *c) {
+    int len = strlen(a)+strlen(b)+strlen(c);
+    char *cp=malloc(len+5);
+    strcpy (cp,a); strcat(cp,b); strcat(cp,c);
+    SCFree (a); /*SCFree (b);*/ SCFree (c);
+    return (cp);
+}
+
+char *scstrjoin4sisi (char *a, const char *b, char *c, const char* d) {
+    int len = strlen(a)+strlen(b)+strlen(c)+strlen(d);
+    char *cp=malloc(len+5);
+    strcpy (cp,a); strcat(cp,b); strcat(cp,c); strcat(cp,d);
+    SCFree (a); /*SCFree (b);*/ SCFree (c); /*ScFree(d)*/
     return (cp);
 }
 
@@ -78,6 +103,17 @@ int scgrammerlex() {
 %token		PP
 %token		SP
 
+%token		COLONCOLON
+
+%token		CLASS
+%token		ENUM
+%token		PUBLIC
+%token		PRIVATE
+%token		PROTECTED
+%token		CONST
+
+%token		AUTO
+
 %token		SC_MODULE
 %token<string>	SC_SIGNAL
 %token<string>	SC_INOUT_CLK
@@ -92,15 +128,18 @@ int scgrammerlex() {
 %token		VL_SIGW
 %token		VL_PORT
 %token		VL_PORTW
-%token		CLASS
-%token		ENUM
-%token		AUTO
 
 %type<string>	cellname
 %type<string>	vectors_bra
 %type<string>	vector_bra
 %type<string>	vector
 %type<string>	vectorNum
+%type<string>	clSymAccess
+%type<string>	clSymScoped
+%type<string>	clSymParamed
+%type<string>	clSymRef
+%type<string>	clList
+%type<string>	clColList
 %type<string>	declType
 %type<string>	declType1
 %type<string>	declTypeBase
@@ -112,7 +151,7 @@ sourceText:	expList
 		{ /*clean up!*/
      		scparser_EmitPrefix();
 		}
-;
+		;
 
 //************************************
 // Aliases and such
@@ -122,8 +161,11 @@ symbol:		  '!' | '"' | '#' | '$' | '%' | '&'
 		| '-' | '.' | '/' | ':' | ';' | '<'
 		| '=' | '>' | '?' | '@'	| '\\' | '['
 		| ']' | '^' | '`' | '|' | '{' | '}'
-		| '~'
-;
+		| '~' | COLONCOLON
+		;
+
+clAccess:	PUBLIC | PRIVATE | PROTECTED
+		;
 
 //************************************
 
@@ -149,7 +191,9 @@ exp:		auto
 		| SYMBOL	{ scparser_symbol($1); SCFree($1); }
 		| NUMBER	{ SCFree($1); }
 		| PP		{ }
+		| CONST
 		| symbol
+		| clAccess
 		;
 
 auto:		AUTO
@@ -166,10 +210,41 @@ module:		SC_MODULE '(' SYMBOL ')'
 			{ scparser_call(1,"module","sc_main"); }
 		;
 
-class:		CLASS SYMBOL
-			{ scparser_call(-1,"class",$2); }
-		| CLASS '{'	/* Anonymous struct */
-			{ }
+class:		CLASS clSymScoped '{'	{ scparser_call(-1,"class",$2); }
+		| CLASS clSymScoped ':' clColList '{'
+			{ scparser_call(-2,"class",$2,$4); }
+		| CLASS clSymScoped ';'	{ }	/* Fwd decl */
+		| CLASS clSymScoped '>'	{ }	/* template <class SYMBOL> */
+		| CLASS clSymScoped clSymScoped { }	/* struct SYM sym; */
+		| CLASS clSymScoped '*'	{ }	/* (struct SYM*) */
+		| CLASS clSymScoped ')'	{ }	/* (struct SYM) */
+		| CLASS '{'		{ }	/* Anonymous struct */
+		;
+
+clColList:	clSymAccess			{ $$ = $1; }
+		| clSymAccess ':' clColList	{ $$ = scstrjoin3sis ($1,":",$3); }
+		;
+
+clList:		clSymAccess			{ $$ = $1; }
+		| clSymAccess ',' clList	{ $$ = scstrjoin3sis ($1,",",$3); }
+		;
+
+clSymAccess:	clSymParamed		{ $$ = $1; }
+		| clAccess clSymParamed	{ $$ = $2; }
+		;
+
+clSymParamed:	clSymRef		{ $$ = $1; }
+		| clSymRef '<' clList '>'	{ $$ = scstrjoin4sisi ($1,"<",$3,">"); }
+		;
+
+clSymScoped:	SYMBOL			{ $$ = $1; }
+		| SYMBOL COLONCOLON SYMBOL	{ $$ = scstrjoin3sis ($1,"::",$3); }
+		;
+
+clSymRef:	clSymScoped		{ $$ = $1; }
+		| clSymScoped '*'	{ $$ = scstrjoin2si ($1,"*"); }
+		| CONST clSymScoped	{ $$ = $2; }
+		| CONST clSymScoped '*'	{ $$ = scstrjoin2si ($2,"*"); }
 		;
 
 ctor:		SC_CTOR '(' SYMBOL ')'
@@ -198,11 +273,8 @@ declType:	declType1		{ $$ = $1; }
 		;
 
 declType1:	declTypeBase
-		| SYMBOL ':' ':' declType1
-			{ char *cp=malloc(strlen($1)+strlen($4)+5);
-			  strcpy(cp, $1); strcat(cp, "::"); strcat(cp, $4);
-			  SCFree($1); SCFree($4);
-			  $$=cp; }
+		| SYMBOL COLONCOLON declType1
+			{ $$ = scstrjoin3sis ($1,"::",$3); }
 		;
 
 //		uint32_t | sc_bit<4> | unsigned int
@@ -279,11 +351,11 @@ enumAssign:	'=' NUMBER	{ SCFree ($2); }
 //************************************
 
 cellname:	SYMBOL
-		| SYMBOL vectors_bra		{ $$=scstrjoin($1,$2); }
+		| SYMBOL vectors_bra		{ $$=scstrjoin2ss($1,$2); }
 		;
 
 vectors_bra:	vector_bra
-		| vectors_bra vector_bra	{ $$=scstrjoin($1,$2); }
+		| vectors_bra vector_bra	{ $$=scstrjoin2ss($1,$2); }
 		;
 
 vector_bra:	'[' vectorNum ']'	{ char *cp=malloc(strlen($2)+5);
@@ -298,10 +370,7 @@ vector:		'[' vectorNum ']'	{ $$ = $2; }
 
 vectorNum:	SYMBOL			{ $$ = $1; }
 		| NUMBER		{ $$ = $1; }
-	 	| SYMBOL ':' ':' SYMBOL	{ char *cp=malloc(strlen($1)+strlen($4)+5);
-			  strcpy (cp,$1); strcat(cp,"::"); strcat(cp,$4);
-			  SCFree ($1); SCFree ($4);
-			  $$=cp; }
+	 	| SYMBOL COLONCOLON SYMBOL	{ $$ = scstrjoin3sis ($1,":",$3); }
 		;
 
 %%

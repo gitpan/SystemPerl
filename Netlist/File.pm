@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Revision: #90 $$Date: 2002/08/07 $$Author: wsnyder $
+# $Revision: #92 $$Date: 2002/08/19 $$Author: wsnyder $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -28,7 +28,7 @@ use SystemC::Template;
 use Verilog::Netlist::Subclass;
 @ISA = qw(SystemC::Netlist::File::Struct
 	Verilog::Netlist::Subclass);
-$VERSION = '1.110';
+$VERSION = '1.120';
 use strict;
 
 structs('new',
@@ -423,8 +423,21 @@ sub preproc_sp {
 sub class {
     my $self = shift;
     my $class = shift;
+    my $inh = shift;
+    #print "CLASS $class  INH $inh   $self->{netlist}\n";
+    if ($inh) {
+	$self->{netlist}{_class_inherits}{$class} = $inh;
+    }
     # Track class x { enum y ...}
     $self->{class} = $class;
+    # See if it's really a module via inheritance
+    while ($inh) {
+	if ($inh eq 'sc_module') {
+	    module($self,$class);
+	}
+	$inh = $self->{netlist}{_class_inherits}{$inh};  # Inh->inh
+    }
+    
 }
 
 sub enum_value {
@@ -505,9 +518,15 @@ sub _link {
 	    $incref->{fileref} = $self->netlist->find_file($filename);
 	    if (!$incref->{fileref} && $self->netlist->{link_read}) {
 		print "  use_Link_Read ",$filename,"\n" if $Verilog::Netlist::Debug;
-		$incref->{fileref} = $self->netlist->read_file(filename=>$filename);
-		$incref->{fileref} or die;
-		$self->netlist->{_relink} = 1;
+		my $filepath = $self->netlist->resolve_filename($filename);
+		(my $filename_h = $filename) =~ s/\.sp$/.h/;
+		if (!$filepath && $self->netlist->resolve_filename($filename_h)) {
+		    # There's a .h.  Just consider it as a regular #include
+		} else {
+		    $incref->{fileref} = $self->netlist->read_file(filename=>$filepath);
+		    $incref->{fileref} or die;
+		    $self->netlist->{_relink} = 1;
+		}
 	    }
 	}
     }

@@ -1,4 +1,4 @@
-// $Revision: #11 $$Date: 2002/07/16 $$Author: wsnyder $
+// $Revision: #12 $$Date: 2002/08/19 $$Author: wsnyder $
 // DESCRIPTION: SystemPerl: Example main()
 
 #sp interface
@@ -45,9 +45,12 @@ SP_CTOR_IMP(__MODULE__)
     sensitive_pos(clk);
     
     SP_CELL (mod,ExMod);
-    SP_PIN (mod,in,in);
-    SP_PIN (mod,out,out);
-    SP_PIN (mod,clk,clk);
+     SP_PIN (mod,in,in);
+     SP_PIN (mod,out,out);
+     SP_PIN (mod,clk,clk);
+
+    SP_CELL (parse,ExParse);
+     SP_PIN (parse,clk,clk);
 
     m_cyclenum = 0;
 
