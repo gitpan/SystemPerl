@@ -1,4 +1,4 @@
-/* $Id: scparse.h,v 1.6 2001/03/29 22:53:37 wsnyder Exp $
+/* $Id: scparse.h,v 1.7 2001/04/03 22:16:58 wsnyder Exp $
  ******************************************************************************
  * DESCRIPTION: SystemC parser header file
  * 
@@ -6,7 +6,7 @@
  * 
  * Author: Wilson Snyder <wsnyder@wsnyder.org>
  * 
- * Code available from: http://veripool.com/systemc-perl
+ * Code available from: http://veripool.com/systemperl
  * 
  ******************************************************************************
  * 

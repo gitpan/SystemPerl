@@ -1,4 +1,4 @@
-#$Id: SystemPerl.pod,v 1.2 2001/03/31 20:23:47 wsnyder Exp $
+#$Id: SystemPerl.pod,v 1.3 2001/04/03 22:58:38 wsnyder Exp $
 ######################################################################
 #
 # This program is Copyright 2001 by Wilson Snyder.
@@ -77,7 +77,8 @@ a string.
 =item SC_MODULE (I<modulename>)
 
 Though a standard optional SystemC construct, SystemC requires use of the
-SC_MODULE macro when defining a module class.
+SC_MODULE macro when defining a module class. For example "struct mod1 :
+public sc_module" must instead be coded as "SC_MODULE(mod1)".
 
 =item SP_PIN (I<instname>, I<portname>, I<netname>)
 

@@ -1,5 +1,5 @@
 %{
-/* $Id: scgrammer.y,v 1.15 2001/04/03 16:11:00 wsnyder Exp $
+/* $Id: scgrammer.y,v 1.17 2001/04/03 22:58:43 wsnyder Exp $
  ******************************************************************************
  * DESCRIPTION: SystemC bison parser
  *
@@ -7,7 +7,7 @@
  *
  * Author: Wilson Snyder <wsnyder@wsnyder.org>
  *
- * Code available from: http://veripool.com/systemc-perl
+ * Code available from: http://veripool.com/systemperl
  *
  ******************************************************************************
  *
@@ -32,6 +32,7 @@
 
 #include "scparse.h"
 #define YYERROR_VERBOSE
+#define SCFree(p) {if (p) free(p); p=NULL;}
 
 extern /*const*/ char *sclextext;
 int scgrammerdebug = 0;
@@ -68,15 +69,16 @@ int scgrammerlex() {
 
 %token	 	STRING
 %token<string>	SYMBOL
-%token		NUMBER
+%token<string>	NUMBER
 %token		PP
 %token		SP
 
 %token		SC_MODULE
 %token<string>	SC_SIGNAL
 %token<string>	SC_INOUT_CLK
-%token<string>	SC_SIGNAL_CLK
+%token<string>	SC_CLOCK
 %token		SC_CTOR
+%token		SC_MAIN
 %token		SP_CELL
 %token		SP_PIN
 %token		ENUM
@@ -84,6 +86,7 @@ int scgrammerlex() {
 
 %type<string>	vector
 %type<string>	vectorNum
+%type<string>	declType
 
 %%
 //************************************
@@ -117,51 +120,71 @@ exp:		auto
 		| cell
 		| pin
 		| decl
-		| inoutck
-		| declck
+		| inout
+		| inout_clk
+		| inst_clk
 		| sp
 		| enum
 		| STRING	{ }
-		| SYMBOL	{ free($1); }
-		| NUMBER	{ }
+		| SYMBOL	{ SCFree($1); }
+		| NUMBER	{ SCFree($1); }
 		| PP		{ }
 		| symbol
 ;
 
 auto:		AUTO
 			{ scparser_call(1,"auto",sclextext);}
+
 module:		SC_MODULE '(' SYMBOL ')' '{'
 			{ scparser_call(-1,"module",$3); }
-ctor:		SC_CTOR '(' SYMBOL ')' '{'
+		| SC_MAIN
+			{ scparser_call(1,"module","sc_main"); }
+
+ctor:		SC_CTOR '(' SYMBOL ')'
 			{ scparser_call(-1,"ctor",$3); }
 cell:		SP_CELL '(' SYMBOL ',' SYMBOL ')' ';'
 			{ scparser_call(-2,"cell",$3,$5); }
 pin:		SP_PIN '(' SYMBOL ',' SYMBOL vector ',' SYMBOL vector ')' ';'
 			{ scparser_call(-5,"pin",$3,$5,$6,$8,$9); }
-decl:		SC_SIGNAL '<' SYMBOL '>' SYMBOL vector ';'
+decl:		SC_SIGNAL '<' declType '>' SYMBOL vector ';'
 			{ scparser_call(-4,"signal",$1,$3,$5,$6); }
-inoutck:	SC_INOUT_CLK SYMBOL
+
+//		uint32_t | sc_bit<4> | unsigned int
+declType:	SYMBOL
+		| SYMBOL '<' vectorNum '>'
+			{ char *cp=malloc(strlen($1)+strlen($3)+5);
+			  strcpy (cp,$1); strcat(cp,"<");strcat(cp,$3);strcat(cp,">");
+			  SCFree ($1); SCFree ($3);
+			  $$=cp; }
+
+//		sc_in_clk SYMBOL
+inout:		SC_INOUT_CLK SYMBOL
 			{
 			  {char *cp = strrchr($1,'_'); if (cp) *cp='\0';} /* Drop _clk */
 			  scparser_call(3,"signal",$1,"sc_clock",$2);
- 			  free($1); free($2);}
-declck:		SC_SIGNAL_CLK SYMBOL ';'
+ 			  SCFree($1); SCFree($2);}
+//		sc_clock SYMBOL ;
+inout_clk:	SC_CLOCK SYMBOL ';'
 			{
 			  scparser_call(3,"signal",$1,"sc_clock",$2);
- 			  free($1); free($2);}
-		| SC_SIGNAL_CLK '(' { free($1); }	// foo = sc_clk (bar)
+ 			  SCFree($1); SCFree($2);}
+
+		// foo = sc_clk (bar)
+inst_clk:	SC_CLOCK '(' { SCFree($1); }
+		| SC_CLOCK SYMBOL '(' { SCFree($1); SCFree($2);}
 
 sp:		SP	{ scparser_call(1,"preproc_sp",sclextext);}
 enum:		ENUM enumSymbol '{' enumValList '}'
-  			{ free (ScParserLex.enumname); }
+  			{ SCFree (ScParserLex.enumname); }
 
 enumSymbol:	SYMBOL	{ ScParserLex.enumname = $1; }
+		|	{ ScParserLex.enumname = NULL; }
 enumValList:	enumVal
  		| enumValList ',' enumVal ;
 enumVal:	SYMBOL	enumAssign  {
-			scparser_call(2,"enum_value",ScParserLex.enumname,$1);
-			free ($1); }
-enumAssign:	'=' NUMBER	{ }
+			if (ScParserLex.enumname) scparser_call(2,"enum_value",ScParserLex.enumname,$1);
+			SCFree ($1); }
+enumAssign:	'=' NUMBER	{ SCFree ($2); }
  		| ;
 
 //************************************
@@ -169,8 +192,7 @@ enumAssign:	'=' NUMBER	{ }
 vector:		'[' vectorNum ']'	{ $$ = $2; }
 		|	{ $$ = strdup(""); }	/* Horrid */
 
-vectorNum:	SYMBOL
-		| NUMBER	{$$ = strdup(""); }	/* Horrid */
+vectorNum:	SYMBOL | NUMBER
 
 //	      if ($line =~ /^\s* sc_(in|out|inout) \s* (_clk|<([^>]+)>)
 //		  \s*  ([^\[; \t]+)		# Signame

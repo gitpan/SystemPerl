@@ -1,6 +1,6 @@
 %option noyywrap align never-interactive prefix="sclex"
 %{
-/* $Id: sclex.l,v 1.12 2001/04/03 21:26:05 wsnyder Exp $
+/* $Id: sclex.l,v 1.14 2001/04/03 22:58:43 wsnyder Exp $
  ******************************************************************************
  * DESCRIPTION: SystemC lexer
  * 
@@ -8,7 +8,7 @@
  * 
  * Author: Wilson Snyder <wsnyder@wsnyder.org>
  * 
- * Code available from: http://veripool.com/systemc-perl
+ * Code available from: http://veripool.com/systemperl
  * 
  ******************************************************************************
  * 
@@ -69,6 +69,7 @@ FLOATNUM	[0-9]+"."*[0-9]*[eE][0-9]+
 [S][PC]"_CELL"	{ return(SP_CELL); }
 [S][PC]"_PIN"	{ return(SP_PIN); }
 "SC_CTOR"	{ return(SC_CTOR); }
+"sc_main"	{ return(SC_MAIN); }
 "enum"		{ return(ENUM); }
 
 "sc_signal"	|
@@ -80,7 +81,7 @@ FLOATNUM	[0-9]+"."*[0-9]*[eE][0-9]+
 "sc_out_clk"	|
 "sc_inout_clk"	{ yylval.string = strdup(yytext); return(SC_INOUT_CLK); }
 
-"sc_clock"	{ yylval.string = strdup(yytext); return(SC_SIGNAL_CLK); }
+"sc_clock"	{ yylval.string = strdup(yytext); return(SC_CLOCK); }
 
 	/* Automatic comments */
 {WHITESPACE}+"// Beginning of SystemPerl automatic".*\n	{
@@ -98,7 +99,7 @@ FLOATNUM	[0-9]+"."*[0-9]*[eE][0-9]+
 "/*"	       	{ BEGIN(CMTMODE); StashPrefix; }
 
 {SYMBOL}      		{ yylval.string = strdup(yytext); return(SYMBOL); }
-{DECNUM}|{BASENUM}|{FLOATNUM}  	{ return(NUMBER); }
+{DECNUM}|{BASENUM}|{FLOATNUM}  	{ yylval.string = strdup(yytext); return(NUMBER); }
 .	       		{ return(yytext[yyleng-1]); }
 
 	/************/
