@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-#$Revision: #2 $$Date: 2004/07/22 $$Author: ws150726 $
+#$Revision: #6 $$Date: 2004/08/26 $$Author: ws150726 $
 ######################################################################
 #
 # Copyright 2001-2004 by Wilson Snyder.  This program is free software;
@@ -92,7 +92,7 @@ line_report($cov, $opt_out_dir);
 #----------------------------------------------------------------------
 
 sub usage {
-    print '$Revision: #2 $$Date: 2004/07/22 $$Author: ws150726 $ ', "\n";
+    print '$Revision: #6 $$Date: 2004/08/26 $$Author: ws150726 $ ', "\n";
     $SIG{__WARN__} = sub{};	#pod2text isn't clean.
     pod2text($0);
     exit (1);
@@ -259,7 +259,8 @@ sub src_kill_ascii_defaults {
 
 sub linenums {
     my $cov = shift;
-    foreach my $filename (glob "obj_x86-linux/v/*.sp") {
+    # For developer testing only
+    foreach my $filename (glob "obj_$ENV{DIRPROJECT_ARCH}/v/*.sp") {
 	my $fh = IO::File->new($filename) or die "%Error: $! $filename\n";
 	while (defined (my $line=$fh->getline)) {
 	    if ($line =~ /SP_AUTO_COVER3\(\"([^\"]+)\",\"([^\"]+)\",([0-9]+)/) {
@@ -283,7 +284,7 @@ vcoverage - Verilog/SystemC coverage analyzer
 
 =head1 SYNOPSIS
 
-C<vcoverage>  I<datafile>  I<datafile...>
+  vcoverage <datafile>...
 
 =head1 DESCRIPTION
 
@@ -361,13 +362,21 @@ Specifies a module search directory.
 
 =back
 
-=head1 SEE ALSO
+=head1 DISTRIBUTION
 
-C<Verilog::Getopt>, C<SystemC::Coverage>
+The latest version is available from CPAN and from L<http://www.veripool.com/>.
+
+Copyright 2001-2004 by Wilson Snyder.  This package is free software; you
+can redistribute it and/or modify it under the terms of either the GNU
+Lesser General Public License or the Perl Artistic License.
 
 =head1 AUTHORS
 
 Wilson Snyder <wsnyder@wsnyder.org>
+
+=head1 SEE ALSO
+
+L<Verilog::Getopt>, L<SystemC::Coverage>
 
 =cut
 

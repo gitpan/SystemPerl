@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Revision: #35 $$Date: 2004/08/12 $$Author: ws150726 $
+# $Revision: #37 $$Date: 2004/08/26 $$Author: ws150726 $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -20,7 +20,7 @@ use Class::Struct;
 use Verilog::Netlist;
 use SystemC::Netlist;
 @ISA = qw(Verilog::Netlist::Port);
-$VERSION = '1.160';
+$VERSION = '1.161';
 use strict;
 
 ######################################################################
@@ -39,14 +39,22 @@ SystemC::Netlist::Port - Port for a SystemC Module
 This is a superclass of Verilog::Netlist::Port, derived for a SystemC netlist
 port.
 
+=head1 DISTRIBUTION
+
+The latest version is available from CPAN and from L<http://www.veripool.com/>.
+
+Copyright 2001-2004 by Wilson Snyder.  This package is free software; you
+can redistribute it and/or modify it under the terms of either the GNU
+Lesser General Public License or the Perl Artistic License.
+
+=head1 AUTHORS
+
+Wilson Snyder <wsnyder@wsnyder.org>
+
 =head1 SEE ALSO
 
 L<Verilog::Netlist::Port>
 L<Verilog::Netlist>
 L<SystemC::Netlist>
-
-=head1 AUTHORS
-
-Wilson Snyder <wsnyder@wsnyder.org>
 
 =cut

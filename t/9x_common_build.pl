@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# $Revision: #12 $$Date: 2004/07/19 $$Author: ws150726 $
+# $Revision: #13 $$Date: 2004/08/20 $$Author: ws150726 $
 # DESCRIPTION: Perl ExtUtils: Type 'make test' to test this package
 #
 # Copyright 2001-2004 by Wilson Snyder.  This program is free software;
@@ -13,13 +13,15 @@ if ($Use_SCL) {
     $dir = "test_scl";
 }
 
+unlink glob("$dir/logs/*");
+
 print "Building example...\n";
 if ($Config{archname} !~ /linux/
     || !$ENV{SYSTEMC}) {
     skip("skip Harmless; Not linux or missing SystemC",1);
 } else {
     run_system ("cd $dir && make -j 3 -f ../example/Makefile_obj");
-    ok(1);
+    ok(-x "$dir/ex_main");
 }
 
 print "Running example...\n";
@@ -29,16 +31,14 @@ if (! -x "$dir/ex_main"
     skip("skip Harmless; Not linux or missing SystemC",1);
     skip("skip Harmless; Not linux or missing SystemC",1);
     skip("skip Harmless; Not linux or missing SystemC",1);
+    skip("skip Harmless; Not linux or missing SystemC",1);
 } else {
     run_system ("cd $dir && ./ex_main");
     ok(1);
     ok(-r "$dir/sim_sc.vcd");
     ok(-r "$dir/sim_sp.dump");
-}
-
-if (!-r "$dir/logs/coverage.pl") {
-    skip("skip Harmless; Missing coverage input",1);
-} else {
     run_system ("cd $dir && ../vcoverage -y ../");
     ok(-r "$dir/logs/coverage_source/ExModSub.sp");
 }
+
+1;

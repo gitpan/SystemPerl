@@ -5,6 +5,16 @@ The contributors that suggested a given feature is shown in [].
 This uses outline mode in Emacs.  See C-h m [M-x describe-mode].
 
 
+* Changes in SystemC 1.161 8/26/2004
+
+***	Support macro calls in enumeration values.
+
+****	Fixed sp_log_file empty file creation on GCC 3.
+
+****	Fixed cygwin test error.  [John Brownlee]
+
+****	Fix pod documentation errors. [Offer Kaye]
+
 * Changes in SystemC 1.160 8/12/2004
 
 **	Added vcoverage, SystemC::Coverage, and related coverage examples.
@@ -225,7 +235,7 @@ This uses outline mode in Emacs.  See C-h m [M-x describe-mode].
 
 
 ----------------------------------------------------------------------
-$Revision: #79 $$Date: 2004/08/12 $$Author: ws150726 $
+$Revision: #82 $$Date: 2004/08/26 $$Author: ws150726 $
 ----------------------------------------------------------------------
 Copyright information:
 

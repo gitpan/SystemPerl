@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Revision: #24 $$Date: 2004/08/12 $$Author: ws150726 $
+# $Revision: #26 $$Date: 2004/08/26 $$Author: ws150726 $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -21,7 +21,7 @@ use Verilog::Netlist;
 use Verilog::Netlist::Subclass;
 @ISA = qw(SystemC::Netlist::AutoCover::Struct
 	Verilog::Netlist::Subclass);
-$VERSION = '1.160';
+$VERSION = '1.161';
 use strict;
 
 structs('new',
@@ -143,12 +143,20 @@ SystemC::Netlist::AutoCover - Coverage analysis routines
 SystemC::Netlist::AutoCover creates the SP_AUTO_COVERAGE features.
 It is called from SystemC::Netlist::Module.
 
-=head1 SEE ALSO
+=head1 DISTRIBUTION
 
-L<SystemC::Netlist::Module>
+The latest version is available from CPAN and from L<http://www.veripool.com/>.
+
+Copyright 2001-2004 by Wilson Snyder.  This package is free software; you
+can redistribute it and/or modify it under the terms of either the GNU
+Lesser General Public License or the Perl Artistic License.
 
 =head1 AUTHORS
 
 Wilson Snyder <wsnyder@wsnyder.org>
+
+=head1 SEE ALSO
+
+L<SystemC::Netlist::Module>
 
 =cut

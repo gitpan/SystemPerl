@@ -1,4 +1,4 @@
-#$Revision: #39 $$Date: 2004/08/12 $$Author: ws150726 $
+#$Revision: #41 $$Date: 2004/08/26 $$Author: ws150726 $
 ######################################################################
 #
 # Copyright 2001-2004 by Wilson Snyder.  This program is free software;
@@ -21,7 +21,7 @@ require DynaLoader;
 use strict;
 use vars qw($VERSION);
 
-$VERSION = '1.160';
+$VERSION = '1.161';
 
 ######################################################################
 #### Configuration Section
@@ -110,7 +110,7 @@ SystemC::Parser - Parse SystemC Files
 
 =head1 DESCRIPTION
 
-C<SystemC::Parser> reads SystemC files, and parses out the netlist
+L<SystemC::Parser> reads SystemC files, and parses out the netlist
 interconnectivity and other information.  As the tokens are recognized,
 callbacks are invoked.  Note that the parser is designed to work on
 UNPREPROCESSED files.
@@ -216,16 +216,20 @@ stripped // Auto inserted comments.
 
 =back
 
-=head1 SEE ALSO
-
-C<SystemC::Netlist>
-
 =head1 DISTRIBUTION
 
-The latest version is available from CPAN and from C<http://veripool.com/>.
+The latest version is available from CPAN and from L<http://www.veripool.com/>.
+
+Copyright 2001-2004 by Wilson Snyder.  This package is free software; you
+can redistribute it and/or modify it under the terms of either the GNU
+Lesser General Public License or the Perl Artistic License.
 
 =head1 AUTHORS
 
 Wilson Snyder <wsnyder@wsnyder.org>
+
+=head1 SEE ALSO
+
+L<SystemC::Netlist>
 
 =cut

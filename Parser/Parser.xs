@@ -1,12 +1,12 @@
 #/* SystemC.xs -- SystemC Booter  -*- Mode: C -*-
-#* $Revision: #22 $$Date: 2004/01/27 $$Author: wsnyder $
+#* $Revision: #23 $$Date: 2004/08/26 $$Author: ws150726 $
 #*********************************************************************
 #*
 #* Vl SystemC perl utility library
 #* 
 #* Author: Wilson Snyder <wsnyder@wsnyder.org> or <wsnyder@iname.com>
 #* 
-#* Code available from: http://veripool.com/vl
+#* Code available from: http://www.veripool.com/vl
 #* 
 #*********************************************************************
 #* 

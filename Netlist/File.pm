@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Revision: #124 $$Date: 2004/08/12 $$Author: ws150726 $
+# $Revision: #126 $$Date: 2004/08/26 $$Author: ws150726 $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -23,7 +23,7 @@ use SystemC::Template;
 use Verilog::Netlist::Subclass;
 @ISA = qw(SystemC::Netlist::File::Struct
 	Verilog::Netlist::Subclass);
-$VERSION = '1.160';
+$VERSION = '1.161';
 use strict;
 
 structs('new',
@@ -1003,12 +1003,20 @@ Prints debugging information for this file.
 
 =back
 
-=head1 SEE ALSO
+=head1 DISTRIBUTION
 
-L<SystemC::Netlist>
+The latest version is available from CPAN and from L<http://www.veripool.com/>.
+
+Copyright 2001-2004 by Wilson Snyder.  This package is free software; you
+can redistribute it and/or modify it under the terms of either the GNU
+Lesser General Public License or the Perl Artistic License.
 
 =head1 AUTHORS
 
 Wilson Snyder <wsnyder@wsnyder.org>
+
+=head1 SEE ALSO
+
+L<SystemC::Netlist>
 
 =cut

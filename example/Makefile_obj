@@ -1,4 +1,4 @@
-# $Revision: #23 $$Date: 2004/07/19 $$Author: ws150726 $ -*- Makefile -*-
+# $Revision: #24 $$Date: 2004/08/20 $$Author: ws150726 $ -*- Makefile -*-
 # DESCRIPTION: SystemPerl: Example makefile
 #
 # This is executed in the "test_dir", not in this directory
@@ -9,17 +9,19 @@
 #
 
 # Sigh... SystemC should provide a program to determine this
-TARGET_ARCH = linux
+ifeq ($(SYSTEMC_ARCH),)
+  SYSTEMC_ARCH = linux
+endif
 SYSTEMPERL = ..
 
 CC = g++
 INCDIR += -I. -I$(SYSTEMPERL)/src -I$(SYSTEMC)/include -I../example
-LIBDIR += -L. -L$(SYSTEMPERL)/src -L$(SYSTEMC)/lib-$(TARGET_ARCH)
+LIBDIR += -L. -L$(SYSTEMPERL)/src -L$(SYSTEMC)/lib-$(SYSTEMC_ARCH)
 VPATH += ../example $(SYSTEMPERL)/src
 MAKEFILES += ../example/Makefile_obj
 
 SC_LIBS = -lsystemc
-ifneq ($(wildcard $(SYSTEMC)/lib-$(TARGET_ARCH)/*numeric_bit*),)
+ifneq ($(wildcard $(SYSTEMC)/lib-$(SYSTEMC_ARCH)/*numeric_bit*),)
   # Systemc 1.2.1beta
   SC_LIBS   += -lnumeric_bit -lqt
 endif

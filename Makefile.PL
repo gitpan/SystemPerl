@@ -30,13 +30,13 @@ preexist:
 	test ! -r \$(HOME)/src/kits/\$(DISTVNAME).tar.gz
 
 tag:
-	p4 label -d     \$(DISTNAME)_\$(VERSION_SYM) || true
-	p4 label        \$(DISTNAME)_\$(VERSION_SYM)
-	p4 labelsync -l \$(DISTNAME)_\$(VERSION_SYM) ...
+	c4 label -d     \$(DISTNAME)_\$(VERSION_SYM) || true
+	c4 label        \$(DISTNAME)_\$(VERSION_SYM)
+	c4 labelsync -l \$(DISTNAME)_\$(VERSION_SYM) ...
 #	cvs tag -F      \$(DISTNAME)_\$(VERSION_SYM) .
 
 maintainer-diff:
-	p4 diff     ...@\$(DISTNAME)_\$(VERSION_SYM) 
+	c4 diff     ...@\$(DISTNAME)_\$(VERSION_SYM) 
 
 maintainer-dist: preexist dist tag
 	cp \$(DISTVNAME).tar.gz \$(HOME)/src/kits

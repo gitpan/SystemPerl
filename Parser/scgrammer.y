@@ -1,5 +1,5 @@
 %{
-/* $Revision: #48 $$Date: 2004/01/27 $$Author: wsnyder $
+/* $Revision: #50 $$Date: 2004/08/26 $$Author: ws150726 $
  ******************************************************************************
  * DESCRIPTION: SystemC bison parser
  *
@@ -7,7 +7,7 @@
  *
  * Author: Wilson Snyder <wsnyder@wsnyder.org>
  *
- * Code available from: http://veripool.com/systemperl
+ * Code available from: http://www.veripool.com/systemperl
  *
  ******************************************************************************
  *
@@ -355,9 +355,17 @@ enumVal:	SYMBOL	enumAssign  {
 			if (scParserLex.enumname) scparser_call(2,"enum_value",scParserLex.enumname,$1);
 			SCFree ($1); }
 		;
-enumAssign:	'=' NUMBER	{ SCFree ($2); }
-		| '=' SYMBOL	{ SCFree ($2); }
- 		| ;
+enumAssign:	'=' enumExpr	{}
+ 		|
+		;
+enumExpr:	NUMBER		{ SCFree ($1); }
+		| SYMBOL	{ SCFree ($1); }
+		| SYMBOL '(' ')'			{ SCFree ($1); }
+		| SYMBOL '(' enumFunParmList ')'	{ SCFree ($1); }
+		;
+enumFunParmList: enumExpr
+		| enumFunParmList ',' enumExpr
+		;
 
 //************************************
 

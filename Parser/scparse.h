@@ -1,4 +1,4 @@
-/* $Revision: #16 $$Date: 2004/01/27 $$Author: wsnyder $
+/* $Revision: #17 $$Date: 2004/08/26 $$Author: ws150726 $
  ******************************************************************************
  * DESCRIPTION: SystemC parser header file
  * 
@@ -6,7 +6,7 @@
  * 
  * Author: Wilson Snyder <wsnyder@wsnyder.org>
  * 
- * Code available from: http://veripool.com/systemperl
+ * Code available from: http://www.veripool.com/systemperl
  * 
  ******************************************************************************
  * 

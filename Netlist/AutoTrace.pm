@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Revision: #54 $$Date: 2004/08/12 $$Author: ws150726 $
+# $Revision: #56 $$Date: 2004/08/26 $$Author: ws150726 $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -18,7 +18,7 @@ package SystemC::Netlist::AutoTrace;
 use File::Basename;
 
 use SystemC::Netlist::Module;
-$VERSION = '1.160';
+$VERSION = '1.161';
 use strict;
 
 use vars qw ($Setup_Ident_Code);	# Local use for recursion only
@@ -563,12 +563,20 @@ SystemC::Netlist::AutoTrace - Tracing routines
 SystemC::Netlist::AutoTrace creates the /*AUTOTRACE*/ features.
 It is called from SystemC::Netlist::Module.
 
-=head1 SEE ALSO
+=head1 DISTRIBUTION
 
-L<SystemC::Netlist::Module>
+The latest version is available from CPAN and from L<http://www.veripool.com/>.
+
+Copyright 2001-2004 by Wilson Snyder.  This package is free software; you
+can redistribute it and/or modify it under the terms of either the GNU
+Lesser General Public License or the Perl Artistic License.
 
 =head1 AUTHORS
 
 Wilson Snyder <wsnyder@wsnyder.org>
+
+=head1 SEE ALSO
+
+L<SystemC::Netlist::Module>
 
 =cut

@@ -1,4 +1,4 @@
-#$Revision: #30 $$Date: 2004/03/26 $$Author: wsnyder $
+#$Revision: #32 $$Date: 2004/08/26 $$Author: ws150726 $
 ######################################################################
 #
 # Copyright 2001-2004 by Wilson Snyder.  This program is free software;
@@ -23,10 +23,10 @@ SystemC::SystemPerl - SystemPerl Language Extension to SystemC
 
 SystemPerl is a version of the SystemC language.  It is designed to expand
 text so that needless repetition in the language is minimized.  By using
-C<sp_preproc>, SystemPerl files can be expanded into C++ files at compile
+L<sp_preproc>, SystemPerl files can be expanded into C++ files at compile
 time, or expanded in place to make them valid stand-alone SystemC files.
 
-The concept of SystemPerl is based upon the AUTOS in the C<verilog-mode>
+The concept of SystemPerl is based upon the AUTOS in the L<verilog-mode>
 package for Emacs, by the same author.
 
 =head1 LANGUAGE
@@ -380,19 +380,20 @@ will be substituted to find the file to be included.  If a name of the form
 
 =back
 
-=head1 SEE ALSO
-
-C<sp_includer>
-C<sp_preproc>
-C<SystemC::Netlist>
-C<SystemC::Parser>
-
 =head1 DISTRIBUTION
 
-The latest version is available from CPAN and from C<http://veripool.com/>.
+The latest version is available from CPAN and from L<http://www.veripool.com/>.
+
+Copyright 2001-2004 by Wilson Snyder.  This package is free software; you
+can redistribute it and/or modify it under the terms of either the GNU
+Lesser General Public License or the Perl Artistic License.
 
 =head1 AUTHORS
 
 Wilson Snyder <wsnyder@wsnyder.org>
+
+=head1 SEE ALSO
+
+L<sp_includer>, L<sp_preproc>, L<SystemC::Netlist>, L<SystemC::Parser>
 
 =cut

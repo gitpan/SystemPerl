@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-#$Revision: #8 $$Date: 2004/06/21 $$Author: ws150726 $
+#$Revision: #10 $$Date: 2004/08/26 $$Author: ws150726 $
 ######################################################################
 #
 # Copyright 2001-2004 by Wilson Snyder.  This program is free software;
@@ -41,7 +41,7 @@ foreach my $param (@params) {
 #----------------------------------------------------------------------
 
 sub usage {
-    print '$Revision: #8 $$Date: 2004/06/21 $$Author: ws150726 $ ', "\n";
+    print '$Revision: #10 $$Date: 2004/08/26 $$Author: ws150726 $ ', "\n";
     $SIG{__WARN__} = sub{};	#pod2text isn't clean.
     pod2text($0);
     exit (1);
@@ -67,7 +67,7 @@ sp_includer - Form include statements
 
 =head1 SYNOPSIS
 
-C<sp_includer> I<file1.cpp> I<file2.cpp> ...
+  sp_includer <file1.cpp>...
 
 =head1 DESCRIPTION
 
@@ -75,6 +75,7 @@ sp_includer simply takes all of the arguments on the command line and
 prints #include statements for each argument.
 
 This allows multiple files to be compiled in one pass; rather then using
+
     gcc file1.cpp
     gcc file2.cpp
     gcc file3.cpp
@@ -102,13 +103,21 @@ Displays this message and program version and exits.
 
 =back
 
-=head1 SEE ALSO
+=head1 DISTRIBUTION
 
-C<SystemC::SystemPerl>
+The latest version is available from CPAN and from L<http://www.veripool.com/>.
+
+Copyright 2001-2004 by Wilson Snyder.  This package is free software; you
+can redistribute it and/or modify it under the terms of either the GNU
+Lesser General Public License or the Perl Artistic License.
 
 =head1 AUTHORS
 
 Wilson Snyder <wsnyder@wsnyder.org>
+
+=head1 SEE ALSO
+
+L<SystemC::SystemPerl>
 
 =cut
 

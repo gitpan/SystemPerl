@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Revision: #39 $$Date: 2004/08/12 $$Author: ws150726 $
+# $Revision: #41 $$Date: 2004/08/26 $$Author: ws150726 $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -24,7 +24,7 @@ use SystemC::Netlist::Net;
 use SystemC::Netlist::Cell;
 use SystemC::Netlist::Module;
 @ISA = qw(Verilog::Netlist::Pin);
-$VERSION = '1.160';
+$VERSION = '1.161';
 use strict;
 
 ######################################################################
@@ -63,14 +63,22 @@ SystemC::Netlist::Pin - Pin on a SystemC Cell
 This is a superclass of Verilog::Netlist::Pin, derived for a SystemC netlist
 pin.
 
+=head1 DISTRIBUTION
+
+The latest version is available from CPAN and from L<http://www.veripool.com/>.
+
+Copyright 2001-2004 by Wilson Snyder.  This package is free software; you
+can redistribute it and/or modify it under the terms of either the GNU
+Lesser General Public License or the Perl Artistic License.
+
+=head1 AUTHORS
+
+Wilson Snyder <wsnyder@wsnyder.org>
+
 =head1 SEE ALSO
 
 L<Verilog::Netlist::Pin>
 L<Verilog::Netlist>
 L<SystemC::Netlist>
-
-=head1 AUTHORS
-
-Wilson Snyder <wsnyder@wsnyder.org>
 
 =cut

@@ -1,4 +1,4 @@
-/* $Revision: #16 $$Date: 2004/01/27 $$Author: wsnyder $
+/* $Revision: #17 $$Date: 2004/08/20 $$Author: ws150726 $
  ************************************************************************
  *
  * THIS MODULE IS PUBLICLY LICENSED
@@ -40,8 +40,10 @@ void sp_log_file::open_int (string filename, open_mode_t append) {
     // Internal open, used also for split
     this->close();
     std::ofstream::open (filename.c_str(), append);
-    m_isOpen = true;
-    add_file();
+    if (std::ofstream::is_open()) {
+	m_isOpen = true;
+	add_file();
+    }
 }
 
 //**********************************************************************
@@ -54,9 +56,9 @@ void sp_log_file::close() {
 
 void sp_log_file::close_int() {
     if (m_isOpen) {
-	std::ofstream::close();
 	m_isOpen = false;
 	remove_file();
+	std::ofstream::close();
     }
 }
 

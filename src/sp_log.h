@@ -1,4 +1,4 @@
-/* $Revision: #21 $$Date: 2004/01/27 $$Author: wsnyder $
+/* $Revision: #22 $$Date: 2004/08/20 $$Author: ws150726 $ -*- C++ -*-
  ************************************************************************
  *
  * THIS MODULE IS PUBLICLY LICENSED
@@ -99,9 +99,9 @@ public:
     sp_log_file (const char *filename, streampos split=0) :
 	m_strmOldCout(NULL),
 	m_strmOldCerr(NULL),
-	m_isOpen(true) {
-	open(filename);
+	m_isOpen(false) {
 	split_size(split);
+	open(filename);
     }
     ~sp_log_file () { close(); }
     
@@ -128,10 +128,11 @@ public:
     static void	flush_all();
 
     // ACCESSORS
-    bool	isOpen() { return(m_isOpen); }	// Is the log file open?
+    bool	isOpen() const { return(m_isOpen); }	// Is the log file open?
     void	split_size (streampos size) {	// Set # bytes to roll at
 	m_splitSize = size;
     }
+    inline operator bool () const { return isOpen(); };  // Compatible w/ostream
 
   private:
     // METHODS
