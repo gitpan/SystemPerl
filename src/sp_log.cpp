@@ -1,9 +1,9 @@
-/* $Revision: #14 $$Date: 2003/09/22 $$Author: wsnyder $
+/* $Revision: #16 $$Date: 2004/01/27 $$Author: wsnyder $
  ************************************************************************
  *
  * THIS MODULE IS PUBLICLY LICENSED
  *
- * Copyright 2001-2003 by Wilson Snyder.  This program is free software;
+ * Copyright 2001-2004 by Wilson Snyder.  This program is free software;
  * you can redistribute it and/or modify it under the terms of either the GNU
  * General Public License or the Perl Artistic License.
  *
@@ -24,9 +24,7 @@
 //**********************************************************************
 // Static
 
-#if defined(__GNUC__) && __GNUC__ >= 3
 list<sp_log_file*> sp_log_file::s_fileps;
-#endif
 
 //**********************************************************************
 // Opening
@@ -133,22 +131,18 @@ void sp_log_file::end_redirect() {
 // Flushing
 
 void sp_log_file::add_file() {
-#if defined(__GNUC__) && __GNUC__ >= 3
     s_fileps.push_back(this);
-#endif
 }
 void sp_log_file::remove_file() {
-#if defined(__GNUC__) && __GNUC__ >= 3
     s_fileps.remove(this);
-#endif
 }
 void sp_log_file::flush_all() {
     // Flush every open file, or on more recent library, those we know about
-#if defined(__GNUC__) && __GNUC__ >= 3
     // And they call this progress? :(
     for (list<sp_log_file*>::iterator it = s_fileps.begin(); it != s_fileps.end(); ++it) {
 	(*it)->flush();
     }
+#if defined(__GNUC__) && __GNUC__ >= 3
 #else
     std::streambuf::flush_all();
 #endif

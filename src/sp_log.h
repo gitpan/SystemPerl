@@ -1,9 +1,9 @@
-/* $Revision: #19 $$Date: 2003/09/22 $$Author: wsnyder $
+/* $Revision: #21 $$Date: 2004/01/27 $$Author: wsnyder $
  ************************************************************************
  *
  * THIS MODULE IS PUBLICLY LICENSED
  *
- * Copyright 2001-2003 by Wilson Snyder.  This program is free software;
+ * Copyright 2001-2004 by Wilson Snyder.  This program is free software;
  * you can redistribute it and/or modify it under the terms of either the GNU
  * General Public License or the Perl Artistic License.
  *
@@ -51,9 +51,7 @@ extern "C" {
 #include <fstream>
 #include <string>
 #include <sys/types.h>
-#if defined(__GNUC__) && __GNUC__ >= 3
-# include <list>
-#endif
+#include <list>
 using namespace std;
 
 //**********************************************************************
@@ -152,9 +150,7 @@ public:
     string	m_filename;		// Original Filename that was opened
     streampos	m_splitSize;		// Bytes to split at
     unsigned	m_splitNum;		// Number of splits done
-#if defined(__GNUC__) && __GNUC__ >= 3
     static list<sp_log_file*> s_fileps;	// List of current files open
-#endif
 };
 
 #undef DEFAULT_OPEN_MODE

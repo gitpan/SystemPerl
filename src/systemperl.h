@@ -1,9 +1,9 @@
-// $Revision: #27 $$Date: 2003/12/05 $$Author: wsnyder $ -*- SystemC -*-
+// $Revision: #30 $$Date: 2004/01/27 $$Author: wsnyder $ -*- SystemC -*-
 //********************************************************************
 //
 // THIS MODULE IS PUBLICLY LICENSED
 //
-// Copyright 2001-2003 by Wilson Snyder.  This program is free software;
+// Copyright 2001-2004 by Wilson Snyder.  This program is free software;
 // you can redistribute it and/or modify it under the terms of either the GNU
 // General Public License or the Perl Artistic License.
 //
@@ -73,8 +73,8 @@ using namespace std;
 # define VL_PIN_NOP(instname,pin,port)
 # define VL_CELL(instname,type)
 # define VL_MODULE(modname)		class modname : public VerilatedModule
-# define VL_CTOR(name) name()
-# define VL_CTOR_IMP(name) name::name()
+# define VL_CTOR(modname)		modname(const char* __VCname="")
+# define VL_CTOR_IMP(modname)		modname::modname(const char* __VCname) : VerilatedModule(__VCname)
 #endif
 
 //********************************************************************

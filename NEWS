@@ -5,6 +5,10 @@ The contributors that suggested a given feature is shown in [].
 This uses outline mode in Emacs.  See C-h m [M-x describe-mode].
 
 
+* Changes in SystemC 1.148 1/27/2004
+
+****	Documentation fixes
+
 * Changes in SystemC 1.147 12/5/2003
 
 ****	Support Verilator Modules
@@ -206,11 +210,11 @@ This uses outline mode in Emacs.  See C-h m [M-x describe-mode].
 
 
 ----------------------------------------------------------------------
-$Revision: #72 $$Date: 2003/12/05 $$Author: wsnyder $
+$Revision: #73 $$Date: 2004/01/27 $$Author: wsnyder $
 ----------------------------------------------------------------------
 Copyright information:
 
-   Copyright 2001-2003 by Wilson Snyder.  This program is free software;
+   Copyright 2001-2004 by Wilson Snyder.  This program is free software;
    you can redistribute it and/or modify it under the terms of either the GNU
    General Public License or the Perl Artistic License.
 

@@ -1,5 +1,5 @@
 #/* SystemC.xs -- SystemC Booter  -*- Mode: C -*-
-#* $Revision: #21 $$Date: 2003/09/22 $$Author: wsnyder $
+#* $Revision: #22 $$Date: 2004/01/27 $$Author: wsnyder $
 #*********************************************************************
 #*
 #* Vl SystemC perl utility library
@@ -10,7 +10,7 @@
 #* 
 #*********************************************************************
 #* 
-#* Copyright 2001-2003 by Wilson Snyder.  This program is free software;
+#* Copyright 2001-2004 by Wilson Snyder.  This program is free software;
 #* you can redistribute it and/or modify it under the terms of either the GNU
 #* General Public License or the Perl Artistic License.
 #* 

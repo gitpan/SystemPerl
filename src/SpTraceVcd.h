@@ -1,9 +1,9 @@
-// $Revision: #25 $$Date: 2003/11/21 $$Author: wsnyder $ -*- SystemC -*-
+// $Revision: #27 $$Date: 2004/01/27 $$Author: wsnyder $ -*- SystemC -*-
 //=============================================================================
 //
 // THIS MODULE IS PUBLICLY LICENSED
 //
-// Copyright 2001-2003 by Wilson Snyder.  This program is free software;
+// Copyright 2001-2004 by Wilson Snyder.  This program is free software;
 // you can redistribute it and/or modify it under the terms of either the GNU
 // General Public License or the Perl Artistic License.
 //
@@ -157,7 +157,7 @@ public:
 	bufferCheck();
     }
     inline void fullArray (uint32_t code, const uint32_t* newval, int bits) {
-	for (int word=0; word<((bits/32)+1); ++word) {
+	for (int word=0; word<(((bits-1)/32)+1); ++word) {
 	    m_sigs_oldval[code+word] = newval[word];
 	}
 	*m_writep++='b';
@@ -176,7 +176,7 @@ public:
 	if (m_sigs_oldval[code] != newval) { fullBus (code, newval, bits); }
     }
     inline void chgArray (uint32_t code, const uint32_t* newval, int bits) {
-	for (int word=0; word<((bits/32)+1); ++word) {
+	for (int word=0; word<(((bits-1)/32)+1); ++word) {
 	    if (m_sigs_oldval[code+word] != newval[word]) {
 		fullArray (code,newval,bits);
 		return;

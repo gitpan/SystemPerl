@@ -1,9 +1,9 @@
 # SystemC - SystemC Perl Interface
-# $Revision: #31 $$Date: 2003/12/05 $$Author: wsnyder $
+# $Revision: #32 $$Date: 2004/01/27 $$Author: wsnyder $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
-# Copyright 2001-2003 by Wilson Snyder.  This program is free software;
+# Copyright 2001-2004 by Wilson Snyder.  This program is free software;
 # you can redistribute it and/or modify it under the terms of either the GNU
 # General Public License or the Perl Artistic License.
 # 
@@ -20,7 +20,7 @@ use Class::Struct;
 use Verilog::Netlist;
 use SystemC::Netlist;
 @ISA = qw(Verilog::Netlist::Port);
-$VERSION = '1.147';
+$VERSION = '1.148';
 use strict;
 
 ######################################################################

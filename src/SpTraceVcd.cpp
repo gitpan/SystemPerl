@@ -1,9 +1,9 @@
-// $Revision: #26 $$Date: 2003/09/22 $$Author: wsnyder $ -*- SystemC -*-
+// $Revision: #28 $$Date: 2004/01/27 $$Author: wsnyder $ -*- SystemC -*-
 //=============================================================================
 //
 // THIS MODULE IS PUBLICLY LICENSED
 //
-// Copyright 2001-2003 by Wilson Snyder.  This program is free software;
+// Copyright 2001-2004 by Wilson Snyder.  This program is free software;
 // you can redistribute it and/or modify it under the terms of either the GNU
 // General Public License or the Perl Artistic License.
 //
@@ -159,6 +159,7 @@ void SpTraceVcd::bufferFlush () {
     while (1) {
 	size_t remaining = (m_writep - wp);
 	if (remaining==0) break;
+	errno = 0;
 	int got = write (m_fd, wp, remaining);
 	if (got>0) {
 	    wp += got;
