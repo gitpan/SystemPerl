@@ -1,9 +1,40 @@
-Verilog::Language NEWS --  history of user-visible changes.
+SystemC::Netlist NEWS --  history of user-visible changes.
 Copyright (C) 2001 Wilson Snyder.
 
 The contributors that suggested a given feature is shown in [].
 	
 This uses outline mode in Emacs.  See C-h m [M-x describe-mode].
+
+* Changes in SystemC 0.430 9/26/2001
+
+**	Added #sp include directive.
+
+**	AUTOMETHODS is the new name for AUTODECLS
+	AUTOMETHODS will create a SC_CTOR(__MODULE__); if there is not
+	already one in the class interface.
+
+**	AUTOTRACE uses a internal library to trace ports.
+	AUTOTRACE should work on all clocks, ports, arrays, etc, and
+	any simple types marked with SP_TRACED.
+	AUTOTRACE requires AUTOMETHODS to be used in the class interface.
+
+**	The #include systemperl.h at the top of all .h files has been removed.
+	It must be included manually.  This allows systemperl to be used in
+	non-systemc applications.
+
+***	AUTOENUM ascii() method implementations are now put in the .cpp
+	rather then the .h file.  This is indicated by a AUTOIMPLEMENTATION
+	section, which is inserted automatically at the bottom of the .cpp
+	file if not elsewhere in the file.
+
+***	Detect and report unterminated strings, automodes, comment blocks.
+
+***	Handle character constants ('a', '\0').  Handle octal and hex
+	escape sequences in strings and char-constants.
+
+***	Handle nested typenames (e.g. sc_out<ClassFoo::EnumBar>).
+
+
 
 * Changes in SystemC 0.420 6/27/2001
 
@@ -44,6 +75,8 @@ This uses outline mode in Emacs.  See C-h m [M-x describe-mode].
 
 ***	Fixed test on Solaris Linux.
 
+****	The debugging dump methods are now ->dump, not ->print.
+
 
 * Changes in SystemC 0.300 4/3/2001
 
@@ -62,7 +95,7 @@ This uses outline mode in Emacs.  See C-h m [M-x describe-mode].
 
 
 ----------------------------------------------------------------------
-$Id: NEWS,v 1.19 2001/06/27 13:10:51 wsnyder Exp $
+$Id: NEWS,v 1.30 2001/09/26 14:55:17 wsnyder Exp $
 ----------------------------------------------------------------------
 Copyright information:
 

@@ -1,5 +1,5 @@
 #/* SystemC.xs -- SystemC Booter  -*- Mode: C -*-
-#* $Id: Parser.xs,v 1.11 2001/05/22 13:18:18 wsnyder Exp $
+#* $Id: Parser.xs,v 1.13 2001/09/26 14:51:01 wsnyder Exp $
 #*********************************************************************
 #*
 #* Vl SystemC perl utility library
@@ -148,11 +148,16 @@ void scparse_init (SV *CLASS, const char *filename, int strip)
     ScParserState.Errors = 0;
     ScParserLex.stripAutos = strip;
 
-    ScParserLex.filename = strdup(filename);
-    ScParserLex.lineno = 1;
-    scparser_set_line (1);
+    scparse_set_filename(filename,1);
 
     sclextext = "";  /* In case we get a error in the open */
+}
+
+void scparse_set_filename (const char *filename, int lineno)
+{
+    ScParserLex.filename = strdup(filename);
+    ScParserLex.lineno = lineno;
+    scparser_set_line (lineno);
 }
 
 #/**********************************************************************/
@@ -197,18 +202,28 @@ int strip_autos
 PROTOTYPE: $$$
 CODE:
 {
+    static int/*bool*/ in_parser = 0;
+
     if (!SvROK(CLASS)) {
+	in_parser = 0;
 	croak ("SystemC::Parser::read() not called as class member");
     }
 
     if (!filename) {
+	in_parser = 0;
 	croak ("SystemC::Parser::read() filename=> parameter not passed");
     }
+
+    if (in_parser) {
+	croak ("SystemC::Parser::read() called recursively");
+    }
+    in_parser = 1;
 
     scparse_init (CLASS, filename, strip_autos);
     sclexin = fopen (filename, "r");
     if (!sclexin) {
 	/* Presume user does -r before calling us */
+	in_parser = 0;
 	croak ("SystemC::Parser::read() file not found");
     }
     scgrammerparse();
@@ -218,8 +233,31 @@ CODE:
     scparser_EmitPrefix ();
 
     if (ScParserState.Errors) {
+	in_parser = 0;
 	croak ("SystemC::Parser::read() detected parse errors");
     }
+    in_parser = 0;
+    RETVAL = 1;
+}
+OUTPUT: RETVAL
+
+#/**********************************************************************/
+#/* self->read_include (filename) */
+
+int 
+_read_include_xs (CLASS, filename)
+SV *CLASS
+char *filename
+PROTOTYPE: $$
+CODE:
+{
+    if (!SvROK(CLASS)) {
+	croak ("SystemC::Parser::read_include() not called as class member");
+    }
+    if (!filename) {
+	croak ("SystemC::Parser::read_include() filename=> parameter not passed");
+    }
+    sclex_include (filename);
     RETVAL = 1;
 }
 OUTPUT: RETVAL

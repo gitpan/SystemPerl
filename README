@@ -136,7 +136,7 @@ Supported Systems
 Installation
 ============
 
-  1. `cd' to the directory containing this INSTALL notice.
+  1. `cd' to the directory containing this README notice.
 
   2. Type `perl Makefile.PL' to configure SystemC for your system.
      (Note this package will probably run slower if you are still using
@@ -155,5 +155,11 @@ Installation
 
   7. Install `src/systemperl.h' somewhere in your project's build path.
      The best place is probably the $SYSTEMC/include directory.
+
+  8. If you wish to trace ports, you must edit the SystemC library.
+     Search the header files for "get_cur_value", and add a public:
+     declaration before it.  After doing so, create a
+     $SYSTEMC/systemperl_patched file.  (SystemPerl will see this file
+     and allow port tracing.)
 
 

@@ -1,4 +1,4 @@
-# $Id: Makefile.PL,v 1.14 2001/05/21 13:34:54 wsnyder Exp $
+# $Id: Makefile.PL,v 1.17 2001/08/23 21:21:17 wsnyder Exp $
 # DESCRIPTION: Perl ExtUtils: Type 'perl Makefile.PL' to create a Makefile for this package
 
 require 5.005;
@@ -11,17 +11,25 @@ README: readme.texi
 	-rm \$@
 	makeinfo \$< --output \$@ --no-headers --no-validate
 
-maintainer-clean: distclean
-	-rm README Makefile
-
 dist: distcheck README
 
 install-local: manifypods
 	cp -R blib/man* /usr/local/common/man
 	cp -R sp_makecheck /usr/local/common/bin/sp_makecheck__notfound
 
+## Maintainer use:
 tag:
 	cvs tag -F \$(DISTNAME)_\$(VERSION_SYM) .
+
+maintainer-dist: dist tag
+	cp \$(DISTVNAME).tar.gz \$(HOME)/src/kits
+	mv \$(DISTVNAME).tar.gz \$(HOME)/backpack
+
+maintainer-clean: distclean
+	-rm README Makefile
+
+clean::
+	-rm -rf test_dir
 ";
 }
 
@@ -31,6 +39,8 @@ WriteMakefile(
 	      AUTHOR	=> 'Wilson Snyder <wsnyder@wsnyder.org>',
 	      ABSTRACT  => 'SystemC Netlist Utilities and Parsing',
 	      VERSION_FROM  => 'Netlist.pm',
+	      PREREQ_PM => {'Verilog::Getopt' => 1.13,
+			},
 	      EXE_FILES => [qw( sp_preproc sp_includer sp_makecheck )],
 	      'clean'	=> {FILES => qw ( ),},
 	      'dist'    => {COMPRESS => 'gzip -9f',

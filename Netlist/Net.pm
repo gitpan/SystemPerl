@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Id: Net.pm,v 1.11 2001/05/30 15:47:57 wsnyder Exp $
+# $Id: Net.pm,v 1.17 2001/07/12 19:30:24 wsnyder Exp $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -28,34 +28,70 @@ use SystemC::Netlist;
 use SystemC::Netlist::Subclass;
 @ISA = qw(SystemC::Netlist::Net::Struct
 	SystemC::Netlist::Subclass);
-$VERSION = '0.420';
+$VERSION = '0.430';
 use strict;
+
+# List of basic C++ types and their sizes
+use vars qw (%TypeInfo);
+%TypeInfo = (bool=>	{ msb=>0,  lsb=>0, basic_type=>1, },
+	     sc_clock=>	{ msb=>0,  lsb=>0, basic_type=>0, },  # Special AutoTrace code
+#	     int8_t=>	{ msb=>7,  lsb=>0, basic_type=>1, },
+#	     int16_t=>	{ msb=>15, lsb=>0, basic_type=>1, },
+	     int32_t=>	{ msb=>31, lsb=>0, basic_type=>1, },
+#	     int =>	{ msb=>31, lsb=>0, basic_type=>1, },
+#	     uint8_t=>	{ msb=>7,  lsb=>0, basic_type=>1, },
+#	     uint16_t=>	{ msb=>15, lsb=>0, basic_type=>1, },
+	     uint32_t=>	{ msb=>31, lsb=>0, basic_type=>1, },
+#	     uint =>	{ msb=>0,  lsb=>0, basic_type=>1, },
+#	     nint8_t=> 	{ msb=>7,  lsb=>0, basic_type=>1, },
+#	     nint16_t=>	{ msb=>15, lsb=>0, basic_type=>1, },
+	     nint32_t=>	{ msb=>31, lsb=>0, basic_type=>1, },
+	 );
+
+######################################################################
 
 structs('new',
 	'SystemC::Netlist::Net::Struct'
 	=>[name     	=> '$', #'	# Name of the net
 	   filename 	=> '$', #'	# Filename this came from
 	   lineno	=> '$', #'	# Linenumber this came from
+	   userdata	=> '%',		# User information
 	   #
 	   type	 	=> '$', #'	# C++ Type (bool/int)
 	   comment	=> '$', #'	# Comment provided by user
 	   array	=> '$', #'	# Vector
 	   module	=> '$', #'	# Module entity belongs to
+	   simple_type	=> '$', #'	# True if is uint (as opposed to sc_signal)
 	   # below only after links()
 	   port		=> '$', #'	# Reference to port connected to
+	   msb		=> '$', #'	# MSB of signal (if known)
+	   lsb		=> '$', #'	# LSB of signal (if known)
 	   _used_input	=> '$', #'	# Declared as signal, or input to cell
 	   _used_output	=> '$', #'	# Declared as signal, or output from cell
 	   # below only after autos()
 	   autocreated	=> '$', #'	# Created by /*AUTOSIGNAL*/
 	   ]);
 
-sub _link {}
+######################################################################
+
+sub _link {
+    my $self = shift;
+    # If there is no msb defined, try to pull it based on the type of the signal
+    if (!defined $self->msb && defined $self->type) {
+	my $tiref = $TypeInfo{$self->type};
+	if (defined $tiref) {
+	    $self->msb($tiref->{msb});
+	    $self->lsb($tiref->{lsb});
+	}
+    }
+}
 
 sub width {
     my $self = shift;
     # Return bit width (if known)
-    return 32 if $self->type eq "uint32_t";
-    return 1 if $self->type eq "bool";
+    if (defined $self->msb && defined $self->lsb) {
+	return ($self->msb - $self->lsb + 1);
+    }
     return undef;
 }
 
@@ -67,15 +103,15 @@ sub lint {
     }
     if (0&&$self->_used_output() && !$self->_used_input()
 	&& $self->name() !~ /unused/) {
-	$self->print(5);
-	$self->port->print(10) if $self->port;
+	$self->dump(5);
+	$self->port->dump(10) if $self->port;
 	$self->warn("Signal is not used (or needs signal declaration): ",$self->name(), "\n");
 	flush STDOUT;
 	flush STDERR;
     }
 }
 
-sub print {
+sub dump {
     my $self = shift;
     my $indent = shift||0;
     print " "x$indent,"Net:",$self->name()
@@ -149,7 +185,7 @@ The C++ type of the net.
 
 Checks the net for errors.  Normally called by SystemC::Netlist::lint.
 
-=item $self->print
+=item $self->dump
 
 Prints debugging information for this net.
 

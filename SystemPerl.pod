@@ -1,4 +1,4 @@
-#$Id: SystemPerl.pod,v 1.11 2001/06/21 21:09:09 wsnyder Exp $
+#$Id: SystemPerl.pod,v 1.18 2001/09/26 14:50:59 wsnyder Exp $
 ######################################################################
 #
 # This program is Copyright 2001 by Wilson Snyder.
@@ -98,6 +98,14 @@ public sc_module" must instead be coded as "SC_MODULE(mod1)".
 
 SP_PIN declares a connection of a instantation's port to the specified net.
 
+=item SP_TRACED
+
+SP_TRACED is used as an attribute like static or const.  It indicates the
+simple variable should be added to any waves files that AUTOTRACE creates.
+
+Note you cannot trace output ports without patching the SystemC library,
+see the README file.
+
 =back
 
 =head1 EXPANSIONS
@@ -116,11 +124,6 @@ For example:
 
 SC_MODULE (__MODULE__) {
   ...
-
-=item /*AUTODECL*/
-
-AUTODECL indicates where interface declarations should be inserted.  This
-is described under each other AUTO that needs AUTODECL.
 
 =item /*AUTOENUM_I<CLASS|GLOBAL>(I<enum>)*/
 
@@ -172,6 +175,21 @@ inline bool operator== (MyENumClass lhs, MyENumClass rhs) { return (lhs.e_en == 
 //... other accessors
 // End of SystemPerl automatic enumeration
 
+=item /*AUTOINOUT_MODULE(I<mod>)*/
+
+AUTOINOUT_MODULE indicates the input/output list should be copied from the
+specified other module.  This is useful for creating null modules which
+need identical pinouts to the module which they are nulling out.
+AUTOSIGNAL must be used along with this auto, as the ports are inserted
+at the point where the AUTOSIGNAL is.
+
+=item /*AUTOIMPLEMENTATION*/
+
+AUTOIMPLEMENTATION includes function definitions required inside the .cpp
+file, such as functions implementing ENUM ascii functions.  AUTOIMPLEMENTATION
+will be included automatically at the end of a expanded .cpp file if it is
+not otherwise found in the file.
+
 =item /*AUTOINST*/
 
 AUTOINST connects any unreferenced ports for the current SP_CELL to signals
@@ -196,6 +214,13 @@ SC_MODULE(mod) {
 	  // Beginning of SystemPerl automatic instantiation pins
 	  SP_PIN (sub, clk,	clk);
 	  // End of SystemPerl automatic instantiation pins
+
+=item /*AUTOMETHODS*/
+
+AUTOMETHODS indicates where interface declarations should be inserted.  It
+also declares a SC_CTOR(__MODULE__) method if there is not already one in
+the class header.  Additional methods that are inserted are is described
+under AUTOTRACE.
 
 =item /*AUTOSUBCELL_CLASS*/
 
@@ -289,7 +314,7 @@ SC_MODULE(mod) {
 =item /*AUTOTRACE(I<module>)*/
 
 AUTOTRACE creates a routine to trace the ports and signals in the current
-module, and then call the tracing routine on all submodules.  AUTODECL is
+module, and then call the tracing routine on all submodules.  AUTOMETHODS is
 also required in the declaration of the module.  
 
 Note because of a SystemC limitation, output ports cannot be traced.  Also
@@ -299,27 +324,33 @@ quite right yet.
 
 Example:
 
-SC_MODULE (ex_mod) {
+SC_MODULE (ExMod) {
     ...
     sc_in<bool>		in;
-    SP_CELL_DECL(ex_mod_sub,          suba);
+    SP_CELL_DECL(ExModSub,          suba);
 
-    /*AUTODECLS*/
+    /*AUTOMETHODS*/
     // Beginning of SystemPerl automatic declarations
     void trace (sc_trace_file *tf, const sc_string& prefix, int levels, int options=0);
     // End of SystemPerl automatic declarations
 }
 ...
 
-/*AUTOTRACE(ex_mod)*/
+/*AUTOTRACE(ExMod)*/
 // Beginning of SystemPerl automatic trace file routine
-void ex_mod::trace (sc_trace_file *tf, const sc_string& prefix, int levels, int options=0) {
+void ExMod::trace (sc_trace_file *tf, const sc_string& prefix, int levels, int options=0) {
     sc_trace(tf, this->in.read(),           prefix+"in", 1);
     if (levels > 0) {
         this->suba->trace (tf, prefix+"suba.", levels-1, options);
     }
 }
 // End of SystemPerl automatic trace file routine
+
+=item #sp include
+
+Includes the file for the preprocessor, it will be expanded into the output
+.h/.cpp files.  Note that regular "#include" files are not read or expanded
+to save disk space and time.
 
 =item #sp interface
 

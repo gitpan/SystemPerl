@@ -169,7 +169,7 @@ It should run on any system with Perl and a C compiler.
 
 @enumerate
 @item
-@code{cd} to the directory containing this INSTALL notice.
+@code{cd} to the directory containing this README notice.
 
 @item
 Type @samp{perl Makefile.PL} to configure SystemC for your system.
@@ -194,6 +194,12 @@ documentation.
 @item
 Install @samp{src/systemperl.h} somewhere in your project's build path.
 The best place is probably the $SYSTEMC/include directory.
+
+@item
+If you wish to trace ports, you must edit the SystemC library.  Search
+the header files for "get_cur_value", and add a public: declaration
+before it.  After doing so, create a $SYSTEMC/systemperl_patched file.
+(SystemPerl will see this file and allow port tracing.)
 
 @end enumerate
 

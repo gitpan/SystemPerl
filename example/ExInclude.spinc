@@ -1,0 +1,7 @@
+// $Id: ExInclude.spinc,v 1.1 2001/09/26 13:55:20 wsnyder Exp $ -*- SystemC -*-
+// DESCRIPTION: SystemPerl: Example include file
+
+#sp implementation
+
+void __MODULE__::configure () {
+}

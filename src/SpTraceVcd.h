@@ -1,0 +1,206 @@
+// $Id: SpTraceVcd.h,v 1.3 2001/07/16 15:53:34 wsnyder Exp $ -*- SystemC -*-
+//=============================================================================
+//
+// THIS MODULE IS PUBLICLY LICENSED
+//
+// This program is free software; you can redistribute it and/or modify
+// it under the terms of either the GNU General Public License or the
+// Perl Artistic License, with the exception that it cannot be placed
+// on a CD-ROM or similar media for commercial distribution without the
+// prior approval of the author.
+//
+// This is distributed in the hope that it will be useful, but WITHOUT ANY
+// WARRANTY; without even the implied warranty of MERCHANTABILITY or
+// FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+// for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this module; see the file COPYING.  If not, write to
+// the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+// Boston, MA 02111-1307, USA.
+//
+//=============================================================================
+//
+// AUTHOR:  Wilson Snyder
+//
+// DESCRIPTION: Tracing in SpTraceVcd Format
+//
+//=============================================================================
+
+#ifndef _VLTRACEVCD_H_
+#define _VLTRACEVCD_H_ 1
+
+#include <sys/types.h>	// uint32_t
+#include <stdint.h>	// uint32_t
+#include <iostream>
+#include <fstream>
+#include <string>
+#include <algorithm>
+#include <vector>
+
+//=============================================================================
+// SpTraceVcdSig
+
+class SpTraceVcdSig {
+protected:
+    friend class SpTraceVcd;
+    uint32_t		m_code;		// Code number
+    const uint32_t*	m_valp;		// Pointer to where value comes from
+    int			m_bits;		// Size of value
+    SpTraceVcdSig (uint32_t code, const uint32_t* valp, int bits)
+	: m_code(code), m_valp(valp), m_bits(bits) {}
+};
+
+//=============================================================================
+// SpTraceVcdSig
+
+typedef void (*SpTraceCallback_t)(SpTraceVcd* vcdp, void* userthis, uint32_t code);
+class SpTraceCallInfo;
+
+class SpTraceVcd {
+private:
+    bool 		m_isOpen;	// True indicates open file
+    std::ofstream	m_fp;		// File we're writing to
+    int			m_modDepth;	// Depth of module hiearchy
+    bool		m_fullDump;	// True indicates dump ignoring if changed
+    uint32_t		m_nextCode;	// Next code number to assign
+    string		m_modName;	// Module name being traced now
+
+    vector<SpTraceVcdSig>	m_sigs;		// Pointer to signal information
+    vector<uint32_t>		m_sigs_oldval;	// Pointer to old signal values
+    vector<SpTraceCallInfo*>	m_callbacks;	// Routines to perform dumping
+
+    static const char* genId (void);
+    void printIndent (int levelchange);
+    void declare (uint32_t code, const char* name, int arraynum,
+		  const uint32_t* valp,
+		  int msb, int lsb, bool isBit);
+    void dumpPrep (double timestamp);
+    void dumpDone (void);
+    inline void printCode (uint32_t code) {
+	if (code>=(94*94*94)) m_fp.put((char)((code/94/94/94)%94+33));
+	if (code>=(94*94)) m_fp.put((char)((code/94/94)%94+33));
+	if (code>=(94)) m_fp.put((char)((code/94)%94+33));
+	m_fp.put((char)((code)%94+33));
+    }
+
+public:
+    // CREATORS
+    SpTraceVcd (void) : m_isOpen(false), m_modDepth(0), m_nextCode(0) {}
+
+    // ACCESSORS
+    uint32_t nextCode(void) const {return m_nextCode;}
+
+    // METHODS
+    void open (const char* filename);	// Open the file
+    void close (void);			// Close the file
+
+    void addCallback (SpTraceCallback_t init, SpTraceCallback_t dump,
+		      void* userthis);
+
+    void init (void);
+    void definitions (void);
+    void module (const string name);
+    void declBit   (uint32_t code, const char* name, int arraynum, const uint32_t* valp);
+    void declBit   (uint32_t code, const char* name, int arraynum, const bool* valp);
+    void declBus   (uint32_t code, const char* name, int arraynum, const uint32_t* valp, int msb, int lsb);
+    void declArray (uint32_t code, const char* name, int arraynum, const uint32_t* valp, int msb, int lsb);
+    //	... other module_start for submodules (based on cell name)
+    void enddefinitions (void);
+
+    // Regular dumping
+    void dump     (double timestamp);
+    void dumpFull (double timestamp);
+
+    // Quick dumping
+    inline void dumpValueBit (uint32_t code, const uint32_t& newval) {
+	m_sigs_oldval[code] = newval;
+	m_fp.put(newval?'1':'0'); printCode(code); m_fp.put('\n');
+    }
+    inline void dumpValueBus (uint32_t code, const uint32_t& newval, int bits) {
+	m_sigs_oldval[code] = newval;
+	m_fp.put('b');
+	for (int bit=bits-1; bit>=0; --bit) {
+	    m_fp.put((newval&(1L<<bit))?'1':'0');
+	}
+	m_fp.put(' '); printCode(code); m_fp.put('\n');
+    }
+    inline void dumpValueArray (uint32_t code, const uint32_t* newval, int bits) {
+	for (int word=0; word<((bits/32)+1); ++word) {
+	    m_sigs_oldval[code+word] = newval[word];
+	}
+	m_fp.put('b');
+	for (int bit=bits-1; bit>=0; --bit) {
+	    m_fp.put((newval[(bit/32)]&(1L<<(bit&0x1f)))?'1':'0');
+	}
+	m_fp.put(' '); printCode(code); m_fp.put('\n');
+    }
+
+    inline void dumpBit (uint32_t code, const uint32_t& newval) {
+	if (m_sigs_oldval[code] != newval) { dumpValueBit (code, newval); }
+    }
+    inline void dumpBus (uint32_t code, const uint32_t& newval, int bits) {
+	if (m_sigs_oldval[code] != newval) { dumpValueBus (code, newval, bits); }
+    }
+    inline void dumpArray (uint32_t code, const uint32_t* newval, int bits) {
+	for (int word=0; word<((bits/32)+1); ++word) {
+	    if (m_sigs_oldval[code+word] != newval[word]) {
+		dumpValueArray (code,newval,bits);
+		return;
+	    }
+	}
+    }
+};
+
+//=============================================================================
+// SpTraceHelper
+// This class is passed to the SystemC simulation kernal to make it look like
+// a sc_trace_file
+
+#ifndef SPTRACEVCD_TEST
+#include <systemc.h>
+class SpTraceFile : sc_trace_file {
+    SpTraceVcd		m_sptrace;
+public:
+    SpTraceFile(void) {
+	sc_get_curr_simcontext()->add_trace_file(this);
+    }
+    void open (const char* filename) { m_sptrace.open(filename); }
+    void close (void) { m_sptrace.close(); }
+    // Called by SystemC simulate()
+    virtual void cycle (bool delta_cycle) { m_sptrace.dump(sc_time_stamp()); }
+    inline SpTraceVcd* spTrace (void) { return &m_sptrace; };
+
+private:
+    // Fake outs for linker
+    virtual void trace (const bool &, const sc_string &);
+    virtual void trace (const sc_bit &, const sc_string &);
+    virtual void trace (const sc_logic &, const sc_string &);
+    virtual void trace (const sc_bool_vector &, const sc_string &);
+    virtual void trace (const sc_logic_vector &, const sc_string &);
+    virtual void trace (const unsigned char &, const sc_string &, int);
+    virtual void trace (const short unsigned int &, const sc_string &, int);
+    virtual void trace (const unsigned int &, const sc_string &, int);
+    virtual void trace (const long unsigned int &, const sc_string &, int);
+    virtual void trace (const char &, const sc_string &, int);
+    virtual void trace (const short int &, const sc_string &, int);
+    virtual void trace (const int &, const sc_string &, int);
+    virtual void trace (const long int &, const sc_string &, int);
+    virtual void trace (const float &, const sc_string &);
+    virtual void trace (const double &, const sc_string &);
+    virtual void trace (const sc_signal_bool_vector &, const sc_string &);
+    virtual void trace (const sc_signal_logic_vector &, const sc_string &);
+    virtual void trace (const sc_uint_base &, const sc_string &);
+    virtual void trace (const sc_int_base &, const sc_string &);
+    virtual void trace (const sc_unsigned &, const sc_string &);
+    virtual void trace (const sc_signed &, const sc_string &);
+    virtual void trace (const sc_signal_resolved &, const sc_string &);
+    virtual void trace (const sc_signal_resolved_vector &, const sc_string &);
+    virtual void trace (const sc_bv_ns::sc_bv_base &, const sc_string &);
+    virtual void trace (const sc_bv_ns::sc_lv_base &, const sc_string &);
+    virtual void trace (const unsigned int &, const sc_string &, const char **);
+    virtual void write_comment (const sc_string &);
+};
+#endif
+
+#endif // guard

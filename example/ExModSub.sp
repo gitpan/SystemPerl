@@ -1,7 +1,8 @@
-// $Id: ex_mod_sub.sp,v 1.3 2001/06/21 21:10:02 wsnyder Exp $
+// $Id: ExModSub.sp,v 1.2 2001/08/31 14:56:15 wsnyder Exp $
 // DESCRIPTION: SystemPerl: Example source module
 
 #sp interface
+#include <systemperl.h>
 /*AUTOSUBCELL_CLASS*/
 
 SC_MODULE (__MODULE__) {
@@ -10,12 +11,10 @@ SC_MODULE (__MODULE__) {
     sc_out<bool>	out;
 
     /*AUTOSUBCELLS*/
-    /*AUTODECLS*/
     /*AUTOSIGNAL*/
+    /*AUTOMETHODS*/
 
     void clock (void);
-
-    SC_CTOR(__MODULE__);
 };
 
 #sp implementation

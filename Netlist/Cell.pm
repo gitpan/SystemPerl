@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Id: Cell.pm,v 1.13 2001/05/24 18:39:43 wsnyder Exp $
+# $Id: Cell.pm,v 1.17 2001/07/19 15:36:07 wsnyder Exp $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -28,7 +28,7 @@ use SystemC::Netlist;
 use SystemC::Netlist::Subclass;
 @ISA = qw(SystemC::Netlist::Cell::Struct
 	SystemC::Netlist::Subclass);
-$VERSION = '0.420';
+$VERSION = '0.430';
 use strict;
 
 structs('new',
@@ -36,6 +36,7 @@ structs('new',
 	=>[name     	=> '$', #'	# Instantiation name
 	   filename 	=> '$', #'	# Filename this came from
 	   lineno	=> '$', #'	# Linenumber this came from
+	   userdata	=> '%',		# User information
 	   #
 	   submodname	=> '$', #'	# Which module it instantiates
 	   module	=> '$', #'	# Module reference
@@ -63,11 +64,6 @@ sub _link {
     if ($self->submodname()) {
 	my $name = $self->submodname();
 	my $sm = $self->netlist->find_module ($self->submodname());
-	if (!$sm) {
-	    # Try a name conversion so FOO_BAR defined as foo_bar will work
-	    $name = lc $name;
-	    $sm = $self->netlist->find_module ($name);
-	}
 	$self->submod($sm);
     }
     foreach my $pinref (values %{$self->pins}) {
@@ -85,17 +81,17 @@ sub lint {
     }
 }
 
-sub print {
+sub dump {
     my $self = shift;
     my $indent = shift||0;
     my $norecurse = shift;
     print " "x$indent,"Cell:",$self->name(),"  is-a:",$self->submodname(),"\n";
     if ($self->submod()) {
-	$self->submod->print($indent+10, 'norecurse');
+	$self->submod->dump($indent+10, 'norecurse');
     }
     if (!$norecurse) {
 	foreach my $pinref ($self->pins_sorted) {
-	    $pinref->print($indent+2);
+	    $pinref->dump($indent+2);
 	}
     }
 }
@@ -139,15 +135,15 @@ sub _write_autoinst {
     my $fileref = shift;
     my $prefix = shift;
     return if !$SystemC::Netlist::File::outputting;
-    $fileref->_write_print ("${prefix}// Beginning of SystemPerl automatic instantiation pins\n");
+    $fileref->print ("${prefix}// Beginning of SystemPerl automatic instantiation pins\n");
     foreach my $pinref ($self->pins_sorted) {
 	if ($pinref->autocreated) {
-	    $fileref->_write_printf ("%sSP_PIN(%s, %-20s %-20s // %s\n"
+	    $fileref->printf ("%sSP_PIN(%s, %-20s %-20s // %s\n"
 		,$prefix,$self->name,$pinref->name.",",$pinref->port->name.");"
 				     ,$pinref->port->direction);
 	}
     }
-    $fileref->_write_print ("${prefix}// End of SystemPerl automatic instantiation pins\n");
+    $fileref->print ("${prefix}// End of SystemPerl automatic instantiation pins\n");
 }
 
 ######################################################################
@@ -221,7 +217,7 @@ Checks the cell for errors.  Normally called by SystemC::Netlist::lint.
 
 Creates a new SystemC::Netlist::Pin connection for this cell.
 
-=item $self->print
+=item $self->dump
 
 Prints debugging information for this cell.
 

@@ -1,7 +1,8 @@
-// $Id: ex_enum.sp,v 1.1 2001/04/13 16:36:23 wsnyder Exp $
+// $Id: ExEnum.sp,v 1.2 2001/08/31 14:56:15 wsnyder Exp $
 // DESCRIPTION: SystemPerl: Example source module
 
 #sp interface
+#include <ostream.h>
 
 class MyENumClass {
 public:

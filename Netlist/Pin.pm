@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Id: Pin.pm,v 1.11 2001/05/30 15:01:39 wsnyder Exp $
+# $Id: Pin.pm,v 1.17 2001/07/30 13:43:08 wsnyder Exp $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -33,7 +33,7 @@ use SystemC::Netlist::Pin;
 use SystemC::Netlist::Subclass;
 @ISA = qw(SystemC::Netlist::Pin::Struct
 	SystemC::Netlist::Subclass);
-$VERSION = '0.420';
+$VERSION = '0.430';
 use strict;
 
 structs('new',
@@ -41,6 +41,7 @@ structs('new',
 	=>[name     	=> '$', #'	# Pin connection
 	   filename 	=> '$', #'	# Filename this came from
 	   lineno	=> '$', #'	# Linenumber this came from
+	   userdata	=> '%',		# User information
 	   #
 	   netname	=> '$', #'	# Net connection
 	   cell     	=> '$', #'	# Cell reference
@@ -93,12 +94,12 @@ sub lint {
 	$netdir = $self->net->port->direction if $self->net->port;
 	my $portdir = $self->port->direction;
 	if (($netdir eq "in" && $portdir eq "out")
-	    || ($netdir eq "in" && $portdir eq "inout")
-	    || ($netdir eq "out" && $portdir eq "inout")
+	    #Legal: ($netdir eq "in" && $portdir eq "inout")
+	    #Legal: ($netdir eq "out" && $portdir eq "inout")
 	    ) {
 	    $self->error("Port is ${portdir}put from submodule, but ${netdir}put from this module: "
 			 ,$self->name,"\n");
-	    #$self->cell->module->netlist->print;
+	    #$self->cell->module->netlist->dump;
 	}
     }
     if (!$self->port && $self->submod) {
@@ -106,15 +107,15 @@ sub lint {
     }
 }
 
-sub print {
+sub dump {
     my $self = shift;
     my $indent = shift||0;
     print " "x$indent,"Pin:",$self->name(),"  Net:",$self->netname(),"\n";
     if ($self->port) {
-	$self->port->print($indent+10, 'norecurse');
+	$self->port->dump($indent+10, 'norecurse');
     }
     if ($self->net) {
-	$self->net->print($indent+10, 'norecurse');
+	$self->net->dump($indent+10, 'norecurse');
     }
 }
 
@@ -203,7 +204,7 @@ The net name the pin connects to.
 
 Checks the pin for errors.  Normally called by SystemC::Netlist::lint.
 
-=item $self->print
+=item $self->dump
 
 Prints debugging information for this pin.
 

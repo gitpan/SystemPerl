@@ -1,5 +1,5 @@
 #!/usr/local/bin/perl -w
-#$Id: sp_preproc,v 1.14 2001/05/18 21:48:14 wsnyder Exp $
+#$Id: sp_preproc,v 1.21 2001/08/23 21:21:48 wsnyder Exp $
 ######################################################################
 # Unpublished Work Copyright (C) 2000 Wilson Snyder
 # All Rights Reserved.                                                      
@@ -25,6 +25,7 @@
 ######################################################################
 
 require 5.005;
+use Verilog::Getopt;
 use Getopt::Long;
 use IO::File;
 use Pod::Text;
@@ -52,6 +53,9 @@ my $opt_autos = 1;
 my @sp_files_lib = ();
 my @sp_files_nolib = ();
 my $opt_libcell = 0;
+
+my $opt = new Verilog::Getopt(gcc_style=>1, vcs_style=>0);
+@ARGV = $opt->parameter(@ARGV);	# Strip -D and -U flags
 if (! GetOptions (
 		  "help"	=> \&usage,
 		  "verbose"	=> \&verbose,
@@ -68,7 +72,11 @@ if (! GetOptions (
     usage();
 }
 
-my $nl = new SystemC::Netlist ();
+my $nl = new SystemC::Netlist (options=>$opt,
+			       allow_output_tracing=>
+			       ($ENV{PROJECT}
+				|| -r "$ENV{SYSTEMC}/systemperl_patched"),
+			       );
 
 foreach my $file (@sp_files_nolib) {
     $nl->read_file (filename=>$file,
@@ -76,7 +84,7 @@ foreach my $file (@sp_files_nolib) {
 }
 foreach my $file (@sp_files_lib) {
     $nl->read_file (filename=>$file,
-		    strip_autos=>0,
+		    strip_autos=>1,
 		    is_libcell=>1,);
 }
 
@@ -84,7 +92,7 @@ $nl->link();
 $nl->autos();
 $nl->lint();
 our_rulecheck($nl);
-$nl->print() if $Debug;
+$nl->dump() if $Debug;
 $nl->exit_if_error();
 
  #use Data::Dumper; print Dumper (\%SystemC::Module::Modules);
@@ -117,7 +125,7 @@ if ($opt_makedeps) {
 #----------------------------------------------------------------------
 
 sub usage {
-    print '$Id: sp_preproc,v 1.14 2001/05/18 21:48:14 wsnyder Exp $ ', "\n";
+    print '$Id: sp_preproc,v 1.21 2001/08/23 21:21:48 wsnyder Exp $ ', "\n";
     $SIG{__WARN__} = sub{};	#pod2text isn't clean.
     pod2text($0);
     exit (1);
@@ -218,9 +226,17 @@ With --inline, remove any expanded automatics.
 
 Shows which files are being written, or are the same.
 
-=item --M
+=item -M
 
 Makes the dependancy listing (similar to I<cpp -M>).
+
+=item -DI<var>=I<value>
+
+Sets a define to the given value (similar to I<cpp -D>).
+
+=item -f I<file>
+
+Parse parameters from the given file.
 
 =back
 

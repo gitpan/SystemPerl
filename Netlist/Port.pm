@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Id: Port.pm,v 1.10 2001/05/30 15:01:39 wsnyder Exp $
+# $Id: Port.pm,v 1.14 2001/07/19 15:36:07 wsnyder Exp $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -28,7 +28,7 @@ use SystemC::Netlist;
 use SystemC::Netlist::Subclass;
 @ISA = qw(SystemC::Netlist::Port::Struct
 	SystemC::Netlist::Subclass);
-$VERSION = '0.420';
+$VERSION = '0.430';
 use strict;
 
 structs('new',
@@ -36,6 +36,7 @@ structs('new',
 	=>[name     	=> '$', #'	# Name of the port
 	   filename 	=> '$', #'	# Filename this came from
 	   lineno	=> '$', #'	# Linenumber this came from
+	   userdata	=> '%',		# User information
 	   #
 	   direction	=> '$', #'	# Direction (in/out/inout)
 	   type	 	=> '$', #'	# C++ Type (bool/int)
@@ -44,6 +45,8 @@ structs('new',
 	   module	=> '$', #'	# Module entity belongs to
 	   # below only after links()
 	   net		=> '$', #'	# Net port connects
+	   # below only after autos()
+	   autocreated	=> '$', #'	# Created by /*AUTOINOUT*/
 	   ]);
 
 sub _link {
@@ -66,7 +69,7 @@ sub _link {
 }
 sub lint {}
 
-sub print {
+sub dump {
     my $self = shift;
     my $indent = shift||0;
     print " "x$indent,"Port:",$self->name(),"  Dir:",$self->direction()
@@ -139,7 +142,7 @@ The C++ type of the port.
 
 =over 4
 
-=item $self->print
+=item $self->dump
 
 Prints debugging information for this port.
 

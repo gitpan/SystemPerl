@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Id: Module.pm,v 1.19 2001/06/21 21:09:14 wsnyder Exp $
+# $Id: Module.pm,v 1.33 2001/08/28 19:31:17 wsnyder Exp $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -30,9 +30,10 @@ use SystemC::Netlist::Net;
 use SystemC::Netlist::Cell;
 use SystemC::Netlist::Pin;
 use SystemC::Netlist::Subclass;
+use SystemC::Netlist::AutoTrace;
 @ISA = qw(SystemC::Netlist::Module::Struct
 	SystemC::Netlist::Subclass);
-$VERSION = '0.420';
+$VERSION = '0.430';
 use strict;
 
 structs('new',
@@ -41,6 +42,7 @@ structs('new',
 	   filename 	=> '$', #'	# Filename this came from
 	   lineno	=> '$', #'	# Linenumber this came from
 	   netlist	=> '$', #'	# Netlist is a member of
+	   userdata	=> '%',		# User information
 	   #
 	   ports	=> '%',		# hash of SystemC::Netlist::Ports
 	   nets		=> '%',		# hash of SystemC::Netlist::Nets
@@ -49,6 +51,9 @@ structs('new',
 	   _autosignal	=> '$', #'	# Module has /*AUTOSIGNAL*/ in it
 	   _autosubcells=> '$', #'	# Module has /*AUTOSUBCELLS*/ in it
 	   _autotrace	=> '$', #'	# Module has /*AUTOTRACE*/ in it
+	   _autoinoutmod=> '$', #'	# Module has /*AUTOINOUT_MODULE*/ in it
+	   _ctor	=> '$', #'	# Module has SC_CTOR in it
+	   lesswarn     => '$',	#'	# True if some warnings should be disabled
 	   is_libcell	=> '$', #'	# Module is a library cell
 	   ]);
 
@@ -106,7 +111,7 @@ sub new_net {
     my $self = shift;
     # @_ params
     # Create a new net under this module
-    my $netref = new SystemC::Netlist::Net (module=>$self, direction=>'net', @_);
+    my $netref = new SystemC::Netlist::Net (direction=>'net', @_, module=>$self, );
     $self->nets ($netref->name(), $netref);
     return $netref;
 }
@@ -115,7 +120,7 @@ sub new_port {
     my $self = shift;
     # @_ params
     # Create a new port under this module
-    my $portref = new SystemC::Netlist::Port (module=>$self, @_);
+    my $portref = new SystemC::Netlist::Port (@_, module=>$self,);
     $self->ports ($portref->name(), $portref);
     return $portref;
 }
@@ -124,7 +129,7 @@ sub new_cell {
     my $self = shift;
     # @_ params
     # Create a new cell under this module
-    my $cellref = new SystemC::Netlist::Cell (module=>$self, @_);
+    my $cellref = new SystemC::Netlist::Cell (@_, module=>$self,);
     $self->cells ($cellref->name(), $cellref);
     return $cellref;
 }
@@ -156,20 +161,20 @@ sub lint {
     }
 }
 
-sub print {
+sub dump {
     my $self = shift;
     my $indent = shift||0;
     my $norecurse = shift;
     print " "x$indent,"Module:",$self->name(),"  File:",$self->filename(),"\n";
     if (!$norecurse) {
 	foreach my $portref (values %{$self->ports}) {
-	    $portref->print($indent+2);
+	    $portref->dump($indent+2);
 	}
 	foreach my $netref (values %{$self->nets}) {
-	    $netref->print($indent+2);
+	    $netref->dump($indent+2);
 	}
 	foreach my $cellref (values %{$self->cells}) {
-	    $cellref->print($indent+2);
+	    $cellref->dump($indent+2);
 	}
     }
 }
@@ -177,8 +182,36 @@ sub print {
 ######################################################################
 #### Automatics (Preprocessing)
 
-sub autos {
+sub autos1 {
     my $self = shift;
+    if ($self->_autoinoutmod) {
+	my $frommodname = $self->_autoinoutmod;
+	my $fromref = $self->netlist->find_module ($frommodname);
+	if (!$fromref) {
+	    $self->warn ("AUTOINOUT_MODULE not found: $frommodname\n");
+	} else {
+	    # Copy ports
+	    foreach my $portref ($fromref->ports_sorted) {
+		my $newport = $self->new_port
+		    (name	=> $portref->name,
+		     filename	=> ($self->filename."AUTOINST("
+				    .$portref->filename.":"
+				    .$portref->lineno.")"),
+		     lineno	=> $self->lineno,
+		     direction	=> $portref->direction,
+		     type	=> $portref->type,
+		     comment	=> " From AUTOINST(".$fromref->name.")",
+		     array	=> $portref->array,
+		     autocreated=>1,
+		     );
+	    }
+	}
+    }
+}
+
+sub autos2 {
+    my $self = shift;
+    # Below must be after creating above autoinouts
     foreach my $cellref (values %{$self->cells}) {
 	$cellref->_autos();
     }
@@ -190,15 +223,26 @@ sub _write_autosignal {
     my $fileref = shift;
     my $prefix = shift;
     return if !$SystemC::Netlist::File::outputting;
-    $fileref->_write_print ("${prefix}// Beginning of SystemPerl automatic signals\n");
+    $fileref->print ("${prefix}// Beginning of SystemPerl automatic signals/ports\n");
+    foreach my $portref ($self->ports_sorted) {
+	 if ($portref->autocreated) {
+	     my $vec = $portref->array || "";
+	     $vec = "[$vec]" if $vec;
+	     $fileref->printf ("%ssc_%-26s %-20s //%s\n"
+			       ,$prefix
+			       ,$portref->direction."<".$portref->type." >"
+			       # Space above in " >" to prevent >> C++ operator
+			       ,$portref->name.$vec.";", $portref->comment);
+	 }
+    }
     foreach my $netref ($self->nets_sorted) {
 	 if ($netref->autocreated) {
 	     my $vec = $netref->array || "";
-	     $fileref->_write_printf ("%ssc_signal%-20s %-20s //%s\n"
-		 ,$prefix,"<".$netref->type.">",$netref->name.$vec.";", $netref->comment);
+	     $fileref->printf ("%ssc_signal%-20s %-20s //%s\n"
+		 ,$prefix,"<".$netref->type." >",$netref->name.$vec.";", $netref->comment);
 	 }
     }
-    $fileref->_write_print ("${prefix}// End of SystemPerl automatic signals\n");
+    $fileref->print ("${prefix}// End of SystemPerl automatic signals/ports\n");
 }
 
 sub _write_autosubcell_decl {
@@ -206,7 +250,7 @@ sub _write_autosubcell_decl {
     my $fileref = shift;
     my $prefix = shift;
     return if !$SystemC::Netlist::File::outputting;
-    $fileref->_write_print ("${prefix}// Beginning of SystemPerl automatic subcells\n");
+    $fileref->print ("${prefix}// Beginning of SystemPerl automatic subcells\n");
     foreach my $cellref ($self->cells_sorted) {
 	my $name = $cellref->name; my $bra = "";
 	next if ($self->_celldecls($name));
@@ -217,10 +261,10 @@ sub _write_autosubcell_decl {
 			    $cellref->submodname,",",$name,"[/*MAXNUMBER*/]);\n");
 	    next;
 	}
-	$fileref->_write_printf ("%sSP_CELL_DECL(%-20s %s);\n"
+	$fileref->printf ("%sSP_CELL_DECL(%-20s %s);\n"
 				 ,$prefix,$cellref->submodname.",",$name);
     }
-    $fileref->_write_print ("${prefix}// End of SystemPerl automatic subcells\n");
+    $fileref->print ("${prefix}// End of SystemPerl automatic subcells\n");
 }
 
 sub _write_autodecls {
@@ -228,48 +272,21 @@ sub _write_autodecls {
     my $fileref = shift;
     my $prefix = shift;
     return if !$SystemC::Netlist::File::outputting;
-    $fileref->_write_print ("${prefix}// Beginning of SystemPerl automatic declarations\n");
+    $fileref->print ("${prefix}// Beginning of SystemPerl automatic declarations\n");
+    if (!$self->_ctor()) {
+	$fileref->print("${prefix}SC_CTOR(",$self->name,");\n");
+    }
     if ($self->_autotrace()) {
-	$fileref->_write_print ("${prefix}void trace (sc_trace_file *tf,",
-				" const sc_string& prefix, int levels, int options=0);\n");
+	$fileref->print
+	    ("#if WAVES\n",
+	     "${prefix}void trace (SpTraceFile *tfp, int levels, int options=0);\n",
+	     "${prefix}static void\ttraceInit",
+	     " (SpTraceVcd* vcdp, void* userthis, uint32_t code);\n",
+	     "${prefix}static void\ttraceChange",
+	     " (SpTraceVcd* vcdp, void* userthis, uint32_t code);\n",
+	     "#endif\n");
     }
-    $fileref->_write_print ("${prefix}// End of SystemPerl automatic declarations\n");
-}
-
-sub _write_autotrace {
-    my $self = shift;
-    my $fileref = shift;
-    my $prefix = shift;
-    return if !$SystemC::Netlist::File::outputting;
-    $fileref->_write_print
-	("${prefix}// Beginning of SystemPerl automatic trace file routine\n",
-	 "${prefix}void ",$self->name(),"::trace (sc_trace_file *tf, const sc_string& prefix, int levels, int options=0) {\n",
-	 );
-    foreach my $netref ($self->nets_sorted) {
-	next if $netref->port && $netref->port->direction eq 'out';
-	my $width = $netref->width;
-	$fileref->_write_printf ("${prefix}    sc_trace(tf, this->%-20s prefix+\"%s\"",
-				 $netref->name.".read(),", $netref->name);
-	if ($width) {
-	    $fileref->_write_printf (", %d);\n",$width);
-	} else {
-	    $fileref->_write_printf (");\n");
-	}
-    }
-    $fileref->_write_print ("${prefix}    if (levels > 0) {\n",);
-    foreach my $cellref ($self->cells_sorted) {
-	my $name = $cellref->name;
-	#if ($name =~ /^(.*?)\[(.*)\]/);
-	(my $namenobra = $name) =~ tr/\[\]/()/;
-	if ($cellref->submod->_autotrace()) {
-	    $fileref->_write_printf ("${prefix}         this->${name}->trace (tf, prefix+\"%s.\", levels-1, options);\n",
-				     $namenobra);
-	}
-    }
-    $fileref->_write_print ("${prefix}    }\n",
-			    "${prefix}}\n",
-			    "${prefix}// End of SystemPerl automatic trace file routine\n",
-			    );
+    $fileref->print ("${prefix}// End of SystemPerl automatic declarations\n");
 }
 
 ######################################################################
@@ -367,7 +384,7 @@ Creates a new SystemC::Netlist::Port.
 
 Creates a new SystemC::Netlist::Net.
 
-=item $self->print
+=item $self->dump
 
 Prints debugging information for this module.
 

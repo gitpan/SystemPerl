@@ -13,7 +13,7 @@ ok(1);
 {
     print "Checking example in Netlist.pm\n";
     my $nl = new SystemC::Netlist ();
-    foreach my $file ('example/ex_mod.sp', 'example/ex_mod_sub.sp') {
+    foreach my $file ('example/ExMod.sp', 'example/ExModSub.sp') {
 	$nl->read_file (filename=>$file,
 			strip_autos=>1);
     }

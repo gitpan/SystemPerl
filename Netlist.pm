@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Id: Netlist.pm,v 1.17 2001/05/24 18:39:41 wsnyder Exp $
+# $Id: Netlist.pm,v 1.25 2001/08/23 23:08:00 wsnyder Exp $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -32,7 +32,7 @@ use SystemC::Netlist::Subclass;
 use strict;
 use vars qw($Debug $Verbose $VERSION);
 
-$VERSION = '0.420';
+$VERSION = '0.430';
 
 ######################################################################
 #### Error Handling
@@ -48,6 +48,8 @@ sub new {
     my $class = shift;
     my $self = {_modules => {},
 		_files => {},
+		options => undef,	# Usually pointer to Verilog::Getopt
+		allow_output_tracing => 0,
 		@_};
     bless $self, $class;
     return $self;
@@ -74,13 +76,19 @@ sub autos {
     my $self = shift;
     foreach my $modref ($self->modules) {
 	next if $modref->is_libcell();
-	$modref->autos();
+	$modref->autos1();
     }
+    $self->link();  # Pick up pins autos1 created
+    foreach my $modref ($self->modules) {
+	next if $modref->is_libcell();
+	$modref->autos2();
+    }
+    $self->link();
 }
-sub print {
+sub dump {
     my $self = shift;
     foreach my $modref ($self->modules_sorted) {
-	$modref->print();
+	$modref->dump();
     }
 }
 
@@ -99,11 +107,39 @@ sub new_module {
     return $modref;
 }
 
+sub defvalue_nowarn {
+    my $self = shift;
+    my $sym = shift;
+    # Look up the value of a define, letting the user pick the accessor class
+    if ($self->{options}) {
+	return $self->{options}->defvalue_nowarn($sym);
+    }
+    return undef;
+}
+
+sub remove_defines {
+    my $self = shift;
+    my $sym = shift;
+    my $val = "x";
+    while (defined $val) {
+	$val = $self->defvalue_nowarn($sym);  #Undef if not found
+	$sym = $val if defined $val;
+    }
+    return $sym;
+}
+
 sub find_module {
     my $self = shift;
     my $search = shift;
     # Return module maching name
-    return $self->{_modules}{$search};
+    my $mod = $self->{_modules}{$search};
+    return $mod if $mod;
+    # Allow FOO_CELL to be a #define to choose what instantiation is really used
+    my $rsearch = $self->remove_defines($search);
+    if ($rsearch ne $search) {
+	return $self->find_module($rsearch);
+    }
+    return undef;
 }
     
 sub modules {
@@ -268,7 +304,7 @@ Error checks the entire netlist structure.
 
 Resolves references between the different modules.
 
-=item $netlist->print
+=item $netlist->dump
 
 Prints debugging information for the entire netlist structure.
 

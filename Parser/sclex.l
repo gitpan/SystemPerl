@@ -1,6 +1,6 @@
 %option noyywrap align never-interactive prefix="sclex"
 %{
-/* $Id: sclex.l,v 1.18 2001/04/26 14:45:40 wsnyder Exp $
+/* $Id: sclex.l,v 1.23 2001/09/26 14:51:01 wsnyder Exp $
  ******************************************************************************
  * DESCRIPTION: SystemC lexer
  * 
@@ -34,6 +34,17 @@
 #include "scparse.h"
 #include "scgrammer.h"
 
+#define SCLEX_MAX_INCLUDE_DEPTH 20
+
+typedef struct {
+    int lineno;
+    const char *filename;
+    YY_BUFFER_STATE buffer;
+} ScLexInclude_t ;
+ScLexInclude_t sclex_includes[SCLEX_MAX_INCLUDE_DEPTH];
+
+int sclex_include_stack_ptr = 0;
+
 YYSTYPE scgrammerlval;
 #define yylval scgrammerlval
 
@@ -42,6 +53,13 @@ YYSTYPE scgrammerlval;
 
 extern void sclex_ppline (const char *line);
 
+char *   str_bufp = NULL;
+unsigned str_buf_size = 0;
+
+static void yyerror(const char* msg)
+{
+    scgrammererror (msg);
+}
 /**********************************************************************/
 %}
 
@@ -51,7 +69,7 @@ extern void sclex_ppline (const char *line);
 
 WHITESPACE	[ \t\r\f]
 NEWLINE		[\n]
-QUOTE		["]
+QUOTE		['"]
 SYMBOL		[a-zA-Z_][a-zA-Z0-9_$]*
 DECNUM		[0-9]+U?L?L?
 BASENUM		0x[0-9a-fA-F_]+U?L?L?
@@ -69,8 +87,11 @@ FLOATNUM	[0-9]+"."*[0-9]*[eE][0-9]+
 [S][PC]"_CELL"	{ return(SP_CELL); }
 [S][PC]"_CELL_FORM"	{ return(SP_CELL); }
 [S][PC]"_CELL_DECL"	{ return(SP_CELL_DECL); }
-[S][PC]"_PIN"	{ return(SP_PIN); }
+[S][PC]"_PIN"		{ return(SP_PIN); }
+[S][PC]"_TRACED"	{ return(SP_TRACED); }
 "SC_CTOR"	{ return(SC_CTOR); }
+"VL_SIG"	{ return(VL_SIG); }
+"VL_SIGW"	{ return(VL_SIGW); }
 "sc_main"	{ return(SC_MAIN); }
 "enum"		{ return(ENUM); }
 "class"		{ return(CLASS); }
@@ -92,13 +113,29 @@ FLOATNUM	[0-9]+"."*[0-9]*[eE][0-9]+
 	else { StashPrefix; }
 	LINENO++;}
 {WHITESPACE}*"/*AUTO"[^*]+"*/"	{ return(AUTO); }
-<<EOF>>			{ yyleng=0; yyterminate(); }/*else get null added to EOF*/
+<INITIAL><<EOF>>	{
+    if (--sclex_include_stack_ptr<0) {
+	yyleng=0; yyterminate(); /* Else NUL added to EOF*/
+    } else {
+	yy_delete_buffer (YY_CURRENT_BUFFER);
+	yy_switch_to_buffer (sclex_includes[sclex_include_stack_ptr].buffer);
+	scparse_set_filename (sclex_includes[sclex_include_stack_ptr].filename,
+			      sclex_includes[sclex_include_stack_ptr].lineno);
+    }
+}
 
 	/* Generics */
 {NEWLINE}      	{ StashPrefix; LINENO++; }
 {WHITESPACE}+	{ StashPrefix; }
 "//".*[\n]     	{ StashPrefix; LINENO++; }
-{QUOTE}		{ BEGIN(STRMODE); yymore(); }
+	/* This handles strings AND character constants. */
+{QUOTE}		{ StashPrefix;
+		  /* Room for trailing '\"' or '\'', and '\0' */
+		  str_buf_size = yyleng + 2;
+		  str_bufp = malloc(str_buf_size);
+		  strcpy(str_bufp, yytext);
+		  BEGIN(STRMODE); }
+
 "/*"	       	{ BEGIN(CMTMODE); StashPrefix; }
 
 {SYMBOL}      		{ yylval.string = strdup(yytext); return(SYMBOL); }
@@ -111,24 +148,55 @@ FLOATNUM	[0-9]+"."*[0-9]*[eE][0-9]+
 <CMTMODE>\n		{ StashPrefix; LINENO++; }
 <CMTMODE>"*"+"/"	{ StashPrefix; BEGIN(INITIAL); }
 <CMTMODE>. 		{ StashPrefix; }
+<CMTMODE><<EOF>>	{ yyerror("EOF in '/* ... */' block comment");
+			  yyleng = 0; yyterminate(); }
 
 	/************/
 	/* Strings */
-<STRMODE>\n		{ LINENO++; yymore(); /* Unterminated error */ }
-<STRMODE>\\.		{ yymore(); }
-<STRMODE>[^"\\\n]*	{ yymore(); }
-<STRMODE>{QUOTE}	{ BEGIN(INITIAL); if (0) yy_c_buf_p--; return STRING; }
+<STRMODE>\n		{ StashPrefix; LINENO++;
+			  yyerror((str_bufp[0] == '\'')
+				  ? "Unterminated character-constant"
+				  : "Unterminated string");
+			  BEGIN(INITIAL); }
+<STRMODE><<EOF>>	{ yyerror("EOF in string or character-constant");
+			  yyleng = 0; yyterminate(); }
+<STRMODE>\\[0-7][0-7]?[0-7]? |
+<STRMODE>\\x[0-9A-Fa-f][0-9A-Fa-f]+ |
+<STRMODE>\\(.|\n)	|
+<STRMODE>[^\n\'\"\\]+	{ StashPrefix;
+			  if (strcmp(yytext, "\\\n")==0) LINENO++;
+			  str_buf_size += yyleng;
+			  str_bufp = realloc(str_bufp, str_buf_size + 1);
+			  strcat(str_bufp, yytext); }
+<STRMODE>{QUOTE}	{ StashPrefix;
+			  if (yytext[0] != str_bufp[0]) {
+			    str_buf_size += yyleng;
+			    str_bufp = realloc(str_bufp, str_buf_size + 1);
+			    strcat(str_bufp, yytext);
+			  } else {
+			    BEGIN(INITIAL);
+			    assert(strlen(str_bufp) + yyleng < str_buf_size);
+			    strcat(str_bufp, yytext);
+			    yylval.string = str_bufp;
+			    str_bufp = NULL;
+			    str_buf_size = 0;
+			    yyleng = 0;
+			    return STRING;
+			  }
+			}
 
 	/************/
 	/* In Automatic */
 <AUTOMODE>\n		{ LINENO++; yymore(); }
-<AUTOMODE>"// End of SystemPerl automatic".*\n	{LINENO++; BEGIN(INITIAL); }
+<AUTOMODE>"// End of SystemPerl automatic".*\n	{ LINENO++; BEGIN(INITIAL); }
 <AUTOMODE>.	 	{ yymore(); }
+<AUTOMODE><<EOF>>	{ yyerror("EOF before '// End of SystemPerl automatic'");
+			  yyleng = 0; yyterminate(); }
 
 	/**************************************************************/
 %%
 
-void sclex_ppline (const char *line) {
+void sclex_ppline (const char* line) {
     /* Passed string which looks like #line {##} "{filename}" */
     if (0==strncmp ("#line",line,5)) { line += 5; }
     while (*line && isspace(*line)) line++;
@@ -145,6 +213,28 @@ void sclex_ppline (const char *line) {
 	    if (NULL!=(cp=strchr(ScParserLex.filename, '"'))) *cp = '\0';
 	}
     }
+}
+
+void sclex_include (const char* filename) {
+    if (sclex_include_stack_ptr >= SCLEX_MAX_INCLUDE_DEPTH ) {
+	yyerror("Includes nested too deeply");
+	return;
+    }
+
+    sclex_includes[sclex_include_stack_ptr].buffer = YY_CURRENT_BUFFER;
+    sclex_includes[sclex_include_stack_ptr].lineno = ScParserLex.lineno;
+    sclex_includes[sclex_include_stack_ptr].filename = ScParserLex.filename;
+    sclex_include_stack_ptr++;
+
+    yyin = fopen (filename, "r");
+    if (!yyin) {
+	yyerror("Cannot open include file");
+	return;
+    }
+
+    scparse_set_filename (filename, 1);
+    yy_switch_to_buffer(
+	yy_create_buffer( yyin, YY_BUF_SIZE ) );
 }
 
 /*###################################################################

@@ -1,4 +1,4 @@
-/* $Id: sp_log.h,v 1.11 2001/05/29 19:19:34 wsnyder Exp $
+/* $Id: sp_log.h,v 1.13 2001/07/03 16:00:58 wsnyder Exp $
  ************************************************************************
  *
  * THIS MODULE IS PUBLICLY LICENSED
@@ -56,6 +56,7 @@ extern "C" {
 
 #include <iostream>
 #include <fstream>
+#include <string>
 
 //**********************************************************************
 // Echo a stream to two output streams, one to screen and one to a logfile
@@ -104,7 +105,8 @@ public:
 	{ open(filename);}
     ~sp_log_file () { close();};
     
-    void	open (const char *filename);	// Open the file
+    void	open (const char* filename);	// Open the file
+    void	open (const string filename) { open(filename.c_str()); };
     void	close (void);		// Close the file
     void	redirect_cout (void);	// Redirect cout and cerr to logfile
     void	end_redirect (void);	// End redirection

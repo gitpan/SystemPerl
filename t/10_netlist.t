@@ -13,10 +13,10 @@ ok(1);
 my $nl = new SystemC::Netlist ();
 ok($nl);
 
-$nl->read_file (filename=>'example/ex_mod.sp',
+$nl->read_file (filename=>'example/ExMod.sp',
 		strip_autos=>1);
 ok($nl);
-$nl->read_file (filename=>'example/ex_mod_sub.sp',
+$nl->read_file (filename=>'example/ExModSub.sp',
 		strip_autos=>1);
 ok($nl);
 

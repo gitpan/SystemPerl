@@ -1,38 +1,45 @@
 #!/usr/local/bin/perl -w
 # DESCRIPTION: Perl ExtUtils: Type 'make test' to test this package
-# Before `make install' is performed this script should be runnable with
-# `make test'. After `make install' it should work as `perl test.pl'
 
-use lib '.';
-use lib '..';
-use IO::File;
-use SystemC::Parser;
+use strict;
 use Test;
 
 BEGIN { plan tests => 3 }
+BEGIN { require "t/test_utils.pl"; }
 
+use IO::File;
+use SystemC::Parser;
 ok(1);
 mkdir 'test_dir', 0777;
 
 ######################################################################
 package Trialparser;
+use vars qw(@ISA);
 @ISA = qw(SystemC::Parser);
 
 sub _common {
     my $comment = shift;
     my $self = shift;
-    print $::fdump "Parser.pm::$comment: ",$self->filename,":",$self->lineno
+    print $::Fdump "Parser.pm::$comment: ",$self->filename,":",$self->lineno
 	,": '",join("','", @_),"'\n";
 }
 
 sub text {
     my $self = shift;
-    #print $::fdump ("Parser.pm::TEXT: ",$self->filename,":",$self->lineno,
+    #print $::Fdump ("Parser.pm::TEXT: ",$self->filename,":",$self->lineno,
     #	   ": '",join("','", @_),"'\n");
     $self->writetext($_[0]);
 }
 
-sub auto {	_common ('AUTO',@_); }
+sub include {
+    my $self = shift;
+    my $auto = shift;
+    if ($auto =~ /AUTOINCLUDE/) {
+	$self->read_include(filename=>"t/01_parser.spinc");
+    }
+}
+
+sub auto {	_common ('AUTO',@_); include(@_);}
 sub module {	_common ('MODULE',@_); }
 sub ctor {	_common ('CTOR',@_); }
 sub cell {	_common ('CELL',@_); }
@@ -48,14 +55,14 @@ sub writetext {
     my $ln = $self->lineno();
     if ($self->{lastline} != $ln) {
 	if ($self->{lastfile} ne $fn) {
-	    print $::fh "#line $ln \"$fn\"\n";
+	    print $::Fh "#line $ln \"$fn\"\n";
 	} else {
-	    print $::fh "#line $ln\n";
+	    print $::Fh "#line $ln\n";
 	}
 	$self->{lastfile} = $fn;
 	$self->{lastline} = $ln;
     }
-    print $::fh $text;
+    print $::Fh $text;
     while ($text =~ /\n/g) {
 	$self->{lastline}++;
     }
@@ -66,21 +73,22 @@ package main;
 
 {
     # We'll write out all text, to make sure nothing gets dropped
-    $fh = IO::File->new (">test_dir/test.out");
-    $fdump = IO::File->new (">test_dir/test.parse");
+    $::Fh = IO::File->new (">test_dir/01_parser.out");
+    $::Fdump = IO::File->new (">test_dir/01_parser.parse");
     my $sp = Trialparser->new();
-    $sp->{lastfile} = "test.sp";
+    $sp->{lastfile} = "t/01_parser.sp";
     $sp->{lastline} = 1;
-    $sp->read (filename=>"test.sp");
-    $fh->close();
-    $fdump->close();
+    $sp->read (filename=>"t/01_parser.sp");
+    $::Fh->close();
+    $::Fdump->close();
 }
 ok(1);
 
 {
     # Ok, let's make sure the right data went through
-    my $f1 = wholefile ("test.sp") or die;
-    my $f2 = wholefile ("test_dir/test.out") or die;
+    my $f1 = wholefile ("t/01_parser.sp") or die;
+    my $f2 = wholefile ("test_dir/01_parser.out") or die;
+    $f1 =~ s/\/\*AUTOINCLUDE\*\//\/\*AUTOINCLUDE\*\/\/\*AUTO_FROM_INCLUDE\*\/\n/g;
     my @l1 = split ("\n", $f1);
     my @l2 = split ("\n", $f2);
     for (my $l=0; $l<($#l1 | $#l2); $l++) {

@@ -19,8 +19,9 @@ struct showmyenum {
 };
 
 SC_MODULE (tte) {
-    sc_in_clk		clk;		  // **** System Inputs
-    sc_in<bool>		reset;		  //  system reset
+    sc_in_clk		clk;		// **** System Inputs
+    sc_in<bool>		reset;		//  system reset
+    sc_in<bool*>	boolptr;	//  check pointer types
 
     /*AUTOSUBCELLS*/
    // Beginning of SystemPerl automatic foo
@@ -45,6 +46,8 @@ rip this out please
 
 	sc_clock clk( "clock", ct) ;
     }
+
+/*AUTOINCLUDE*/
 
 int sc_main(int ac, char *av[])
 {

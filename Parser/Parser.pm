@@ -1,4 +1,4 @@
-#$Id: Parser.pm,v 1.12 2001/05/24 18:39:43 wsnyder Exp $
+#$Id: Parser.pm,v 1.16 2001/09/26 14:51:01 wsnyder Exp $
 ######################################################################
 #
 # This program is Copyright 2001 by Wilson Snyder.
@@ -29,7 +29,7 @@ require DynaLoader;
 use strict;
 use vars qw($VERSION);
 
-$VERSION = '0.420';
+$VERSION = '0.430';
 
 ######################################################################
 #### Configuration Section
@@ -40,7 +40,7 @@ bootstrap SystemC::Parser;
 #### Accessors
 
 sub new {
-    my $class = shift;
+    my $class = shift;  $class = ref $class if ref $class;
     my $self = { strip_autos=>0,
 		 @_};
 
@@ -51,11 +51,20 @@ sub new {
 sub read {
     my $self = shift;
     my %param = (@_);
+    (-r $param{filename}) or croak "%Error: file not found: $param{filename}, stopped";
     $self->_read_xs($param{filename}, $param{strip_autos}||$self->{strip_autos});
 }
 
+sub read_include {
+    my $self = shift;
+    my %param = (@_);
+    (-r $param{filename}) or croak "%Error: file not found: $param{filename}, stopped";
+    $self->_read_include_xs($param{filename});
+}
+
 #In Parser.XS:
-# sub read_xs {class}
+# sub _read_xs {class}
+# sub _read_include_xs {class}
 # sub filename {class}
 # sub lineno {class}
 
@@ -125,6 +134,12 @@ Creates a new parser element.
 =item $self->read(I<filename>)
 
 Reads the filename and invokes necessary callbacks.
+
+=item $self->read_include(I<filename>)
+
+When called from inside a read() callback function, switches to the
+specified include file.  The EOF of the include file will automatically
+switch back to the original file.
 
 =back
 

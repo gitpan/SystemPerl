@@ -1,28 +1,30 @@
-// $Id: ex_mod.sp,v 1.6 2001/06/27 13:10:53 wsnyder Exp $
+// $Id: ExMod.sp,v 1.4 2001/09/26 14:51:02 wsnyder Exp $
 // DESCRIPTION: SystemPerl: Example source module
 
 //error test:
 ///*AUTOSIGNAL*/
 
 #sp interface
+#include <systemperl.h>
 /*AUTOSUBCELL_CLASS*/
 
 SC_MODULE (__MODULE__) {
+    static const int ARRAYSIZE = 3;
 
     sc_in_clk		clk;		/* System Clock */
-    sc_in<bool>		in;		// Input from bench to   ex_mod
-    sc_out<bool>	out;		// Output to  bench from ex_mod
+    sc_in<bool>		in;		// Input from bench to   ExMod
+    sc_out<bool>	out;		// Output to  bench from ExMod
+    sc_signal<uint32_t> out_array[ARRAYSIZE];
 
-    SP_CELL_DECL (ex_mod_sub, sub[1]);
+    SP_CELL_DECL (ExModSub, sub[1]);
 
     /*AUTOSUBCELLS*/
-    /*AUTODECLS*/
     /*AUTOSIGNAL*/
+  public:
+    /*AUTOMETHODS*/
 
     //error test:
     //sc_signal<bool> in;
-
-    SC_CTOR(__MODULE__);
 };
 
 #sp implementation
@@ -31,7 +33,7 @@ SC_MODULE (__MODULE__) {
 SP_CTOR_IMP(__MODULE__)
 {
     //====
-    SP_CELL (sub[0], ex_mod_sub);
+    SP_CELL (sub[0], ExModSub);
     SP_PIN  (sub[0], out, cross);
     /*AUTOINST*/	
 
@@ -39,9 +41,11 @@ SP_CTOR_IMP(__MODULE__)
     //SP_PIN  (sub0, nonexisting_error, cross);
     
     //====
-    SP_CELL (suba, ex_mod_sub);
+    SP_CELL (suba, ExModSub);
     SP_PIN  (suba, in, cross);
     /*AUTOINST*/
+
+    for (int i=0; i<ARRAYSIZE; i++) out_array[i].write(i);
 }
 
 /*AUTOTRACE(__MODULE__)*/

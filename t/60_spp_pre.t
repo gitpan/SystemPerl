@@ -8,7 +8,7 @@ BEGIN { plan tests => 3 }
 BEGIN { require "t/test_utils.pl"; }
 
 print "Checking sp_preproc (Preproc mode)...\n";
-run_system ("cp example/*.sp test_dir");
+run_system ("cp example/*.sp* test_dir");
 ok(1);
 
 run_system ("cd test_dir && ${PERL} ../sp_preproc -M sp_preproc.d --preproc *.sp");

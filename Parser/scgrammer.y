@@ -1,5 +1,5 @@
 %{
-/* $Id: scgrammer.y,v 1.22 2001/04/26 14:45:40 wsnyder Exp $
+/* $Id: scgrammer.y,v 1.30 2001/08/29 16:59:16 gwaters Exp $
  ******************************************************************************
  * DESCRIPTION: SystemC bison parser
  *
@@ -67,17 +67,11 @@ int scgrammerlex() {
 
 /*%pure_parser*/
 %token_table
-/* #%union {
- #  char *string;
- #  Vp_Node *node;
- #  Vp_SubType sub;
- #  Vp_Flag flag;
- #} */
 %union {
   char *string;
 }
 
-%token	 	STRING
+%token<string> 	STRING
 %token<string>	SYMBOL
 %token<string>	NUMBER
 %token		PP
@@ -92,6 +86,9 @@ int scgrammerlex() {
 %token		SP_CELL
 %token		SP_CELL_DECL
 %token		SP_PIN
+%token		SP_TRACED
+%token		VL_SIG
+%token		VL_SIGW
 %token		CLASS
 %token		ENUM
 %token		AUTO
@@ -102,6 +99,8 @@ int scgrammerlex() {
 %type<string>	vector
 %type<string>	vectorNum
 %type<string>	declType
+%type<string>	declType1
+%type<string>	declTypeBase
 
 %%
 //************************************
@@ -136,13 +135,14 @@ exp:		auto
 		| cell_decl
 		| pin
 		| decl
+		| traceable
 		| inout
 		| inout_clk
 		| inst_clk
 		| sp
 		| class
 		| enum
-		| STRING	{ }
+		| STRING	{ SCFree($1); }
 		| SYMBOL	{ SCFree($1); }
 		| NUMBER	{ SCFree($1); }
 		| PP		{ }
@@ -172,8 +172,22 @@ pin:		SP_PIN '(' cellname ',' SYMBOL vector ',' SYMBOL vector ')' ';'
 decl:		SC_SIGNAL '<' declType '>' SYMBOL vector ';'
 			{ scparser_call(-4,"signal",$1,$3,$5,$6); }
 
+//		FOO or FOO::BAR*
+declType:	declType1		{ $$ = $1; }
+		| declType1 '*'	{ char *cp=malloc(strlen($1)+5);
+			  strcpy (cp,$1); strcat(cp,"*");
+			  SCFree ($1);
+			  $$=cp; }
+
+declType1:	declTypeBase
+		| SYMBOL ':' ':' declType1
+			{ char *cp=malloc(strlen($1)+strlen($4)+5);
+			  strcpy(cp, $1); strcat(cp, "::"); strcat(cp, $4);
+			  SCFree($1); SCFree($4);
+			  $$=cp; }
+
 //		uint32_t | sc_bit<4> | unsigned int
-declType:	SYMBOL
+declTypeBase:	SYMBOL
 		| SYMBOL '<' vectorNum '>'
 			{ char *cp=malloc(strlen($1)+strlen($3)+5);
 			  strcpy (cp,$1); strcat(cp,"<");strcat(cp,$3);strcat(cp,">");
@@ -181,11 +195,11 @@ declType:	SYMBOL
 			  $$=cp; }
 
 //		sc_in_clk SYMBOL
-inout:		SC_INOUT_CLK SYMBOL
+inout:		SC_INOUT_CLK SYMBOL vector ';'
 			{
 			  {char *cp = strrchr($1,'_'); if (cp) *cp='\0';} /* Drop _clk */
-			  scparser_call(3,"signal",$1,"sc_clock",$2);
- 			  SCFree($1); SCFree($2);}
+			  scparser_call(4,"signal",$1,"sc_clock",$2,$3);
+ 			  SCFree($1); SCFree($2); SCFree($3);}
 //		sc_clock SYMBOL ;
 inout_clk:	SC_CLOCK SYMBOL ';'
 			{
@@ -197,6 +211,23 @@ inst_clk:	SC_CLOCK '(' { SCFree($1); }
 		| SC_CLOCK SYMBOL '(' { SCFree($1); SCFree($2);}
 
 sp:		SP	{ scparser_call(1,"preproc_sp",sclextext);}
+
+//************************************
+// Tracables
+
+traceable:	SP_TRACED SYMBOL SYMBOL vector ';'
+ 			{ scparser_call(4,"signal","sp_traced",$2,$3,$4);
+ 			  SCFree($2); SCFree($3); SCFree($4)}
+		| VL_SIG '(' SYMBOL vector ',' NUMBER ',' NUMBER ')' ';'
+ 			{ scparser_call(6,"signal","sp_traced","uint32_t",$3,$4,$6,$8);
+ 			  SCFree($3); SCFree($4); SCFree($6); SCFree($8);}
+		| VL_SIGW '(' SYMBOL vector ',' NUMBER ',' NUMBER ',' vectorNum ')' ';'
+ 			{ scparser_call(6,"signal","sp_traced","uint32_t",$3,$4,$6,$8);
+ 			  SCFree($3); SCFree($4); SCFree($6); SCFree($8); SCFree($10);}
+
+//************************************
+// Enumerations
+
 enum:		ENUM enumSymbol '{' enumValList '}'
   			{ SCFree (ScParserLex.enumname); }
 

@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Id: Subclass.pm,v 1.6 2001/05/24 18:39:43 wsnyder Exp $
+# $Id: Subclass.pm,v 1.8 2001/08/31 13:06:17 wsnyder Exp $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -24,7 +24,7 @@
 package SystemC::Netlist::Subclass;
 use Class::Struct;
 require Exporter;
-$VERSION = '0.420';
+$VERSION = '0.430';
 @ISA = qw(Exporter);
 @EXPORT = qw(structs);
 use strict;
@@ -46,6 +46,12 @@ $Warnings = $Errors = 0;
 #### Error Handling
 # Class::Struct is great, but it can't have a @ISA... Sigh.
 # Thus you can't just call a $netlist_object->warn ("message...");
+
+sub info {
+    my $self = shift;
+    $self = shift if ref $_[0];	# Optional reference to object
+    CORE::warn "-Info: ".($self->filename||"").":".($self->lineno||"").": ".join('',@_);
+}
 
 sub warn {
     my $self = shift;

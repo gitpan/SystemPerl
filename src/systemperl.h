@@ -1,4 +1,4 @@
-/* $Id: systemperl.h,v 1.9 2001/05/18 17:25:03 wsnyder Exp $
+/* $Id: systemperl.h,v 1.12 2001/07/12 19:30:24 wsnyder Exp $
  ************************************************************************
  *
  * THIS MODULE IS PUBLICLY LICENSED
@@ -30,10 +30,11 @@
 /* Necessary includes */
 #include <ostream.h>	// For AUTOENUM
 #ifdef SYSTEMC_LESSER
-#include <systemc_lesser.h>
+# include <systemc_lesser.h>
 #else
-#include <systemc.h>
+# include <systemc.h>
 #endif
+#include <stdint.h>      /*uint32_t*/
 
 /**********************************************************************/
 /* Macros */
@@ -41,19 +42,27 @@
 // Allows constructor to be in implementation rather then the header
 #define SP_CTOR_IMP(name) name::name(sc_module_name)
 
-// Declaration cell that SP can understand
+// Declaration of cell for interface
 #define SP_CELL_DECL(type,instname) type *instname
 
-// Instantiation of a cell that SP can understand
+// Instantiation of a cell in CTOR
 #define SP_CELL(instname,type) (instname = new type (# instname))
 
-// Instantiation of a cell that SP can understand
+// Instantiation of a cell in CTOR
 // Allocate using a formatted name
 #define SP_CELL_FORM(instname,type,format...) \
 	(instname = new type (sp_cell_sprintf(format)))
 
-// Connection of a pin that SP can understand
+// Connection of a pin to a SC_CELL
 #define SP_PIN(instname,port,net) (instname->port(net))
+
+// Tracing types
+#define SP_TRACED	// Just a NOP; it simply marks a declaration
+#ifndef VL_SIG
+# define VL_SIG(name, msb,lsb)	         uint32_t name
+# define VL_SIGW(name, msb,lsb, words)   uint32_t name[words]
+# define VL_SIGW_P(name, msb,lsb, words) uint32_t name[]
+#endif
 
 /**********************************************************************/
 // Functions
@@ -64,6 +73,12 @@ inline const char *sp_cell_sprintf(const char *fmt...) {
     va_list ap; va_start(ap,fmt); vsprintf(buf,fmt,ap); va_end(ap);
     return(buf);
 }
+
+/**********************************************************************/
+/* Classes so we can sometimes avoid header inclusion */
+
+class SpTraceFile;
+class SpTraceVcd;
 
 /**********************************************************************/
 /* sp_log.h has whole thing... This one function may be used everywhere */

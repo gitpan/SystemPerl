@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Id: File.pm,v 1.41 2001/06/27 13:10:53 wsnyder Exp $
+# $Id: File.pm,v 1.65 2001/09/26 14:51:01 wsnyder Exp $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -30,7 +30,7 @@ use SystemC::Template;
 use SystemC::Netlist::Subclass;
 @ISA = qw(SystemC::Netlist::File::Struct
 	SystemC::Netlist::Subclass);
-$VERSION = '0.420';
+$VERSION = '0.430';
 use strict;
 
 structs('new',
@@ -38,13 +38,17 @@ structs('new',
 	=>[name		=> '$', #'	# Filename this came from
 	   basename	=> '$', #'	# Basename of the file
 	   netlist	=> '$', #'	# Netlist is a member of
+	   userdata	=> '%',		# User information
 	   #
 	   text		=> '$',	#'	# ARRAYREF: Lines of text
 	   is_libcell	=> '$',	#'	# True if is a library cell
 	   # For special procedures
 	   _write_var	=> '%',		# For write() function info passing
-	   _enums	=> '$', #'	# For autoenums
+	   _enums	=> '$', #'	# For autoenums, hash{class}{en}{def}
+	   _autoenums	=> '%', 	# For autoenums, hash{class} = en
 	   _modules	=> '%',		# For autosubcell_include
+	   _intf_done	=> '$', #'	# For autointf, already inserted it
+	   _impl_done	=> '$', #'	# For autoimpl, already inserted it
 	   ]);
 	
 ######################################################################
@@ -57,6 +61,37 @@ use strict;
 use vars qw (@ISA);
 use vars qw (@Text);	# Local for speed while inside parser.
 @ISA = qw (SystemC::Parser);
+
+sub resolve_filename {
+    my $self = shift;
+    my $filename = shift;
+    my $from = shift;
+    if ($self->{netlist}{options}) {
+	$filename = $self->{netlist}{options}->file_path($filename);
+    }
+    if (!-r $filename) {
+	$from->error("Cannot open $filename") if $from;
+	die "%Error: Cannot open $filename\n";
+    }
+    $self->{netlist}->dependancy_in ($filename);
+    return $filename;
+}
+
+sub new {
+    my $class = shift;
+    my %params = (@_);	# filename=>
+
+    # A new file; make new information
+    $params{fileref} or die "No fileref parameter?";
+    $params{netlist} = $params{fileref}->netlist;
+    my $parser = $class->SUPER::new (%params,
+				     modref=>undef,	# Module being parsed now
+				     cellref=>undef,	# Cell being parsed now
+				     );
+    $parser->{filename} = $parser->resolve_filename($params{filename});
+    $parser->read (filename=>$parser->{filename});
+    return $parser;
+}
 
 sub text {
     my $self = shift;
@@ -138,6 +173,7 @@ sub auto {
     }
     elsif ($line =~ /^(\s*)\/\*AUTOENUM_CLASS\(([a-zA-Z0-9_]+)(\.|::)([a-zA-Z0-9_]+)\)\*\//) {
 	my $prefix = $1; my $class = $2;  my $enumtype = $4;
+	$self->{fileref}->_autoenums($class, $enumtype);
 	push @Text, [ 1, $self->filename, $self->lineno,
 		      \&SystemC::Netlist::File::_write_autoenum_class,
 		      $self->{fileref}, $class, $enumtype, $prefix,];
@@ -148,28 +184,68 @@ sub auto {
 		      \&SystemC::Netlist::File::_write_autoenum_global,
 		      $self->{fileref}, $class, $enumtype, $prefix,];
     }
-    elsif ($line =~ /^(\s*)\/\*AUTODECLS\*\//) {
+    elsif ($line =~ /^(\s*)\/\*AUTOMETHODS\*\//) {
 	my $prefix = $1;
 	push @Text, [ 1, $self->filename, $self->lineno,
 		      \&SystemC::Netlist::Module::_write_autodecls,
 		      $modref, $self->{fileref}, $prefix];
     }
-    elsif ($line =~ /^(\s*)\/\*AUTOTRACE\(([a-zA-Z0-9_]+)\)\*\//) {
-	my $prefix = $1; my $modname = $2;
+    elsif ($line =~ /^(\s*)\/\*AUTOTRACE\(([a-zA-Z0-9_]+)(,manual|,recurse|)\)\*\//) {
+	my $prefix = $1; my $modname = $2; my $manual = $3;
 	$modname = $self->{fileref}->basename if $modname eq "__MODULE__";
 	my $mod = $self->{netlist}->find_module ($modname);
 	$mod or $self->warn ("Declaration for module not found: $modname\n");
 	$mod->_autotrace(1);
+	$mod->_autotrace('manual') if $manual =~ /manual/;
+	$mod->_autotrace('recurse') if $manual =~ /recurse/;
 	push @Text, [ 1, $self->filename, $self->lineno,
-		      \&SystemC::Netlist::Module::_write_autotrace,
+		      \&SystemC::Netlist::AutoTrace::_write_autotrace,
 		      $mod, $self->{fileref}, $prefix,];
+    }
+    elsif ($line =~ /^(\s*)\/\*AUTOATTR\(([a-zA-Z0-9_,]+)\)\*\//) {
+	my $attrs = $2 . ",";
+	foreach my $attr (split (",", $attrs)) {
+	    if ($attr eq "verilated") {
+		$modref or $self->warn ("Attribute outside of module declaration\n");
+		#print "Lesswarn ",$modref->name(),"\n";
+		$modref->lesswarn(1);
+	    } else {
+		$self->warn ("Unknown attribute $attr\n");
+	    }
+	}
+    }
+    elsif ($line =~ /^(\s*)\/\*AUTOIMPLEMENTATION\*\//) {
+	my $prefix = $1;
+	$self->{fileref}->_impl_done(1);
+	push @Text, [ 1, $self->filename, $self->lineno,
+		      \&SystemC::Netlist::File::_write_autoimpl,
+		      $self->{fileref}, $prefix];
+    }
+    elsif ($line =~ /^(\s*)\/\*AUTOINTERFACE\*\//) {
+	my $prefix = $1;
+	$self->{fileref}->_intf_done(1);
+	push @Text, [ 1, $self->filename, $self->lineno,
+		      \&SystemC::Netlist::File::_write_autointf,
+		      $self->{fileref}, $prefix];
+    }
+    elsif ($line =~ /^(\s*)\/\*AUTOINOUT_MODULE\(([a-zA-Z0-9_,]+)\)\*\//) {
+	if (!$modref) {
+	    return $self->error ("AUTOINOUT_MODULE outside of module definition", $line);
+	}
+	$modref->_autoinoutmod($2);
+	# No push to @Text, we require AUTOSIGNAL to do that.
     }
     else {
 	return $self->error ("Unknown AUTO command", $line);
     }
 }
 
-sub ctor {}
+sub ctor {
+    my $self = shift;
+    my $modref = $self->{modref};
+    $modref or return $self->error ("SC_CTOR outside of module definition\n");
+    $modref->_ctor(1);
+}
 
 sub cell_decl {
     my $self = shift;
@@ -222,22 +298,25 @@ sub signal {
     my $self = shift;
     my $inout = shift;
     my $type = shift;
-    my $net = shift;
+    my $netname = shift;
     my $array = shift;
+    my $msb = shift;
+    my $lsb = shift;
 
     my $modref = $self->{modref};
     if (!$modref) {
-	return $self->error ("Signal declaration outside of module definition", $net);
+	return $self->error ("Signal declaration outside of module definition", $netname);
     }
 
     if ($inout eq "sc_signal"
 	|| $inout eq "sc_clock"
+	|| $inout eq "sp_traced"
 	) {
 	my $net = $modref->new_net
-	    (name=>$net,
+	    (name=>$netname,
 	     filename=>$self->filename, lineno=>$self->lineno,
-	     direction=>$inout, type=>$type, array=>$array,
-	     comment=>undef,
+	     simple_type=>($inout eq "sp_traced"), type=>$type, array=>$array,
+	     comment=>undef, msb=>$msb, lsb=>$lsb,
 	     # we don't detect variable usage, so presume ok if declared
 	     _used_input=>1, _used_output=>1,	
 	     );
@@ -246,7 +325,7 @@ sub signal {
     elsif ($inout =~ /sc_(inout|in|out)$/) {
 	my $dir = $1;
 	my $net = $modref->new_port
-	    (name=>$net,
+	    (name=>$netname,
 	     filename=>$self->filename, lineno=>$self->lineno,
 	     direction=>$dir, type=>$type,
 	     array=>$array, comment=>undef,);
@@ -271,6 +350,14 @@ sub preproc_sp {
 	    push @Text, [ 0, $self->filename, $self->lineno,
 			  \&SystemC::Netlist::File::_write_interface,
 			  $self->{fileref}, $line];
+	}
+	elsif ($cmd =~ /^include/) {
+	    ($cmd =~ m/^include\s+\"([^\" \n]+)\"$/)
+		or $self->error("Badly formed sp include line", $line);
+	    my $filename = $1;
+	    print "#include $filename\n" if $SystemC::Netlist::Debug;
+	    $filename = $self->resolve_filename($filename);
+	    $self->read_include (filename=>$filename);
 	}
 	else {
 	    return $self->error ("Invalid sp_preproc directive",$line);
@@ -321,32 +408,32 @@ sub read {
     my %params = (@_);	# filename=>
 
     my $filename = $params{filename} or croak "%Error: ".__PACKAGE__."::read_file (filename=>) parameter required, stopped";
-
-    print __PACKAGE__."::read_file $filename\n" if $SystemC::Netlist::Debug;
-    (-r $filename) or die "%Error: Cannot open $filename\n";
-
     my $netlist = $params{netlist} or croak ("Call SystemC::Netlist::read_file instead,");
-    my $fileref = $netlist->new_file (name=>$filename,
+
+    my $filepath = $filename;
+    if ($netlist->{options}) {
+	$filepath = $netlist->{options}->file_path($filename);
+    }
+
+    print __PACKAGE__."::read_file $filepath\n" if $SystemC::Netlist::Debug;
+
+    my $fileref = $netlist->new_file (name=>$filepath,
 				      is_libcell=>$params{is_libcell}||0,
 				      );
 
-    my $parser = SystemC::Netlist::File::Parser->new
-	( modref=>undef,	# Module being parsed now
-	  cellref=>undef,	# Cell being parsed now
-	  fileref=>$fileref,
-	  filename=>$filename,	# for ->read
-	  netlist=>$netlist,
-	  strip_autos=>$params{strip_autos}||0,	# for ->read
-	  );
-    # For speed, we don't use the accessor function
+    # For speed, we use @Text instead of the accessor function
     local @SystemC::Netlist::File::Parser::Text = ();
-    $netlist->dependancy_in ($filename);
-    $parser->read (filename=>$filename,);
+
+    my $parser = SystemC::Netlist::File::Parser->new
+	( fileref=>$fileref,
+	  filename=>$filepath,	# for ->read
+	  strip_autos=>$params{strip_autos}||0,		# for ->read
+	  );
     $fileref->text(\@SystemC::Netlist::File::Parser::Text);
     return $fileref;
 }
 
-sub print {
+sub dump {
     my $self = shift;
     my $indent = shift||0;
     print " "x$indent,"File:",$self->name(),"  Lines:",$#{@{$self->text}},"\n";
@@ -359,11 +446,11 @@ sub print {
 # _write locals
 use vars qw($as_imp $as_int $outputting);
 
-sub _write_print {
+sub print {
     shift if ref $_[0];
     SystemC::Template::print (@_);
 }
-sub _write_printf {
+sub printf {
     shift if ref $_[0];
     SystemC::Template::printf (@_);
 }
@@ -401,7 +488,6 @@ sub write {
 	}
 	$tpl->print("// This file generated automatically by $program\n");
 	$tpl->printf("#include \"%s.h\"\n", $self->basename) if $as_imp;
-	$tpl->print("#include \"systemperl.h\"\n") if $as_int;
     }
 
     my $basename = $self->basename;
@@ -428,6 +514,15 @@ sub write {
 	}
     }
 
+    # Automatic AUTOIMPLEMENTATION/AUTOINTERFACE at end of each file
+    $outputting = 1;
+    if (0&&$autos && $as_int && !$self->_intf_done) {
+	$self->_write_autointf("");
+    }
+    if ($autos && $as_imp && !$self->_impl_done) {
+	$self->_write_autoimpl("");
+    }
+
     if ($as_imp || $as_int) {
 	$tpl->print ("// This file generated automatically by $program\n");
 	$tpl->printf ("#endif /*_%s_H_*/\n", uc $self->basename) if $as_int;
@@ -442,23 +537,43 @@ sub _write_implementation {
     my $self = shift;
     my $line = shift;
     if ($as_imp || $as_int) {
-	_write_print ("//$line");
+	$self->print ("//$line");
 	$outputting = 0 if ($as_int);
 	$outputting = 1 if ($as_imp);
     } else {
-	_write_print ($line);
+	$self->print ($line);
     }
 }
 sub _write_interface {
     my $self = shift;
     my $line = shift;
     if ($as_imp || $as_int) {
-	_write_print ("//$line");
+	$self->print ("//$line");
 	$outputting = 1 if ($as_int);
 	$outputting = 0 if ($as_imp);
     } else {
-        _write_print ($line);
+        $self->print ($line);
     }
+}
+
+sub _write_autointf {
+    my $self = shift;
+    my $prefix = shift;
+    return if !$SystemC::Netlist::File::outputting;
+    $self->print ("${prefix}// Beginning of SystemPerl automatic interface\n");
+    $self->print ("${prefix}// End of SystemPerl automatic interface\n");
+}
+
+sub _write_autoimpl {
+    my $self = shift;
+    my $prefix = shift;
+    return if !$SystemC::Netlist::File::outputting;
+    $self->print ("${prefix}// Beginning of SystemPerl automatic implementation\n");
+    foreach my $class (sort (keys %{$self->_autoenums()})) {
+	my $enumtype = $self->_autoenums($class);
+	$self->_write_autoenum_impl($prefix,$class,$enumtype);
+    }
+    $self->print ("${prefix}// End of SystemPerl automatic implementation\n");
 }
 
 sub _write_autoenum_class {
@@ -468,38 +583,25 @@ sub _write_autoenum_class {
     my $prefix = shift;
 
     return if !$SystemC::Netlist::File::outputting;
-    _write_print
+    $self->print
 	("${prefix}// Beginning of SystemPerl automatic enumeration\n"
 	 ."${prefix}enum ${enumtype} e_${enumtype};\n"
-	 ."${prefix}inline ${class} () {};\n"
+	 ."${prefix}// Avoid the default constructor; it may become private.\n"
+	 ."${prefix}inline ${class} () : e_${enumtype}(static_cast<${enumtype}>(0x0 /* 0xdeadbeef */)) {};\n"   
 	 .("${prefix}inline ${class} (${enumtype} _e)"
 	   ." : e_${enumtype}(_e) {};\n")
 	 .("${prefix}explicit inline ${class} (int _e)"
 	   ." : e_${enumtype}(static_cast<${enumtype}>(_e)) {};\n")
-	 ."${prefix}operator const char * (void) const { return ascii(); };\n"
-	 ."${prefix}operator ${enumtype} (void) const { return e_${enumtype}; };\n"
-	 ."${prefix}const char *ascii (void) const {\n"
-	 ."${prefix}   switch (e_${enumtype}) {\n"
+	 ."${prefix}operator const char* () const { return ascii(); };\n"
+	 ."${prefix}operator ${enumtype} () const { return e_${enumtype}; };\n"
+	 ."${prefix}const char* ascii () const;\n"
 	 );
-
-    my $href = $self->_enums() || {{}};
-    my $vals = $href->{$class};
-    $vals = $href->{TOP} if !defined $vals;
-    foreach my $valsym (sort (keys %{$vals->{$enumtype}})) {
-	my $name = $valsym;
-	_write_print ("${prefix}   case ${valsym}: return \"${name}\";\n");
-    }
-
-    _write_print ("${prefix}   default: return \"%E:BadVal:${class}\";\n"
-		  ."${prefix}   };\n"
-		  ."${prefix}};\n"
-		  );
 
     #Can do this, but then also need setting functions...
     #foreach my $valsym (sort (keys %{$href->{$enumtype}})) {
-    #	 _write_print ("${prefix}bool is${valsym}() const {return e_${enumtype}==${valsym};};\n");
+    #	 $self->print ("${prefix}bool is${valsym}() const {return e_${enumtype}==${valsym};};\n");
     #}
-    _write_print ("${prefix}// End of SystemPerl automatic enumeration\n");
+    $self->print ("${prefix}// End of SystemPerl automatic enumeration\n");
 }
 
 sub _write_autoenum_global {
@@ -508,17 +610,44 @@ sub _write_autoenum_global {
     my $enumtype = shift;
     my $prefix = shift;
     return if !$SystemC::Netlist::File::outputting;
-    _write_print
+    $self->print
 	("${prefix}// Beginning of SystemPerl automatic enumeration\n"
-	 ."${prefix}inline bool operator== (${class} lhs, ${class} rhs)"
+	 ."${prefix}inline bool operator== (const ${class}& lhs, const ${class}& rhs)"
 	 ." { return (lhs.e_${enumtype} == rhs.e_${enumtype}); }\n"
-	 ."${prefix}inline bool operator== (${class} lhs, ${class}::${enumtype} rhs)"
+	 ."${prefix}inline bool operator== (const ${class}& lhs, const ${class}::${enumtype} rhs)"
 	 ." { return (lhs.e_${enumtype} == rhs); }\n"
-	 ."${prefix}inline bool operator== (${class}::${enumtype} lhs, ${class} rhs)"
+	 ."${prefix}inline bool operator== (const ${class}::${enumtype} lhs, const ${class}& rhs)"
 	 ." { return (lhs == rhs.e_${enumtype}); }\n"
 	 ."${prefix}inline std::ostream& operator<< (std::ostream& lhs, const ${class}& rhs)"
 	 ." { return lhs << rhs.ascii(); }\n"
 	 ."${prefix}// End of SystemPerl automatic enumeration\n"
+	 );
+}
+
+sub _write_autoenum_impl {
+    my $self = shift;
+    my $prefix = shift;
+    my $class = shift;
+    my $enumtype = shift;
+
+    $self->print
+	("${prefix}// AUTOIMPLEMENTATION: AUTOENUM($class,$enumtype)\n"
+	 ."${prefix}const char* ${class}::ascii () const {\n"
+	 ."${prefix}   switch (e_${enumtype}) {\n"
+	 );
+
+    my $href = $self->_enums() || {{}};
+    my $vals = $href->{$class};
+    $vals = $href->{TOP} if !defined $vals;
+    foreach my $valsym (sort (keys %{$vals->{$enumtype}})) {
+	my $name = $valsym;
+	$self->print ("${prefix}   case ${valsym}: return \"${name}\";\n");
+    }
+
+    $self->print
+	("${prefix}   default: return \"%E:BadVal:${class}\";\n"
+	 ."${prefix}   };\n"
+	 ."${prefix}}\n"
 	 );
 }
 
@@ -538,13 +667,13 @@ sub _write_autosubcell_class {
     my $fileref = shift;
     my $prefix = shift;
     return if !$SystemC::Netlist::File::outputting;
-    $fileref->_write_print ("${prefix}// Beginning of SystemPerl automatic subcell classes\n");
+    $fileref->print ("${prefix}// Beginning of SystemPerl automatic subcell classes\n");
     foreach my $cellref ($fileref->_cells_in_file) {
-	$fileref->_write_printf ("%sclass %-21s  // For %s.%s\n"
+	$fileref->printf ("%sclass %-21s  // For %s.%s\n"
 				 ,$prefix,$cellref->submodname.";"
 				 ,$cellref->module->name, $cellref->name);
     }
-    $fileref->_write_print ("${prefix}// End of SystemPerl automatic subcell classes\n");
+    $fileref->print ("${prefix}// End of SystemPerl automatic subcell classes\n");
 }
 
 sub _write_autosubcell_include {
@@ -552,13 +681,13 @@ sub _write_autosubcell_include {
     my $fileref = shift;
     my $prefix = shift;
     return if !$SystemC::Netlist::File::outputting;
-    $fileref->_write_print ("${prefix}// Beginning of SystemPerl automatic subcell includes\n");
+    $fileref->print ("${prefix}// Beginning of SystemPerl automatic subcell includes\n");
     foreach my $cellref ($fileref->_cells_in_file) {
-	$fileref->_write_printf ("#include \"%-22s  // For %s.%s\n"
-				 ,$cellref->submodname.".h\""
-				 ,$cellref->module->name, $cellref->name);
+	$fileref->printf ("#include \"%-22s  // For %s.%s\n"
+			  ,$self->netlist->remove_defines($cellref->submodname).".h\""
+			  ,$cellref->module->name, $cellref->name);
     }
-    $fileref->_write_print ("${prefix}// End of SystemPerl automatic subcell includes\n");
+    $fileref->print ("${prefix}// End of SystemPerl automatic subcell includes\n");
 }
 
 ######################################################################
@@ -620,7 +749,7 @@ as_implementation=> parameter is set, only implementation code (.cpp) will
 be written.  If the as_interface=> parameter is set, only interface code
 (.h) will be written.
 
-=item $self->print
+=item $self->dump
 
 Prints debugging information for this file.
 
