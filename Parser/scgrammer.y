@@ -1,5 +1,5 @@
 %{
-/* $Revision: #41 $$Date: 2002/08/19 $$Author: wsnyder $
+/* $Revision: #42 $$Date: 2002/08/29 $$Author: wsnyder $
  ******************************************************************************
  * DESCRIPTION: SystemC bison parser
  *
@@ -221,8 +221,8 @@ class:		CLASS clSymScoped '{'	{ scparser_call(-1,"class",$2); }
 		| CLASS '{'		{ }	/* Anonymous struct */
 		;
 
-clColList:	clSymAccess			{ $$ = $1; }
-		| clSymAccess ':' clColList	{ $$ = scstrjoin3sis ($1,":",$3); }
+clColList:	clList				{ $$ = $1; }
+		| clList ':' clColList		{ $$ = scstrjoin3sis ($1,":",$3); }
 		;
 
 clList:		clSymAccess			{ $$ = $1; }

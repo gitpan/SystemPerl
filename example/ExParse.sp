@@ -1,4 +1,4 @@
-// $Revision: #1 $$Date: 2002/08/19 $$Author: wsnyder $
+// $Revision: #2 $$Date: 2002/08/29 $$Author: wsnyder $
 // DESCRIPTION: SystemPerl: Example source module for parser testing
 // This module used for parsing testing, and isn't a good generic example
 
@@ -7,12 +7,18 @@
 /*AUTOSUBCELL_CLASS*/
 
 struct InhLower : public sc_module {
+    sc_in<bool>		inhLowerPin;
 };
 
 struct InhModule : public InhLower {
+    sc_in<bool>		inhModulePin;
 };
 
-struct __MODULE__ : public InhModule {
+struct InhModule2 {
+    sc_in<bool>		inhModule2Pin;
+};
+
+struct __MODULE__ : public InhModule, public InhModule2 {
     sc_in_clk		clk;		/* System Clock */
 
     /*AUTOSUBCELL_DECL*/

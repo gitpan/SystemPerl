@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Revision: #45 $$Date: 2002/08/19 $$Author: wsnyder $
+# $Revision: #48 $$Date: 2002/08/29 $$Author: wsnyder $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -32,7 +32,7 @@ use SystemC::Netlist::AutoCover;
 use SystemC::Netlist::AutoTrace;
 
 @ISA = qw(Verilog::Netlist::Module);
-$VERSION = '1.120';
+$VERSION = '1.122';
 use strict;
 
 sub new_net {
@@ -67,6 +67,8 @@ sub new_cell {
 
 sub autos1 {
     my $self = shift;
+    # First stage of autos... Builds pins, etc
+    $self->_autos1_recurse_inherits($self->netlist->{_class_inherits}{$self->name});
     if ($self->_autoinoutmod) {
 	my $frommodname = $self->_autoinoutmod;
 	my $fromref = $self->netlist->find_module ($frommodname);
@@ -97,6 +99,48 @@ sub autos1 {
     }
 }
 
+sub _autos1_recurse_inherits {
+    my $self = shift;
+    my $inhsref = shift;
+    return if !$inhsref;
+    # Recurse inheritance tree looking for pins to inherit
+    foreach my $inh (keys %$inhsref) {
+	next if $inh eq "sc_module";
+	my $fromref = $self->netlist->find_module ($inh);
+	print "Module::autos1_inh ",$self->name,"  $inh  $fromref\n" if $Verilog::Netlist::Debug;
+	if ($fromref) {
+	    # Clone I/O
+	    foreach my $portref ($fromref->ports_sorted) {
+		my $newport = $self->new_port
+		    (name	=> $portref->name,
+		     filename	=> ($self->filename.":INHERITED("
+				    .$portref->filename.":"
+				    .$portref->lineno.")"),
+		     lineno	=> $self->lineno,
+		     direction	=> $portref->direction,
+		     type	=> $portref->type,
+		     comment	=> " From INHERITED(".$fromref->name.")",
+		     array	=> $portref->array,
+		     );
+	    }
+	    foreach my $netref ($fromref->nets_sorted) {
+		my $newnet = $self->new_net
+		    (name	=> $netref->name,
+		     filename	=> ($self->filename.":INHERITED("
+				    .$netref->filename.":"
+				    .$netref->lineno.")"),
+		     lineno	=> $self->lineno,
+		     type	=> $netref->type,
+		     comment	=> " From INHERITED(".$fromref->name.")",
+		     array	=> $netref->array,
+		     );
+	    }
+	    # Recurse its children
+	    $self->_autos1_recurse_inherits($self->netlist->{_class_inherits}{$inh});
+	}
+    }
+}
+
 sub autos2 {
     my $self = shift;
     # Below must be after creating above autoinouts
@@ -111,7 +155,23 @@ sub _write_autosignal {
     my $fileref = shift;
     my $prefix = shift;
     return if !$SystemC::Netlist::File::outputting;
-    $fileref->print ("${prefix}// Beginning of SystemPerl automatic signals/ports\n");
+    $fileref->print ("${prefix}// Beginning of SystemPerl automatic signals\n");
+    foreach my $netref ($self->nets_sorted) {
+	 if ($netref->sp_autocreated) {
+	     my $vec = $netref->array || "";
+	     $fileref->printf ("%ssc_signal%-20s %-20s //%s\n"
+		 ,$prefix,"<".$netref->type." >",$netref->name.$vec.";", $netref->comment);
+	 }
+    }
+    $fileref->print ("${prefix}// End of SystemPerl automatic signals\n");
+}
+
+sub _write_autoinout {
+    my $self = shift;
+    my $fileref = shift;
+    my $prefix = shift;
+    return if !$SystemC::Netlist::File::outputting;
+    $fileref->print ("${prefix}// Beginning of SystemPerl automatic ports\n");
     foreach my $portref ($self->ports_sorted) {
 	 if ($portref->sp_autocreated) {
 	     my $vec = $portref->array || "";
@@ -123,14 +183,7 @@ sub _write_autosignal {
 			       ,$portref->name.$vec.";", $portref->comment);
 	 }
     }
-    foreach my $netref ($self->nets_sorted) {
-	 if ($netref->sp_autocreated) {
-	     my $vec = $netref->array || "";
-	     $fileref->printf ("%ssc_signal%-20s %-20s //%s\n"
-		 ,$prefix,"<".$netref->type." >",$netref->name.$vec.";", $netref->comment);
-	 }
-    }
-    $fileref->print ("${prefix}// End of SystemPerl automatic signals/ports\n");
+    $fileref->print ("${prefix}// End of SystemPerl automatic ports\n");
 }
 
 sub _write_autosubcell_decl {

@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Revision: #92 $$Date: 2002/08/19 $$Author: wsnyder $
+# $Revision: #95 $$Date: 2002/08/29 $$Author: wsnyder $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -28,7 +28,7 @@ use SystemC::Template;
 use Verilog::Netlist::Subclass;
 @ISA = qw(SystemC::Netlist::File::Struct
 	Verilog::Netlist::Subclass);
-$VERSION = '1.120';
+$VERSION = '1.122';
 use strict;
 
 structs('new',
@@ -234,7 +234,9 @@ sub auto {
 	    return $self->error ("AUTOINOUT_MODULE outside of module definition", $line);
 	}
 	$modref->_autoinoutmod($2);
-	# No push to @Text, we require AUTOSIGNAL to do that.
+	push @Text, [ 1, $self->filename, $self->lineno,
+		      \&SystemC::Netlist::Module::_write_autoinout,
+		      $modref, $self->{fileref}, $1];
     }
     elsif ($line =~ /^(\s*)SP_AUTO_COVER(\d*)[_0-9]*\s*\( (\d+\s*,|) \s* \"([^\"]+)\" (\s*,\s* \"([^\"]+)\" \s*,\s* (\d+) |) \s*\)/x) {
 	my ($prefix,$fields,$_ignore_old_id,$cmt,$file,$line) = ($1,$2,$3,$4,$6,$7);
@@ -423,22 +425,39 @@ sub preproc_sp {
 sub class {
     my $self = shift;
     my $class = shift;
-    my $inh = shift;
-    #print "CLASS $class  INH $inh   $self->{netlist}\n";
-    if ($inh) {
-	$self->{netlist}{_class_inherits}{$class} = $inh;
-    }
+    my $inhs = shift;
     # Track class x { enum y ...}
+    $class = $self->{fileref}->basename if $class eq "__MODULE__";
     $self->{class} = $class;
-    # See if it's really a module via inheritance
-    while ($inh) {
-	if ($inh eq 'sc_module') {
-	    module($self,$class);
+    #print "CLASS $class  INH $inhs   $self->{netlist}\n" if $Debug;
+    if ($inhs) {
+	foreach my $inh (split /[:,]/,$inhs) {
+	    #print "INHSPLIT $class $inh\n" if $Debug;
+	    $self->{netlist}{_class_inherits}{$class}{$inh} = $self;
 	}
-	$inh = $self->{netlist}{_class_inherits}{$inh};  # Inh->inh
+	# See if it's really a module via inheritance
+	_class_recurse_inherits($self, $self->{netlist}{_class_inherits}{$class});
     }
-    
 }
+
+sub _class_recurse_inherits {
+    my $self = shift;
+    my $inhsref = shift;
+    # Recurse inheritance tree looking for sc_modules
+    foreach my $inh (keys %$inhsref) {
+	#print "Class rec $self->{class}  $inh\n";
+	if ($inh eq 'sc_module') {
+	    if (!$self->{modref} || $self->{modref}->name ne $self->{class}) {
+		module($self,$self->{class});
+	    }
+	} else {
+	    _class_recurse_inherits($self,$self->{netlist}{_class_inherits}{$inh});  # Inh->inh
+	    # Clone cells/pinouts from lower modules
+	    
+	}
+    }
+}
+
 
 sub enum_value {
     my $self = shift;

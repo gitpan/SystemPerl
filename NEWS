@@ -6,6 +6,14 @@ The contributors that suggested a given feature is shown in [].
 This uses outline mode in Emacs.  See C-h m [M-x describe-mode].
 
 
+* Changes in SystemC 1.122 8/29/2002
+
+***	Put AUTOINOUT signals under that label, so they can be public
+	while AUTOSIGNALs can be private.  [Greg Waters]
+
+***	Support signals in inherited sc_modules. [Navit Fedida]
+
+
 * Changes in SystemC 1.120 8/19/2002
 
 ***	Support modules declared as inherited from sc_module. [Navit Fedida]
@@ -138,7 +146,7 @@ This uses outline mode in Emacs.  See C-h m [M-x describe-mode].
 
 
 ----------------------------------------------------------------------
-$Revision: #48 $$Date: 2002/08/19 $$Author: wsnyder $
+$Revision: #50 $$Date: 2002/08/29 $$Author: wsnyder $
 ----------------------------------------------------------------------
 Copyright information:
 
