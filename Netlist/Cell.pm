@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Revision: #42 $$Date: 2004/10/26 $$Author: ws150726 $
+# $Revision: #43 $$Date: 2004/11/18 $$Author: ws150726 $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -20,7 +20,7 @@ use Class::Struct;
 use Verilog::Netlist;
 use SystemC::Netlist;
 @ISA = qw(Verilog::Netlist::Cell);
-$VERSION = '1.162';
+$VERSION = '1.163';
 use strict;
 
 ######################################################################

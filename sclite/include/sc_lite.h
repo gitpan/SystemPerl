@@ -1,4 +1,4 @@
-// $Revision: #11 $$Date: 2004/01/27 $$Author: wsnyder $
+// $Revision: #12 $$Date: 2004/10/29 $$Author: ws150726 $ -*- C++ -*-
 //********************************************************************
 //
 // Copyright 2001-2004 by Wilson Snyder.  This program is free software;
@@ -23,6 +23,8 @@
 #include <string.h>
 #include <stdio.h>
 #include <string>
+#include <iostream>
+using namespace std;
 
 //=== Basic types
 typedef string sc_string;

@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Revision: #127 $$Date: 2004/10/26 $$Author: ws150726 $
+# $Revision: #128 $$Date: 2004/11/18 $$Author: ws150726 $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -23,7 +23,7 @@ use SystemC::Template;
 use Verilog::Netlist::Subclass;
 @ISA = qw(SystemC::Netlist::File::Struct
 	Verilog::Netlist::Subclass);
-$VERSION = '1.162';
+$VERSION = '1.163';
 use strict;
 
 structs('new',
