@@ -1,10 +1,11 @@
-// $Id: ex_bench.sp,v 1.3 2001/05/07 15:40:18 wsnyder Exp $
+// $Id: ex_bench.sp,v 1.4 2001/06/21 21:10:02 wsnyder Exp $
 // DESCRIPTION: SystemPerl: Example main()
 
 #sp interface
 
 #include <systemperl.h>
 #include "ex_mod.h"
+/*AUTOSUBCELL_CLASS*/
 
 SC_MODULE (__MODULE__) {
 
@@ -15,6 +16,7 @@ SC_MODULE (__MODULE__) {
 
     /*AUTOSUBCELLS*/
     /*AUTODECLS*/
+    /*AUTOSIGNAL*/
 
     void clock (void);
 
@@ -22,6 +24,8 @@ SC_MODULE (__MODULE__) {
 };
 
 #sp implementation
+/*AUTOSUBCELL_INCLUDE*/
+
 SP_CTOR_IMP(__MODULE__)
 {
     SC_METHOD(clock);

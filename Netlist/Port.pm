@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Id: Port.pm,v 1.7 2001/05/07 15:40:18 wsnyder Exp $
+# $Id: Port.pm,v 1.10 2001/05/30 15:01:39 wsnyder Exp $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -28,9 +28,11 @@ use SystemC::Netlist;
 use SystemC::Netlist::Subclass;
 @ISA = qw(SystemC::Netlist::Port::Struct
 	SystemC::Netlist::Subclass);
+$VERSION = '0.420';
 use strict;
 
-structs('SystemC::Netlist::Port::Struct'
+structs('new',
+	'SystemC::Netlist::Port::Struct'
 	=>[name     	=> '$', #'	# Name of the port
 	   filename 	=> '$', #'	# Filename this came from
 	   lineno	=> '$', #'	# Linenumber this came from
@@ -40,18 +42,29 @@ structs('SystemC::Netlist::Port::Struct'
 	   comment	=> '$', #'	# Comment provided by user
 	   array	=> '$', #'	# Vectorization
 	   module	=> '$', #'	# Module entity belongs to
+	   # below only after links()
+	   net		=> '$', #'	# Net port connects
 	   ]);
 
-sub _link {}
-sub lint {}
-
-sub width {
+sub _link {
     my $self = shift;
-    # Return bit width (if known)
-    return 32 if $self->type eq "uint32_t";
-    return 1 if $self->type eq "bool";
-    return undef;
+    my $net = $self->module->find_net ($self->name);
+    if ($net && $net->port && $net->port != $self) {
+	$self->error ("Port redeclares existing port: ",$self->name,"\n");
+    } else {
+	$net = $self->module->new_net
+	    (name=>$self->name,
+	     filename=>$self->filename, lineno=>$self->lineno,
+	     type=>$self->type, array=>$self->array,
+	     comment=>undef,
+	     );
+    }
+    $self->net($net);
+    $self->net->port($self);
+    $self->net->_used_input(1)  if ($self->direction() =~ /in/); # in/inout
+    $self->net->_used_output(1) if ($self->direction() =~ /out/); # out/inout
 }
+sub lint {}
 
 sub print {
     my $self = shift;

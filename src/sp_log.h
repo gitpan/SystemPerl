@@ -1,4 +1,4 @@
-/* $Id: sp_log.h,v 1.10 2001/05/18 17:25:03 wsnyder Exp $
+/* $Id: sp_log.h,v 1.11 2001/05/29 19:19:34 wsnyder Exp $
  ************************************************************************
  *
  * THIS MODULE IS PUBLICLY LICENSED
@@ -102,12 +102,14 @@ public:
 	m_strmOldCerr(NULL),
 	m_isOpen(true)
 	{ open(filename);}
-    ~sp_log_file () {end_redirect();};
+    ~sp_log_file () { close();};
     
     void	open (const char *filename);	// Open the file
     void	close (void);		// Close the file
     void	redirect_cout (void);	// Redirect cout and cerr to logfile
     void	end_redirect (void);	// End redirection
+
+    static void	flush_all(void) { streambuf::flush_all(); }
 
     bool	isOpen() { return(m_isOpen); }	// Is the log file open?
 

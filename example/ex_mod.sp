@@ -1,32 +1,32 @@
-// $Id: ex_mod.sp,v 1.4 2001/05/07 15:40:18 wsnyder Exp $
+// $Id: ex_mod.sp,v 1.6 2001/06/27 13:10:53 wsnyder Exp $
 // DESCRIPTION: SystemPerl: Example source module
 
 //error test:
 ///*AUTOSIGNAL*/
 
 #sp interface
-
-#include "ex_mod_sub.h"
+/*AUTOSUBCELL_CLASS*/
 
 SC_MODULE (__MODULE__) {
 
-    sc_in_clk		clk;		  // **** System Inputs
-    sc_in<bool>		in;
-    sc_out<bool>	out;
+    sc_in_clk		clk;		/* System Clock */
+    sc_in<bool>		in;		// Input from bench to   ex_mod
+    sc_out<bool>	out;		// Output to  bench from ex_mod
 
     SP_CELL_DECL (ex_mod_sub, sub[1]);
+
     /*AUTOSUBCELLS*/
     /*AUTODECLS*/
+    /*AUTOSIGNAL*/
 
     //error test:
     //sc_signal<bool> in;
-
-    /*AUTOSIGNAL*/
 
     SC_CTOR(__MODULE__);
 };
 
 #sp implementation
+/*AUTOSUBCELL_INCLUDE*/
 
 SP_CTOR_IMP(__MODULE__)
 {

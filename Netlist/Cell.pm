@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Id: Cell.pm,v 1.10 2001/05/10 17:38:47 dcampane Exp $
+# $Id: Cell.pm,v 1.13 2001/05/24 18:39:43 wsnyder Exp $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -28,9 +28,11 @@ use SystemC::Netlist;
 use SystemC::Netlist::Subclass;
 @ISA = qw(SystemC::Netlist::Cell::Struct
 	SystemC::Netlist::Subclass);
+$VERSION = '0.420';
 use strict;
 
-structs('SystemC::Netlist::Cell::Struct'
+structs('new',
+	'SystemC::Netlist::Cell::Struct'
 	=>[name     	=> '$', #'	# Instantiation name
 	   filename 	=> '$', #'	# Filename this came from
 	   lineno	=> '$', #'	# Linenumber this came from
@@ -140,8 +142,9 @@ sub _write_autoinst {
     $fileref->_write_print ("${prefix}// Beginning of SystemPerl automatic instantiation pins\n");
     foreach my $pinref ($self->pins_sorted) {
 	if ($pinref->autocreated) {
-	    $fileref->_write_printf ("%sSP_PIN(%s, %-20s %s);\n"
-		,$prefix,$self->name,$pinref->name.",",$pinref->port->name);
+	    $fileref->_write_printf ("%sSP_PIN(%s, %-20s %-20s // %s\n"
+		,$prefix,$self->name,$pinref->name.",",$pinref->port->name.");"
+				     ,$pinref->port->direction);
 	}
     }
     $fileref->_write_print ("${prefix}// End of SystemPerl automatic instantiation pins\n");

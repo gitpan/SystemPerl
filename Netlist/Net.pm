@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Id: Net.pm,v 1.6 2001/05/07 15:40:18 wsnyder Exp $
+# $Id: Net.pm,v 1.11 2001/05/30 15:47:57 wsnyder Exp $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -28,23 +28,28 @@ use SystemC::Netlist;
 use SystemC::Netlist::Subclass;
 @ISA = qw(SystemC::Netlist::Net::Struct
 	SystemC::Netlist::Subclass);
+$VERSION = '0.420';
 use strict;
 
-structs('SystemC::Netlist::Net::Struct'
+structs('new',
+	'SystemC::Netlist::Net::Struct'
 	=>[name     	=> '$', #'	# Name of the net
 	   filename 	=> '$', #'	# Filename this came from
 	   lineno	=> '$', #'	# Linenumber this came from
-	   array	=> '$', #'	# Vector
 	   #
 	   type	 	=> '$', #'	# C++ Type (bool/int)
 	   comment	=> '$', #'	# Comment provided by user
+	   array	=> '$', #'	# Vector
 	   module	=> '$', #'	# Module entity belongs to
+	   # below only after links()
+	   port		=> '$', #'	# Reference to port connected to
+	   _used_input	=> '$', #'	# Declared as signal, or input to cell
+	   _used_output	=> '$', #'	# Declared as signal, or output from cell
 	   # below only after autos()
 	   autocreated	=> '$', #'	# Created by /*AUTOSIGNAL*/
 	   ]);
 
 sub _link {}
-sub direction {return 'net';}	# Sometimes we treat a net as a port
 
 sub width {
     my $self = shift;
@@ -56,15 +61,25 @@ sub width {
 
 sub lint {
     my $self = shift;
-    if ($self->module->find_port ($self->name)) {
-      $self->error ("Net redeclares existing port: ",$self->name,"\n");
+    # These tests don't work because we can't determine if sequential logic gen/uses a signal
+    if (0&&$self->_used_input() && !$self->_used_output()) {
+	$self->warn("Signal is not generated (or needs signal declaration): ",$self->name(), "\n");
+    }
+    if (0&&$self->_used_output() && !$self->_used_input()
+	&& $self->name() !~ /unused/) {
+	$self->print(5);
+	$self->port->print(10) if $self->port;
+	$self->warn("Signal is not used (or needs signal declaration): ",$self->name(), "\n");
+	flush STDOUT;
+	flush STDERR;
     }
 }
 
 sub print {
     my $self = shift;
     my $indent = shift||0;
-    print " "x$indent,"Net:",$self->name(),
+    print " "x$indent,"Net:",$self->name()
+	,"  ",($self->_used_input() ? "I":""),($self->_used_output() ? "O":""),
 	,"  Type:",$self->type(),"  Array:",$self->array()||"","\n";
 }
 

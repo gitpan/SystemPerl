@@ -7,8 +7,11 @@ use lib '.';
 use lib '..';
 use IO::File;
 use SystemC::Parser;
+use Test;
 
-print "ok 1\n";
+BEGIN { plan tests => 3 }
+
+ok(1);
 mkdir 'test_dir', 0777;
 
 ######################################################################
@@ -72,7 +75,7 @@ package main;
     $fh->close();
     $fdump->close();
 }
-print "ok 2\n";
+ok(1);
 
 {
     # Ok, let's make sure the right data went through
@@ -84,7 +87,7 @@ print "ok 2\n";
 	($l1[$l] eq $l2[$l]) or die "not ok 3: Line $l mismatches\n$l1[$l]\n$l2[$l]\n";
     }
 }
-print "ok 3\n";
+ok(1);
 
 sub wholefile {
     my $file = shift;

@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Id: Subclass.pm,v 1.4 2001/04/03 21:26:02 wsnyder Exp $
+# $Id: Subclass.pm,v 1.6 2001/05/24 18:39:43 wsnyder Exp $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -24,11 +24,12 @@
 package SystemC::Netlist::Subclass;
 use Class::Struct;
 require Exporter;
-use strict;
-
-use vars qw($Warnings $Errors %_Error_Unlink_Files @ISA @EXPORT);
+$VERSION = '0.420';
 @ISA = qw(Exporter);
 @EXPORT = qw(structs);
+use strict;
+
+use vars qw($Warnings $Errors %_Error_Unlink_Files);
 $Warnings = $Errors = 0;
 
 # Maybe in the future
@@ -84,14 +85,15 @@ END {
 # or allow parameter initialization!  We'll override it!
 
 sub structs {
+    my $func = shift;
     Class::Struct::struct (@_);
+    my $baseclass = $_[0];
+    (my $overclass = $baseclass) =~ s/::Struct$//;
     if ($] < 5.6) {
 	# Now override what class::struct created
-	my $baseclass = $_[0];
-	(my $overclass = $baseclass) =~ s/::Struct$//;
 	eval "
             package $overclass;
-            sub new {
+            sub ${func} {
 		my \$class = shift;
 		my \$self = new $baseclass;
 		bless \$self, \$class;
@@ -100,6 +102,12 @@ sub structs {
 		    eval (\"\\\$self->\$param(\\\$value);\");  # Slow, sorry.
 		}
 		return \$self;
+	    }";
+    } else {
+	eval "
+            package $overclass;
+            sub ${func} {
+		return new $baseclass;
 	    }";
     }
 }

@@ -1,4 +1,4 @@
-#$Id: SystemPerl.pod,v 1.10 2001/05/11 13:30:15 wsnyder Exp $
+#$Id: SystemPerl.pod,v 1.11 2001/06/21 21:09:09 wsnyder Exp $
 ######################################################################
 #
 # This program is Copyright 2001 by Wilson Snyder.
@@ -197,14 +197,34 @@ SC_MODULE(mod) {
 	  SP_PIN (sub, clk,	clk);
 	  // End of SystemPerl automatic instantiation pins
 
-=item /*AUTOSUBCELLS*/
+=item /*AUTOSUBCELL_CLASS*/
 
-AUTOSUBCELLS declares the submodules instantiated in SP_CELL declarations.
+AUTOSUBCELL_CLASS creates forward class declarations for the submodules
+instantiated in SP_CELL declarations.
+
+For example:
+
+/*AUTOSUBCELL_CLASS*/
+SC_MODULE(mod) {
+    SC_CTOR(mod) {
+	SP_CELL (sub, submod);
+
+Becomes:
+
+/*AUTOSUBCELL_CLASS*/
+// Beginning of SystemPerl automatic subcell includes
+class submod;
+// End of SystemPerl automatic subcell includes
+...
+
+=item /*AUTOSUBCELL_DECL*/
+
+AUTOSUBCELL_DECL declares the submodules instantiated in SP_CELL declarations.
 
 For example:
 
 SC_MODULE(mod) {
-    /*AUTOSUBCELLS*/
+    /*AUTOSUBCELL_DECL*/
     SC_CTOR(mod) {
 	SP_CELL (sub, submod);
 	  SP_PIN (sub, a,	a);
@@ -212,7 +232,7 @@ SC_MODULE(mod) {
 Becomes:
 
 SC_MODULE(mod) {
-    /*AUTOSUBCELLS*/
+    /*AUTOSUBCELL_DECL*/
     // Beginning of SystemPerl automatic subcells
     submod            *sub;
     // End of SystemPerl automatic subcells
@@ -220,6 +240,26 @@ SC_MODULE(mod) {
     SC_CTOR(mod) {
 	SP_CELL (sub, submod);
 	  SP_PIN (sub, a,	a);
+
+=item /*AUTOSUBCELL_INCLUDE*/
+
+AUTOSUBCELL_INCLUDE creates includes for the submodules instantiated in
+SP_CELL declarations.
+
+For example:
+
+/*AUTOSUBCELL_INCLUDE*/
+SC_MODULE(mod) {
+    SC_CTOR(mod) {
+	SP_CELL (sub, submod);
+
+Becomes:
+
+/*AUTOSUBCELL_INCLUDE*/
+// Beginning of SystemPerl automatic subcell includes
+#include "submod.h"
+// End of SystemPerl automatic subcell includes
+...
 
 =item /*AUTOSIGNAL*/
 

@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Id: File.pm,v 1.30 2001/05/18 21:48:17 wsnyder Exp $
+# $Id: File.pm,v 1.41 2001/06/27 13:10:53 wsnyder Exp $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -26,12 +26,15 @@ use Class::Struct;
 use Carp;
 
 use SystemC::Netlist;
+use SystemC::Template;
 use SystemC::Netlist::Subclass;
 @ISA = qw(SystemC::Netlist::File::Struct
 	SystemC::Netlist::Subclass);
+$VERSION = '0.420';
 use strict;
 
-structs('SystemC::Netlist::File::Struct'
+structs('new',
+	'SystemC::Netlist::File::Struct'
 	=>[name		=> '$', #'	# Filename this came from
 	   basename	=> '$', #'	# Basename of the file
 	   netlist	=> '$', #'	# Netlist is a member of
@@ -41,6 +44,7 @@ structs('SystemC::Netlist::File::Struct'
 	   # For special procedures
 	   _write_var	=> '%',		# For write() function info passing
 	   _enums	=> '$', #'	# For autoenums
+	   _modules	=> '%',		# For autosubcell_include
 	   ]);
 	
 ######################################################################
@@ -59,6 +63,18 @@ sub text {
     my $line = shift;
     push @Text, [ 0, $self->filename, $self->lineno,
 		  $line ];
+    if ($self->{netref}) {
+	# Snarf comment following signal declaration
+	# Note comments must begin on the same line as the signal
+	if ($line =~ /^[ \t]*\/\/[ \t]*([^\n]+)/
+	    || $line =~ /^[ \t]*\/\*[ \t]*(.*)/) {
+	    my $cmt = $1;
+	    $cmt =~ s/\*\/.*$//;  # Strip */ ... comment endings
+	    $cmt =~ s/\s+/ /g;
+	    $self->{netref}->comment($cmt);
+	}
+	$self->{netref} = undef;
+    }
 }
 
 sub module {
@@ -72,6 +88,7 @@ sub module {
 	(name=>$module,
 	 is_libcell=>$fileref->is_libcell(),
 	 filename=>$self->filename, lineno=>$self->lineno);
+    $fileref->_modules($module, $self->{modref});
 }
 
 sub auto {
@@ -91,14 +108,24 @@ sub auto {
 		      \&SystemC::Netlist::Module::_write_autosignal,
 		      $modref, $self->{fileref}, $1];
     }
-    elsif ($line =~ /^(\s*)\/\*AUTOSUBCELLS\*\//) {
+    elsif ($line =~ /^(\s*)\/\*AUTOSUBCELL(S|_DECL)\*\//) {
 	if (!$modref) {
-	    return $self->error ("AUTOSUBCELLS outside of module definition", $line);
+	    return $self->error ("AUTOSUBCELL_DECL outside of module definition", $line);
 	}
 	$modref->_autosubcells(1);
 	push @Text, [ 1, $self->filename, $self->lineno,
-		      \&SystemC::Netlist::Module::_write_autosubcells,
+		      \&SystemC::Netlist::Module::_write_autosubcell_decl,
 		      $modref, $self->{fileref}, $1];
+    }
+    elsif ($line =~ /^(\s*)\/\*AUTOSUBCELL_CLASS\*\//) {
+	push @Text, [ 1, $self->filename, $self->lineno,
+		      \&SystemC::Netlist::File::_write_autosubcell_class,
+		      $self->{fileref}, $self->{fileref}, $1];
+    }
+    elsif ($line =~ /^(\s*)\/\*AUTOSUBCELL_INCLUDE\*\//) {
+	push @Text, [ 1, $self->filename, $self->lineno,
+		      \&SystemC::Netlist::File::_write_autosubcell_include,
+		      $self->{fileref}, $self->{fileref}, $1];
     }
     elsif ($line =~ /^(\s*)\/\*AUTOINST\*\//) {
 	if (!$cellref) {
@@ -206,17 +233,24 @@ sub signal {
     if ($inout eq "sc_signal"
 	|| $inout eq "sc_clock"
 	) {
-	$modref->new_net (name=>$net,
-			  filename=>$self->filename, lineno=>$self->lineno,
-			  direction=>$inout, type=>$type, array=>$array,
-			  comment=>undef,);
+	my $net = $modref->new_net
+	    (name=>$net,
+	     filename=>$self->filename, lineno=>$self->lineno,
+	     direction=>$inout, type=>$type, array=>$array,
+	     comment=>undef,
+	     # we don't detect variable usage, so presume ok if declared
+	     _used_input=>1, _used_output=>1,	
+	     );
+	$self->{netref} = $net;
     }
-    elsif ($inout =~ /sc_(in|out|inout)/) {
+    elsif ($inout =~ /sc_(inout|in|out)$/) {
 	my $dir = $1;
-	$modref->new_port (name=>$net,
-			   filename=>$self->filename, lineno=>$self->lineno,
-			   direction=>$dir, type=>$type,
-			   array=>$array, comment=>undef,);
+	my $net = $modref->new_port
+	    (name=>$net,
+	     filename=>$self->filename, lineno=>$self->lineno,
+	     direction=>$dir, type=>$type,
+	     array=>$array, comment=>undef,);
+	$self->{netref} = $net;
     }
     else {
 	return $self->error ("Strange signal type: $inout", $inout);
@@ -323,47 +357,15 @@ sub print {
 # WRITING
 
 # _write locals
-use vars qw($as_imp $as_int $outputting @write_newtext $outlineno $gcclineno $gccfilename);
+use vars qw($as_imp $as_int $outputting);
 
 sub _write_print {
-    shift if ref $_[0];	# Allow calling as $self->... or not
-    my $outtext = join('',@_);
-    push @write_newtext, $outtext;
-    while ($outtext =~ /\n/g) {
-	$outlineno++;
-	$gcclineno++;
-    }
+    shift if ref $_[0];
+    SystemC::Template::print (@_);
 }
 sub _write_printf {
-    shift if ref $_[0];	# Allow calling as $self->... or not
-    my $fmt = shift;
-    my $str = sprintf ($fmt,@_);
-    _write_print ($str);
-}
-sub _write_lineno {
-    my $lineno = shift;
-    my $filename = shift;
-    if ($gccfilename ne $filename
-	|| $gcclineno != $lineno) {
-	#push @write_newtext, "//LL '$gcclineno'  '$lineno' '$gccfilename' '$filename'\n";
-	$gcclineno = $lineno;
-	# We may not be on a empty line, if not add a CR
-	my $nl = "\n";	    $outlineno++;
-	#if (($write_newtext[$#write_newtext]||"\n") !~ /\n$/m) {
-	#    print "WNT $#write_newtext  $write_newtext[$#write_newtext]\n";
-	#    $nl = "\n";
-	#}
-	if (defined $filename && $gccfilename ne $filename) {
-	    $gccfilename = $filename;
-	    # Don't use write_print, as we don't want the line number to change
-	    push @write_newtext, "${nl}#line $gcclineno \"$gccfilename\"\n";
-	    $outlineno++;
-	} else {
-	    # Don't use write_print, as we don't want the line number to change
-	    push @write_newtext, "${nl}#line $gcclineno\n";
-	    $outlineno++;
-	}
-    }
+    shift if ref $_[0];
+    SystemC::Template::printf (@_);
 }
 
 sub write {
@@ -377,97 +379,63 @@ sub write {
     local $as_int = $params{as_interface};
     my $autos  = $params{expand_autos};
     my $program = $params{program} || __PACKAGE__;	# Allow user to override it
-    my $keepstamp = $params{keep_timestamp};
     foreach my $var (keys %params) {
 	# Copy variables so subprocesses can see them
 	$self->_write_var($var, $params{$var});
     }
 
-    # Read the old file, so we can tell if it changes
-    my @oldtext;	# Old file contents
-    local @write_newtext;  # New file contents
-    if ($keepstamp) {
-	my $fh = IO::File->new ($filename);
-	if ($fh) {
-	    @oldtext = $fh->getlines();
-	    $fh->close();
-	} else {
-	    $keepstamp = 0;
-	}
+
+    my $tpl = new SystemC::Template (ppline=>($as_imp||$as_int),
+				     keep_timestamp=>$params{keep_timestamp},
+				     );
+    foreach my $lref (@{$tpl->src_text()}) {
+	#print "GOT LINE $lref->[1], $lref->[2], $lref->[3]";
+	$tpl->print_ln ($lref->[1], $lref->[2], $lref->[3]);
     }
 
     local $outputting = 1;
-    local $outlineno = 1;	# Real line in current output file
-    local $gcclineno = -1;	# Line we're telling compiler we are on
-    local $gccfilename = "";	# Filename we're telling compiler we are on
 
     if ($as_imp || $as_int) {
 	if ($as_int) {
-	    _write_printf "#ifndef _%s_H_\n#define _%s_H_ 1\n", uc $self->basename, uc $self->basename;
+	    $tpl->printf("#ifndef _%s_H_\n#define _%s_H_ 1\n", uc $self->basename, uc $self->basename);
 	}
-	_write_lineno ($outlineno+2,$filename); #+2 corrects for lines #line will insert
-	_write_print "// This file generated automatically by $program\n";
-	_write_printf "#include \"%s.h\"\n", $self->basename if $as_imp;
-	_write_print "#include \"systemperl.h\"\n" if $as_int;
+	$tpl->print("// This file generated automatically by $program\n");
+	$tpl->printf("#include \"%s.h\"\n", $self->basename) if $as_imp;
+	$tpl->print("#include \"systemperl.h\"\n") if $as_int;
     }
 
-    my $didmodule = 0;
-    $didmodule = 1 if !($as_imp || $as_int);  # If in-place, skip #define
     my $basename = $self->basename;
     foreach my $line (@{$self->text}) {
 	# [autos, filename, lineno, text]
 	# [autos, filename, lineno, function, args, ...]
 	my $needautos = $line->[0];
-	my $srcfile   = $line->[1];
-	my $srclineno = $line->[2];
+	my $src_filename   = $line->[1];
+	my $src_lineno = $line->[2];
 	if ($autos || !$needautos) {
 	    my $func = $line->[3];
 	    if (ref $func) {
 		# it contains a function and arguments to that func
 		#print "$func ($line->[1], $fh, $line->[2], );\n";
-		if ($as_imp||$as_int) {
-		    # This way, errors in the AUTOs refer to the .cpp file
-		    _write_lineno ($outlineno+2,$filename);
-		}
 		&{$func} ($line->[4],$line->[5],$line->[6],$line->[7],$line->[8],);
 	    } else {
 		my $text = $line->[3];
 		if (defined $text && $outputting) {
+		    # This will also substitute in strings.  This was deemed a feature.
 		    $text =~ s/\b__MODULE__\b/$basename/g;
-		    if (0 && !$didmodule && $text =~ /\b__MODULE__\b/) {
-			# Has problem if __MODULE__ usage is before some includes
-			_write_print "#define __MODULE__ ",$self->basename,"\n";
-			$didmodule = 1;
-		    }
-		    if ($as_imp||$as_int) {
-			_write_lineno ($srclineno,$srcfile);
-		    }
-		    _write_print $text;
+		    $tpl->print_ln ($src_filename, $src_lineno, $text);
 		}
 	    }
 	}
     }
 
     if ($as_imp || $as_int) {
-	_write_print "#undef __MODULE__\n" if $didmodule;
-	_write_print "// This file generated automatically by $program\n";
-	_write_printf "#endif /*_%s_H_*/\n", uc $self->basename if $as_int;
+	$tpl->print ("// This file generated automatically by $program\n");
+	$tpl->printf ("#endif /*_%s_H_*/\n", uc $self->basename) if $as_int;
     }
 
     # Write the file
     $self->netlist->dependancy_out ($filename);
-    if (!$keepstamp
-	|| (join ('',@oldtext) ne join ('',@write_newtext))) {
-	print "Write $filename\n" if $SystemC::Netlist::Verbose;
-	my $fh = IO::File->new (">$filename.tmp") or die "%Error: $! $filename.tmp\n";
-        $self->unlink_if_error ("$filename.tmp");
-	print $fh @write_newtext;
-	$fh->close();
-	rename "$filename.tmp", $filename;
-    } else {
-	print "Same $filename\n" if $SystemC::Netlist::Verbose;
-    }
-    unlink "$filename.tmp";
+    $tpl->write( filename=>$filename, );
 }
 
 sub _write_implementation {
@@ -489,7 +457,7 @@ sub _write_interface {
 	$outputting = 1 if ($as_int);
 	$outputting = 0 if ($as_imp);
     } else {
-	_write_print ($line);
+        _write_print ($line);
     }
 }
 
@@ -552,6 +520,45 @@ sub _write_autoenum_global {
 	 ." { return lhs << rhs.ascii(); }\n"
 	 ."${prefix}// End of SystemPerl automatic enumeration\n"
 	 );
+}
+
+sub _cells_in_file {
+    my $fileref = shift;
+    my %cells;
+    foreach my $modref (values %{$fileref->_modules}) {
+	foreach my $cellref ($modref->cells_sorted) {
+	    $cells{$cellref->submodname} = $cellref;
+	}
+    }
+    return (sort {$a->submodname cmp $b->submodname} (values %cells));
+}
+
+sub _write_autosubcell_class {
+    my $self = shift;
+    my $fileref = shift;
+    my $prefix = shift;
+    return if !$SystemC::Netlist::File::outputting;
+    $fileref->_write_print ("${prefix}// Beginning of SystemPerl automatic subcell classes\n");
+    foreach my $cellref ($fileref->_cells_in_file) {
+	$fileref->_write_printf ("%sclass %-21s  // For %s.%s\n"
+				 ,$prefix,$cellref->submodname.";"
+				 ,$cellref->module->name, $cellref->name);
+    }
+    $fileref->_write_print ("${prefix}// End of SystemPerl automatic subcell classes\n");
+}
+
+sub _write_autosubcell_include {
+    my $self = shift;
+    my $fileref = shift;
+    my $prefix = shift;
+    return if !$SystemC::Netlist::File::outputting;
+    $fileref->_write_print ("${prefix}// Beginning of SystemPerl automatic subcell includes\n");
+    foreach my $cellref ($fileref->_cells_in_file) {
+	$fileref->_write_printf ("#include \"%-22s  // For %s.%s\n"
+				 ,$cellref->submodname.".h\""
+				 ,$cellref->module->name, $cellref->name);
+    }
+    $fileref->_write_print ("${prefix}// End of SystemPerl automatic subcell includes\n");
 }
 
 ######################################################################

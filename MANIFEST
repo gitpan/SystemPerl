@@ -21,6 +21,7 @@ Parser/test.sp
 Parser/typemap
 README
 SystemPerl.pod
+Template.pm
 example/Makefile_obj
 example/ex_bench.sp
 example/ex_enum.sp
@@ -34,6 +35,9 @@ sp_preproc
 src/sp_log.cpp
 src/sp_log.h
 src/systemperl.h
+t/05_template.in
+t/05_template.out
+t/05_template.t
 t/10_netlist.t
 t/20_example.t
 t/50_spp_inline.t

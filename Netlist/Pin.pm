@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Id: Pin.pm,v 1.7 2001/04/05 15:50:10 jderoo Exp $
+# $Id: Pin.pm,v 1.11 2001/05/30 15:01:39 wsnyder Exp $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -33,9 +33,11 @@ use SystemC::Netlist::Pin;
 use SystemC::Netlist::Subclass;
 @ISA = qw(SystemC::Netlist::Pin::Struct
 	SystemC::Netlist::Subclass);
+$VERSION = '0.420';
 use strict;
 
-structs('SystemC::Netlist::Pin::Struct'
+structs('new',
+	'SystemC::Netlist::Pin::Struct'
 	=>[name     	=> '$', #'	# Pin connection
 	   filename 	=> '$', #'	# Filename this came from
 	   lineno	=> '$', #'	# Linenumber this came from
@@ -64,8 +66,11 @@ sub submod {
 sub _link {
     my $self = shift;
     if ($self->netname) {
-	$self->net($self->module->find_net($self->netname)
-		   || $self->module->find_port($self->netname));
+	$self->net($self->module->find_net($self->netname));
+	if ($self->net() && $self->port()) {
+	    $self->net->_used_input(1) if ($self->port->direction() =~ /in/); # in/inout
+	    $self->net->_used_output(1) if ($self->port->direction() =~ /out/); # out/inout
+	}
     }
     if ($self->name && $self->submod) {
 	$self->port($self->submod->find_port($self->name));
@@ -83,6 +88,17 @@ sub lint {
 	if ($nettype ne $porttype) {
 	    $self->error("Port pin type $porttype != Net type $nettype: "
 			 ,$self->name,"\n");
+	}
+	my $netdir = "net";
+	$netdir = $self->net->port->direction if $self->net->port;
+	my $portdir = $self->port->direction;
+	if (($netdir eq "in" && $portdir eq "out")
+	    || ($netdir eq "in" && $portdir eq "inout")
+	    || ($netdir eq "out" && $portdir eq "inout")
+	    ) {
+	    $self->error("Port is ${portdir}put from submodule, but ${netdir}put from this module: "
+			 ,$self->name,"\n");
+	    #$self->cell->module->netlist->print;
 	}
     }
     if (!$self->port && $self->submod) {
@@ -110,7 +126,8 @@ sub _autos {
     if ($self->module->_autosignal) {
 	if (!$self->net && $self->port) {
 	    $self->module->new_net (name=>$self->netname,
-				    filename=>'AUTOSIGNAL(pin)', lineno=>$self->lineno,
+				    filename=>$self->module->filename,
+				    lineno=>$self->lineno . ':(AUTOSIGNAL)',
 				    type=>$self->port->type,
 				    comment=>" For ".$self->submod->name, #.".".$self->name, 
 				    module=>$self->module, autocreated=>1,)

@@ -18,6 +18,14 @@ entirely at your own risk.
 Summary
 =======
 
+   The publicly licensed SystemPerl package provides several extensions
+to SystemC.  It provides sp_preproc, extending the language for
+AUTOmatic connection of hiearchy like my Verilog-Mode, trace files and
+netlist linting.  Its netlist and parsing utilities are general enough
+for writing your own tools.  Two additional tools provide for speeding
+up GCC compiles and dependancy correction.  You can download SystemC
+from the link off of http://www.veripool.com/systemperl.html
+
 Description
 ===========
 
@@ -96,7 +104,7 @@ SystemPerl Example
    Becomes:
 
      SC_MODULE(mod) {
-         /*AUTOSUBCELLS*/
+         /*AUTOSIGNAL*/
          // Beginning of SystemPerl automatic signals
          sc_signal<bool>             a;       // For submod
          // End of SystemPerl automatic signals

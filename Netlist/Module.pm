@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Id: Module.pm,v 1.13 2001/05/18 21:48:17 wsnyder Exp $
+# $Id: Module.pm,v 1.19 2001/06/21 21:09:14 wsnyder Exp $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -32,9 +32,11 @@ use SystemC::Netlist::Pin;
 use SystemC::Netlist::Subclass;
 @ISA = qw(SystemC::Netlist::Module::Struct
 	SystemC::Netlist::Subclass);
+$VERSION = '0.420';
 use strict;
 
-structs('SystemC::Netlist::Module::Struct'
+structs('new',
+	'SystemC::Netlist::Module::Struct'
 	=>[name     	=> '$', #'	# Name of the module
 	   filename 	=> '$', #'	# Filename this came from
 	   lineno	=> '$', #'	# Linenumber this came from
@@ -104,7 +106,7 @@ sub new_net {
     my $self = shift;
     # @_ params
     # Create a new net under this module
-    my $netref = new SystemC::Netlist::Net (module=>$self, @_);
+    my $netref = new SystemC::Netlist::Net (module=>$self, direction=>'net', @_);
     $self->nets ($netref->name(), $netref);
     return $netref;
 }
@@ -129,6 +131,7 @@ sub new_cell {
 
 sub link {
     my $self = shift;
+    # Ports create nets, so link ports before nets
     foreach my $portref (values %{$self->ports}) {
 	$portref->_link();
     }
@@ -198,7 +201,7 @@ sub _write_autosignal {
     $fileref->_write_print ("${prefix}// End of SystemPerl automatic signals\n");
 }
 
-sub _write_autosubcells {
+sub _write_autosubcell_decl {
     my $self = shift;
     my $fileref = shift;
     my $prefix = shift;
@@ -242,8 +245,8 @@ sub _write_autotrace {
 	("${prefix}// Beginning of SystemPerl automatic trace file routine\n",
 	 "${prefix}void ",$self->name(),"::trace (sc_trace_file *tf, const sc_string& prefix, int levels, int options=0) {\n",
 	 );
-    foreach my $netref ($self->nets_and_ports_sorted) {
-	next if $netref->direction eq 'out';
+    foreach my $netref ($self->nets_sorted) {
+	next if $netref->port && $netref->port->direction eq 'out';
 	my $width = $netref->width;
 	$fileref->_write_printf ("${prefix}    sc_trace(tf, this->%-20s prefix+\"%s\"",
 				 $netref->name.".read(),", $netref->name);
@@ -257,9 +260,10 @@ sub _write_autotrace {
     foreach my $cellref ($self->cells_sorted) {
 	my $name = $cellref->name;
 	#if ($name =~ /^(.*?)\[(.*)\]/);
+	(my $namenobra = $name) =~ tr/\[\]/()/;
 	if ($cellref->submod->_autotrace()) {
 	    $fileref->_write_printf ("${prefix}         this->${name}->trace (tf, prefix+\"%s.\", levels-1, options);\n",
-				     $name);
+				     $namenobra);
 	}
     }
     $fileref->_write_print ("${prefix}    }\n",

@@ -1,4 +1,4 @@
-/* $Id: sp_log.cpp,v 1.6 2001/04/17 19:14:02 wsnyder Exp $
+/* $Id: sp_log.cpp,v 1.7 2001/05/29 19:19:34 wsnyder Exp $
  ************************************************************************
  *
  * THIS MODULE IS PUBLICLY LICENSED
@@ -50,6 +50,7 @@ void sp_log_file::open (const char *filename)
 void sp_log_file::close (void)
 {
     if (m_isOpen) {
+	end_redirect();
 	std::ofstream::close();
 	m_isOpen = false;
     }
