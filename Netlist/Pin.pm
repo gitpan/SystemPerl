@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Id: Pin.pm,v 1.6 2001/04/03 21:26:02 wsnyder Exp $
+# $Id: Pin.pm,v 1.7 2001/04/05 15:50:10 jderoo Exp $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -81,8 +81,8 @@ sub lint {
 	my $nettype = $self->net->type;
 	my $porttype = $self->port->type;
 	if ($nettype ne $porttype) {
-	    $self->("Port pin type $porttype != Net type $nettype: "
-		    ,$self->name,"\n");
+	    $self->error("Port pin type $porttype != Net type $nettype: "
+			 ,$self->name,"\n");
 	}
     }
     if (!$self->port && $self->submod) {

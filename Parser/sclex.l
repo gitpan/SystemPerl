@@ -1,6 +1,6 @@
 %option noyywrap align never-interactive prefix="sclex"
 %{
-/* $Id: sclex.l,v 1.14 2001/04/03 22:58:43 wsnyder Exp $
+/* $Id: sclex.l,v 1.18 2001/04/26 14:45:40 wsnyder Exp $
  ******************************************************************************
  * DESCRIPTION: SystemC lexer
  * 
@@ -67,10 +67,13 @@ FLOATNUM	[0-9]+"."*[0-9]*[eE][0-9]+
 	/* Special macros we recognise */
 "SC_MODULE"	{ return(SC_MODULE); }
 [S][PC]"_CELL"	{ return(SP_CELL); }
+[S][PC]"_CELL_FORM"	{ return(SP_CELL); }
+[S][PC]"_CELL_DECL"	{ return(SP_CELL_DECL); }
 [S][PC]"_PIN"	{ return(SP_PIN); }
 "SC_CTOR"	{ return(SC_CTOR); }
 "sc_main"	{ return(SC_MAIN); }
 "enum"		{ return(ENUM); }
+"class"		{ return(CLASS); }
 
 "sc_signal"	|
 "sc_in"		|
@@ -84,11 +87,11 @@ FLOATNUM	[0-9]+"."*[0-9]*[eE][0-9]+
 "sc_clock"	{ yylval.string = strdup(yytext); return(SC_CLOCK); }
 
 	/* Automatic comments */
-{WHITESPACE}+"// Beginning of SystemPerl automatic".*\n	{
+{WHITESPACE}*"// Beginning of SystemPerl automatic".*\n	{
 	if (ScParserLex.stripAutos) {BEGIN(AUTOMODE); scparser_EmitPrefix();}
 	else { StashPrefix; }
 	LINENO++;}
-{WHITESPACE}+"/*AUTO"[^*]+"*/"	{ return(AUTO); }
+{WHITESPACE}*"/*AUTO"[^*]+"*/"	{ return(AUTO); }
 <<EOF>>			{ yyleng=0; yyterminate(); }/*else get null added to EOF*/
 
 	/* Generics */

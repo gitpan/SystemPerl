@@ -35,7 +35,7 @@ your own risk.
 @node Description, Obtaining Distribution, Copyright, Top
 @section Description
 
-This package provides three major sub-packages.  The SystemC::Parser
+This package provides four major sub-packages.  The SystemC::Parser
 understands how to read SystemC files, and extract tokens and such,
 similar to Verilog::Parser.
 
@@ -47,6 +47,9 @@ sp_preproc provides extensions to the SystemC language, called the
 SystemPerl language.  This allows most of the Tedium to be removed from
 SystemC coding, just as the author's /*AUTO*/ comments did for the
 Verilog language.  See @samp{man SystemPerl} after installation.
+
+Finally, the src directory contains useful C++ utilities for simulation,
+such as changing cout to send to both the screen and a file.
 
 Parsing example:
 
@@ -143,7 +146,7 @@ Type @samp{make install} to install the programs and any data files and
 documentation.
 
 @item
-Install @samp{systemperl.h} somewhere in your project's build path.
+Install @samp{src/systemperl.h} somewhere in your project's build path.
 The best place is probably the $SYSTEMC/include directory.
 
 @end enumerate

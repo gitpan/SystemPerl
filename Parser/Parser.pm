@@ -1,4 +1,4 @@
-#$Id: Parser.pm,v 1.9 2001/03/31 20:23:37 wsnyder Exp $
+#$Id: Parser.pm,v 1.10 2001/04/24 14:20:21 wsnyder Exp $
 ######################################################################
 #
 # This program is Copyright 2001 by Wilson Snyder.
@@ -61,6 +61,7 @@ sub read {
 
 sub auto {}
 sub cell {}
+sub cell_decl {}
 sub ctor {}
 sub enum_value {}
 sub module {}
@@ -152,6 +153,12 @@ Auto is called with the text matching /*AUTOINST*/, etc.
 
 Cell is called when SP_CELL is recognized.  Parameters are the instance and
 type of the cell.
+
+=item $self->cell_decl  (I<type>, I<instances>)
+
+Cell_decl is called when SP_CELL_DECL is recognized.  Parameters are the
+type and instances of the cell.  (Note the parameter order is opposite that
+of cell().)
 
 =item $self->ctor  (I<modulename>)
 

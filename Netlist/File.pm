@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Id: File.pm,v 1.20 2001/04/03 21:26:01 wsnyder Exp $
+# $Id: File.pm,v 1.26 2001/04/24 14:20:21 wsnyder Exp $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -107,11 +107,17 @@ sub auto {
 		      \&SystemC::Netlist::Cell::_write_autoinst,
 		      $cellref, $self->{fileref}, $1];
     }
-    elsif ($line =~ /^(\s*)\/\*AUTOASCII_ENUM\(([a-zA-Z0-9_]+)\.([a-zA-Z0-9_]+)\)\*\//) {
-	my $prefix = $1; my $class = $2;  my $element = $3;
+    elsif ($line =~ /^(\s*)\/\*AUTOENUM_CLASS\(([a-zA-Z0-9_]+)(\.|::)([a-zA-Z0-9_]+)\)\*\//) {
+	my $prefix = $1; my $class = $2;  my $enumtype = $4;
 	push @Text, [ 1, $self->filename, $self->lineno,
-		      \&SystemC::Netlist::File::_write_autoascii_enum,
-		      $self->{fileref}, $class, $element, $prefix,];
+		      \&SystemC::Netlist::File::_write_autoenum_class,
+		      $self->{fileref}, $class, $enumtype, $prefix,];
+    }
+    elsif ($line =~ /^(\s*)\/\*AUTOENUM_GLOBAL\(([a-zA-Z0-9_]+)(\.|::)([a-zA-Z0-9_]+)\)\*\//) {
+	my $prefix = $1; my $class = $2;  my $enumtype = $4;
+	push @Text, [ 1, $self->filename, $self->lineno,
+		      \&SystemC::Netlist::File::_write_autoenum_global,
+		      $self->{fileref}, $class, $enumtype, $prefix,];
     }
     else {
 	return $self->error ("Unknown AUTO command", $line);
@@ -119,6 +125,20 @@ sub auto {
 }
 
 sub ctor {}
+
+sub cell_decl {
+    my $self = shift;
+    my $submodname=shift;
+    my $instname=shift;
+
+    print "Cell_decl $instname\n" if $SystemC::Netlist::Debug;
+    my $modref = $self->{modref};
+    if (!$modref) {
+	return $self->error ("SP_CELL_DECL outside of module definition", $instname);
+    }
+    (my $instnamebase = $instname) =~ s/\[.*//;	# Strip any arrays
+    $modref->_celldecls($instnamebase,$submodname);
+}
 
 sub cell {
     my $self = shift;
@@ -128,7 +148,7 @@ sub cell {
     print "Cell $instname\n" if $SystemC::Netlist::Debug;
     my $modref = $self->{modref};
     if (!$modref) {
-	return $self->error ("Cell declaration outside of module definition", $instname);
+	return $self->error ("SP_CELL outside of module definition", $instname);
     }
     $self->{cellref} = $modref->new_cell
 	(name=>$instname, 
@@ -146,7 +166,7 @@ sub pin {
 
     my $cellref = $self->{cellref};
     if (!$cellref) {
-	return $self->error ("Pin declaration outside of cell definition", $net);
+	return $self->error ("SP_PIN outside of cell definition", $net);
     }
     $cellref->new_pin (name=>$pin,
 		       filename=>$self->filename, lineno=>$self->lineno,
@@ -206,15 +226,23 @@ sub preproc_sp {
     }
 }
 
-sub enum_value {
+sub class {
     my $self = shift;
     my $class = shift;
+    # Track class x { enum y ...}
+    $self->{class} = $class;
+}
+
+sub enum_value {
+    my $self = shift;
+    my $enum = shift;
     my $def = shift;
     # We haven't defined a class for enums... Presume others won't use them(?)
     my $fileref = $self->{fileref};
 
+    my $class = $self->{class} || "TOP";
     my $href = $fileref->_enums() || {};
-    $href->{$class}{$def} = 1;
+    $href->{$class}{$enum}{$def} = 1;
     $fileref->_enums($href);
 }
 
@@ -299,7 +327,7 @@ sub _write_lineno {
 	#push @write_newtext, "//LL '$gcclineno'  '$lineno' '$gccfilename' '$filename'\n";
 	$gcclineno = $lineno;
 	# We may not be on a empty line, if not add a CR
-	my $nl = "\n";
+	my $nl = "\n";	    $outlineno++;
 	#if (($write_newtext[$#write_newtext]||"\n") !~ /\n$/m) {
 	#    print "WNT $#write_newtext  $write_newtext[$#write_newtext]\n";
 	#    $nl = "\n";
@@ -308,9 +336,11 @@ sub _write_lineno {
 	    $gccfilename = $filename;
 	    # Don't use write_print, as we don't want the line number to change
 	    push @write_newtext, "${nl}#line $gcclineno \"$gccfilename\"\n";
+	    $outlineno++;
 	} else {
 	    # Don't use write_print, as we don't want the line number to change
 	    push @write_newtext, "${nl}#line $gcclineno\n";
+	    $outlineno++;
 	}
     }
 }
@@ -352,9 +382,9 @@ sub write {
 
     if ($as_imp || $as_int) {
 	if ($as_int) {
-	    _write_printf "#ifndef _%s_H\n#define _%s_H\n", uc $self->basename, uc $self->basename;
+	    _write_printf "#ifndef _%s_H_\n#define _%s_H_ 1\n", uc $self->basename, uc $self->basename;
 	}
-	_write_lineno ($outlineno,$filename);
+	_write_lineno ($outlineno+2,$filename); #+2 corrects for lines #line will insert
 	_write_print "// This file generated automatically by $program\n";
 	_write_printf "#include \"%s.h\"\n", $self->basename if $as_imp;
 	_write_print "#include \"systemperl.h\"\n" if $as_int;
@@ -376,7 +406,7 @@ sub write {
 		#print "$func ($line->[1], $fh, $line->[2], );\n";
 		if ($as_imp||$as_int) {
 		    # This way, errors in the AUTOs refer to the .cpp file
-		    _write_lineno ($outlineno,$filename);
+		    _write_lineno ($outlineno+2,$filename);
 		}
 		&{$func} ($line->[4],$line->[5],$line->[6],$line->[7],$line->[8],);
 	    } else {
@@ -400,7 +430,7 @@ sub write {
     if ($as_imp || $as_int) {
 	_write_print "#undef __MODULE__\n" if $didmodule;
 	_write_print "// This file generated automatically by $program\n";
-	_write_printf "#endif /*_%s_H*/\n", uc $self->basename if $as_int;
+	_write_printf "#endif /*_%s_H_*/\n", uc $self->basename if $as_int;
     }
 
     # Write the file
@@ -441,30 +471,65 @@ sub _write_interface {
     }
 }
 
-sub _write_autoascii_enum {
+sub _write_autoenum_class {
     my $self = shift;
     my $class = shift;
-    my $element = shift;
+    my $enumtype = shift;
     my $prefix = shift;
 
-    _write_print ("${prefix}// Beginning of SystemPerl automatic enumeration\n");
-    _write_print ("${prefix}const char *ascii (void) const {\n"
-		  ."${prefix}   switch (${element}) {\n");
+    return if !$SystemC::Netlist::File::outputting;
+    _write_print
+	("${prefix}// Beginning of SystemPerl automatic enumeration\n"
+	 ."${prefix}enum ${enumtype} e_${enumtype};\n"
+	 ."${prefix}inline ${class} () {};\n"
+	 .("${prefix}inline ${class} (${enumtype} _e)"
+	   ." : e_${enumtype}(_e) {};\n")
+	 .("${prefix}explicit inline ${class} (int _e)"
+	   ." : e_${enumtype}(static_cast<${enumtype}>(_e)) {};\n")
+	 ."${prefix}operator const char * (void) const { return ascii(); };\n"
+	 ."${prefix}operator ${enumtype} (void) const { return e_${enumtype}; };\n"
+	 ."${prefix}const char *ascii (void) const {\n"
+	 ."${prefix}   switch (e_${enumtype}) {\n"
+	 );
 
-    my $href = $self->_enums() || {};
-    foreach my $valsym (sort (keys %{$href->{$class}})) {
+    my $href = $self->_enums() || {{}};
+    my $vals = $href->{$class};
+    $vals = $href->{TOP} if !defined $vals;
+    foreach my $valsym (sort (keys %{$vals->{$enumtype}})) {
 	my $name = $valsym;
 	_write_print ("${prefix}   case ${valsym}: return \"${name}\";\n");
     }
 
-    _write_print ("${prefix}   default: return \"%E:Bad${class}\";\n"
+    _write_print ("${prefix}   default: return \"%E:BadVal:${class}\";\n"
 		  ."${prefix}   };\n"
-		  ."${prefix}}\n"
-		  .("${prefix}friend ostream& operator << "
-		    ."(ostream& os, const ${class}& e) {"
-		    ."return os << e.ascii(); }\n")
+		  ."${prefix}};\n"
 		  );
-    _write_print ("${prefix}// Beginning of SystemPerl automatic enumeration\n");
+
+    #Can do this, but then also need setting functions...
+    #foreach my $valsym (sort (keys %{$href->{$enumtype}})) {
+    #	 _write_print ("${prefix}bool is${valsym}() const {return e_${enumtype}==${valsym};};\n");
+    #}
+    _write_print ("${prefix}// End of SystemPerl automatic enumeration\n");
+}
+
+sub _write_autoenum_global {
+    my $self = shift;
+    my $class = shift;
+    my $enumtype = shift;
+    my $prefix = shift;
+    return if !$SystemC::Netlist::File::outputting;
+    _write_print
+	("${prefix}// Beginning of SystemPerl automatic enumeration\n"
+	 ."${prefix}inline bool operator== (${class} lhs, ${class} rhs)"
+	 ." { return (lhs.e_${enumtype} == rhs.e_${enumtype}); }\n"
+	 ."${prefix}inline bool operator== (${class} lhs, ${class}::${enumtype} rhs)"
+	 ." { return (lhs.e_${enumtype} == rhs); }\n"
+	 ."${prefix}inline bool operator== (${class}::${enumtype} lhs, ${class} rhs)"
+	 ." { return (lhs == rhs.e_${enumtype}); }\n"
+	 ."${prefix}inline std::ostream& operator<< (std::ostream& lhs, const ${class}& rhs)"
+	 ." { return lhs << rhs.ascii(); }\n"
+	 ."${prefix}// End of SystemPerl automatic enumeration\n"
+	 );
 }
 
 ######################################################################

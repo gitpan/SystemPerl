@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Id: Module.pm,v 1.8 2001/04/03 21:26:01 wsnyder Exp $
+# $Id: Module.pm,v 1.10 2001/04/24 14:20:21 wsnyder Exp $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -43,6 +43,7 @@ structs('SystemC::Netlist::Module::Struct'
 	   ports	=> '%',		# hash of SystemC::Netlist::Ports
 	   nets		=> '%',		# hash of SystemC::Netlist::Nets
 	   cells	=> '%',		# hash of SystemC::Netlist::Cells
+	   _celldecls	=> '%',		# hash of declared cells (for autocell only)
 	   _autosignal	=> '$', #'	# Module has /*AUTOSIGNAL*/ in it
 	   _autosubcells=> '$', #'	# Module has /*AUTOSUBCELLS*/ in it
 	   ]);
@@ -189,9 +190,18 @@ sub _write_autosubcells {
     my $prefix = shift;
     return if !$SystemC::Netlist::File::outputting;
     $fileref->_write_print ("${prefix}// Beginning of SystemPerl automatic subcells\n");
+    my %todo = ();
     foreach my $cellref ($self->cells_sorted) {
-        $fileref->_write_printf ("%s%-20s *%s\n"
-	    ,$prefix,$cellref->submodname,$cellref->name.";");
+	my $name = $cellref->name; my $bra = "";
+	if ($name =~ /^(.*?)\[(.*)\]/) {
+	    $name = $1; $bra = $2;
+	    next if ($self->_celldecls($name));
+	    $cellref->warn ("Vectored cell $name needs manual: SP_CELL_DECL(",
+			    $cellref->submodname,",",$name,"[/*MAXNUMBER*/]);\n");
+	    next;
+	}
+	$fileref->_write_printf ("%sSP_CELL_DECL(%-20s %s);\n"
+				 ,$prefix,$cellref->submodname.",",$name);
     }
     $fileref->_write_print ("${prefix}// End of SystemPerl automatic subcells\n");
 }

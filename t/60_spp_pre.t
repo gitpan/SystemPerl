@@ -11,5 +11,5 @@ print "Checking sp_preproc (Preproc mode)...\n";
 run_system ("cp example/*.sp test_dir");
 ok(1);
 
-run_system ("cd test_dir && perl -Iblib/arch -Iblib/lib ../sp_preproc --preproc *.sp");
+run_system ("cd test_dir && ${PERL} ../sp_preproc --preproc *.sp");
 ok(1);

@@ -9,7 +9,9 @@ BEGIN { plan tests => 3 }
 BEGIN { require "t/test_utils.pl"; }
 
 print "Building example...\n";
-if ($Config{archname} !~ /linux/) {
+if ($Config{archname} !~ /linux/
+    || !$ENV{SYSTEMC}) {
+    print "Skipping: Not linux with systemc installed\n";
     skip(1,1);
 } else {
     run_system ("cd test_dir && make -f ../example/Makefile_obj");

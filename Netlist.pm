@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Id: Netlist.pm,v 1.12 2001/04/03 23:03:34 wsnyder Exp $
+# $Id: Netlist.pm,v 1.13 2001/05/04 18:14:24 wsnyder Exp $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -31,7 +31,7 @@ use SystemC::Netlist::Subclass;
 use strict;
 use vars qw($Debug $Verbose $VERSION);
 
-$VERSION = '0.300';
+$VERSION = '0.400';
 
 ######################################################################
 #### Error Handling

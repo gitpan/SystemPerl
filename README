@@ -18,7 +18,7 @@ entirely at your own risk.
 Description
 ===========
 
-   This package provides three major sub-packages.  The SystemC::Parser
+   This package provides four major sub-packages.  The SystemC::Parser
 understands how to read SystemC files, and extract tokens and such,
 similar to Verilog::Parser.
 
@@ -30,6 +30,9 @@ The netlist database may also be extended to support other languages.
 SystemPerl language.  This allows most of the Tedium to be removed from
 SystemC coding, just as the author's /*AUTO*/ comments did for the
 Verilog language.  See `man SystemPerl' after installation.
+
+   Finally, the src directory contains useful C++ utilities for
+simulation, such as changing cout to send to both the screen and a file.
 
    Parsing example:
 
@@ -111,7 +114,7 @@ Installation
   6. Type `make install' to install the programs and any data files and
      documentation.
 
-  7. Install `systemperl.h' somewhere in your project's build path.
+  7. Install `src/systemperl.h' somewhere in your project's build path.
      The best place is probably the $SYSTEMC/include directory.
 
 

@@ -1,4 +1,4 @@
-#$Id: SystemPerl.pod,v 1.3 2001/04/03 22:58:38 wsnyder Exp $
+#$Id: SystemPerl.pod,v 1.7 2001/05/04 18:12:16 wsnyder Exp $
 ######################################################################
 #
 # This program is Copyright 2001 by Wilson Snyder.
@@ -24,7 +24,7 @@
 
 =head1 NAME
 
-SystemPerl - SystemPerl Lanugage Extension to SystemC
+SystemPerl - SystemPerl Language Extension to SystemC
 
 =head1 DESCRIPTION
 
@@ -68,17 +68,31 @@ derrive required information from the source code.
 
 =over 4
 
+=item SP_CELL_DECL (I<refname>, I<instname[s]>)
+
+SP_CELL_DECL declares the cell structures.  It is only needed to declare
+those cells that AUTOCELLS will not create itself; currently this is any
+cells which are arrayed.
+
 =item SP_CELL (I<instname>, I<refname>)
 
 SP_CELL instantiates the given module named refname as a instantiation
 called instname.  The instname is also passed as a parameter to refname as
-a string.
+a string.  Note if you are doing an array, you probably want SP_CELL_FORM.
+
+=item SP_CELL_FORM (I<instname>, I<refname>, I<form>, ...)
+
+SP_CELL_FORM instantiates the given module named refname as a instantiation.
+The instantiation is named by using a sprintf of the given format and arguments.
+Generally this is used for arrays: i.e.:
 
 =item SC_MODULE (I<modulename>)
 
 Though a standard optional SystemC construct, SystemC requires use of the
 SC_MODULE macro when defining a module class. For example "struct mod1 :
 public sc_module" must instead be coded as "SC_MODULE(mod1)".
+
+    SP_CELL_FORM(slice[i], smm_pi_slice, "slice[%d]", i);
 
 =item SP_PIN (I<instname>, I<portname>, I<netname>)
 
@@ -102,6 +116,56 @@ For example:
 
 SC_MODULE (__MODULE__) {
   ...
+
+=item /*AUTOENUM_I<CLASS|GLOBAL>(I<enum>)*/
+
+AUTOENUM is used to take an existing enumeration and make it into a class
+with functions to return the ASCII name of the enumeration.  This makes
+it easy to print the value of the enumeration in text form.
+
+For example:
+
+class MyENumClass {
+public:
+    enum en {
+	IDLE = 0,
+	ONE, TWO, THREE, FOUR, FIVE
+    };
+    /*AUTOENUM_CLASS(MyENumClass.en)*/
+};
+/*AUTOENUM_GLOBAL(MyENumClass.en)*/
+
+Becomes:
+
+class MyENumClass {
+public:
+    enum en {
+	IDLE = 0,
+	ONE, TWO
+    };
+    /*AUTOENUM_CLASS(MyENumClass.en)*/
+    // Beginning of SystemPerl automatic enumeration
+    enum en e_en;
+    inline MyENumClass () {};
+    inline MyENumClass (en _e) : e_en(_e) {};
+    explicit inline MyENumClass (int _e) : e_en(static_cast<en>(_e)) {};
+    operator const char * (void) const { return ascii(); };
+    operator en (void) const { return e_en; };
+    const char *ascii (void) const {
+       switch (e_en) {
+       case IDLE: return "IDLE";
+       case ONE: return "ONE";
+       case TWO: return "TWO";
+       default: return "%E:BadVal:MyENumClass";
+       };
+    };
+    // End of SystemPerl automatic enumeration
+};
+/*AUTOENUM_GLOBAL(MyENumClass.en)*/
+// Beginning of SystemPerl automatic enumeration
+inline bool operator== (MyENumClass lhs, MyENumClass rhs) { return (lhs.e_en == rhs.e_en); }
+//... other accessors
+// End of SystemPerl automatic enumeration
 
 =item /*AUTOINST*/
 

@@ -1,5 +1,5 @@
 %{
-/* $Id: scgrammer.y,v 1.17 2001/04/03 22:58:43 wsnyder Exp $
+/* $Id: scgrammer.y,v 1.22 2001/04/26 14:45:40 wsnyder Exp $
  ******************************************************************************
  * DESCRIPTION: SystemC bison parser
  *
@@ -37,6 +37,16 @@
 extern /*const*/ char *sclextext;
 int scgrammerdebug = 0;
 extern int sclexleng;
+
+/* Join two strings, return result */
+char *scstrjoin (char *a, char *b)
+{
+    int len = strlen(a)+strlen(b);
+    char *cp=malloc(len+5);
+    strcpy (cp,a); strcat(cp,b);
+    SCFree (a); SCFree (b);
+    return (cp);
+}
 
 /* Emit all text including this parsed token */
 
@@ -80,10 +90,15 @@ int scgrammerlex() {
 %token		SC_CTOR
 %token		SC_MAIN
 %token		SP_CELL
+%token		SP_CELL_DECL
 %token		SP_PIN
+%token		CLASS
 %token		ENUM
 %token		AUTO
 
+%type<string>	cellname
+%type<string>	vectors_bra
+%type<string>	vector_bra
 %type<string>	vector
 %type<string>	vectorNum
 %type<string>	declType
@@ -118,12 +133,14 @@ exp:		auto
 		| module
 		| ctor
 		| cell
+		| cell_decl
 		| pin
 		| decl
 		| inout
 		| inout_clk
 		| inst_clk
 		| sp
+		| class
 		| enum
 		| STRING	{ }
 		| SYMBOL	{ SCFree($1); }
@@ -135,16 +152,22 @@ exp:		auto
 auto:		AUTO
 			{ scparser_call(1,"auto",sclextext);}
 
-module:		SC_MODULE '(' SYMBOL ')' '{'
+module:		SC_MODULE '(' SYMBOL ')'
 			{ scparser_call(-1,"module",$3); }
 		| SC_MAIN
 			{ scparser_call(1,"module","sc_main"); }
 
+class:		CLASS SYMBOL
+			{ scparser_call(-1,"class",$2); }
+
 ctor:		SC_CTOR '(' SYMBOL ')'
 			{ scparser_call(-1,"ctor",$3); }
-cell:		SP_CELL '(' SYMBOL ',' SYMBOL ')' ';'
+// SP_CELL ignores trailing ')' so SP_CELL_FORM is happy
+cell:		SP_CELL '(' cellname ',' SYMBOL
 			{ scparser_call(-2,"cell",$3,$5); }
-pin:		SP_PIN '(' SYMBOL ',' SYMBOL vector ',' SYMBOL vector ')' ';'
+cell_decl:	SP_CELL_DECL '(' SYMBOL ',' cellname ')' ';'
+			{ scparser_call(-2,"cell_decl",$3,$5); }
+pin:		SP_PIN '(' cellname ',' SYMBOL vector ',' SYMBOL vector ')' ';'
 			{ scparser_call(-5,"pin",$3,$5,$6,$8,$9); }
 decl:		SC_SIGNAL '<' declType '>' SYMBOL vector ';'
 			{ scparser_call(-4,"signal",$1,$3,$5,$6); }
@@ -189,38 +212,21 @@ enumAssign:	'=' NUMBER	{ SCFree ($2); }
 
 //************************************
 
+cellname:	SYMBOL
+		| SYMBOL vectors_bra		{ $$=scstrjoin($1,$2); }
+
+vectors_bra:	vector_bra
+		| vectors_bra vector_bra	{ $$=scstrjoin($1,$2); }
+
+vector_bra:	'[' vectorNum ']'	{ char *cp=malloc(strlen($2)+5);
+			  strcpy (cp,"["); strcat(cp,$2);strcat(cp,"]");
+			  SCFree ($2);
+			  $$=cp; }
+
 vector:		'[' vectorNum ']'	{ $$ = $2; }
 		|	{ $$ = strdup(""); }	/* Horrid */
 
 vectorNum:	SYMBOL | NUMBER
-
-//	      if ($line =~ /^\s* sc_(in|out|inout) \s* (_clk|<([^>]+)>)
-//		  \s*  ([^\[; \t]+)		# Signame
-//		  \s* (\[\s*([^\] \t]+)\s*\]||)	# Array
-//		  ; \s* (.*)$/x) {		# Comment
-//		  my $dir=$1; my $clk=$2; my $type=$3; my $name=$4;
-//		  my $array=$6; my $cmt=$7;
-//		  $type = "sc_clock" if $clk eq "_clk";
-//		  $cmt =~ s/^\/\/\s+//;
-//	      }
-//	      if ($line =~ /^\s* sc_(signal) \s* <([^>]+)>
-//		  \s*  ([^\[; \t]+)		# Signame
-//		  \s* (\[\s*([^\] \t]+)\s*\]||)	# Array
-//		  ; \s* (.*)$/x) {		# Comment
-//		  my $dir=$1; my $type=$2; my $name=$3; my $array=$5; my $cmt=$6;
-//		  $cmt =~ s/^\/\/\s+//;
-//		  $modref->new_signal (name=>$name, filename=>$filename, line=>$.,
-//				       direction=>$dir, type=>$type, array=>$array,
-//				       comment=>$cmt,);
-//	      }
-//		  if ($line =~ /^\s* ([^- \t]+)	# Cell
-//		      \s*\->\s* ([^= \t\[]+)	# pin
-//		      (\[[^\]]+\]|)		# vector
-//		      \s* \( \s*
-//		      ([^; \t\[\)]+)		# sig
-//		      (\[[^\]]+\]|)		# vector
-//		      /x) {
-//		      my $pin = $2; my $sig=$4;
 
 %%
 

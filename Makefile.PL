@@ -1,4 +1,5 @@
-# vrename Makefile.PL
+# $Id: Makefile.PL,v 1.9 2001/04/11 17:47:36 wsnyder Exp $
+# DESCRIPTION: Perl ExtUtils: Type 'perl Makefile.PL' to create a Makefile for this package
 
 use ExtUtils::MakeMaker;
 use Carp;

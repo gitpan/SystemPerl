@@ -1,3 +1,4 @@
+// DESCRIPTION: Example SystemPerl for testing SystemC::Parser
 enum myenum {
     IDLE = 0,
     ONE, TWO, THREE, FOUR, FIVE
