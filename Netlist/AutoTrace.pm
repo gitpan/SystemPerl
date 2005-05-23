@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Revision: 1.60 $$Date: 2005-03-21 09:43:43 -0500 (Mon, 21 Mar 2005) $$Author: wsnyder $
+# $Revision: 1.60 $$Date: 2005-05-23 11:26:07 -0400 (Mon, 23 May 2005) $$Author: wsnyder $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -18,7 +18,7 @@ package SystemC::Netlist::AutoTrace;
 use File::Basename;
 
 use SystemC::Netlist::Module;
-$VERSION = '1.190';
+$VERSION = '1.200';
 use strict;
 
 use vars qw ($Setup_Ident_Code);	# Local use for recursion only
@@ -306,7 +306,8 @@ sub _write_tracer_trace {
     foreach my $cellref ($self->cells_sorted) {
 	my $name = $cellref->name;
 	(my $namenobra = $name) =~ tr/\[\]/()/;
-	if ($cellref->submod->_autotrace('on')) {
+	if ($cellref->submod  # Else not linked
+	    && $cellref->submod->_autotrace('on')) {
 	    $fileref->printf ("    ${cmt}    if (this->${name}) this->${name}->trace (tfp, levels-1, options);  // Is-a %s\n",
 			      $cellref->submod->name);
 	}

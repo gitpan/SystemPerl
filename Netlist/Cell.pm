@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Revision: 1.46 $$Date: 2005-03-21 09:43:43 -0500 (Mon, 21 Mar 2005) $$Author: wsnyder $
+# $Revision: 1.46 $$Date: 2005-05-23 11:26:07 -0400 (Mon, 23 May 2005) $$Author: wsnyder $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -20,7 +20,7 @@ use Class::Struct;
 use Verilog::Netlist;
 use SystemC::Netlist;
 @ISA = qw(Verilog::Netlist::Cell);
-$VERSION = '1.190';
+$VERSION = '1.200';
 use strict;
 
 ######################################################################
@@ -58,9 +58,9 @@ sub _autos_connect_port {
 		# we'll do it the way some C code might eventually have to...
 		if ($cellpin =~ m/$cellpin_regexp/) {
 		    my $a=$1; my $b=$2; my $c=$3; my $d=$4; my $e=$5; my $f=$6; my $g=$7; my $h=$8; my $i=$9;
-		    $replace =~ s/\$1/$a/; $replace =~ s/\$2/$b/;  $replace =~ s/\$3/$c/; $replace =~ s/\$4/$d/;
-		    $replace =~ s/\$5/$e/; $replace =~ s/\$6/$f/;  $replace =~ s/\$g/$c/; $replace =~ s/\$8/$h/;
-		    $replace =~ s/\$9/$i/;
+		    $replace =~ s/\$1/$a/g; $replace =~ s/\$2/$b/g;  $replace =~ s/\$3/$c/g; $replace =~ s/\$4/$d/g;
+		    $replace =~ s/\$5/$e/g; $replace =~ s/\$6/$f/g;  $replace =~ s/\$g/$c/g; $replace =~ s/\$8/$h/g;
+		    $replace =~ s/\$9/$i/g;
 		    $netname = $replace;
 		    $comment = "Templated on ".$templref->filename.":".$templref->lineno;
 		} else {
@@ -108,7 +108,7 @@ sub _write_autoinst {
     foreach my $pinref ($self->pins_sorted) {
 	if ($pinref->sp_autocreated) {
 	    $fileref->printf ("%sSP_PIN(%s, %-20s %-20s // %s%s\n"
-			      ,$prefix,$self->name,$pinref->name.",",$pinref->port->name.");"
+			      ,$prefix,$self->name,$pinref->name.",",$pinref->netname.");"
 			      ,$pinref->port->direction
 			      ,(($pinref->sp_autocreated ne '1')?" ".$pinref->sp_autocreated:"")
 			      );

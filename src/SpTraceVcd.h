@@ -1,4 +1,4 @@
-// $Revision: 1.31 $$Date: 2005-03-02 11:20:22 -0500 (Wed, 02 Mar 2005) $$Author: wsnyder $ -*- SystemC -*-
+// $Revision: 1.31 $$Date: 2005-04-12 15:02:31 -0400 (Tue, 12 Apr 2005) $$Author: wsnyder $ -*- SystemC -*-
 //=============================================================================
 //
 // THIS MODULE IS PUBLICLY LICENSED
@@ -43,7 +43,7 @@ public:
     SpTraceFile() {
 	sc_get_curr_simcontext()->add_trace_file(this);
 # if (SYSTEMC_VERSION>20011000)
-	spTrace()->set_time_resolution(sc_get_default_time_unit().to_string());
+	spTrace()->set_time_resolution(sc_get_time_resolution().to_string());
 	spTrace()->set_time_unit(sc_get_default_time_unit().to_string());
 # endif
     }
@@ -51,7 +51,8 @@ public:
     /// Called by SystemC simulate()
     virtual void cycle (bool delta_cycle) {
 # if (SYSTEMC_VERSION>20011000)
-	if (!delta_cycle) { spTrace()->dump(sc_time_stamp().to_default_time_units()); }
+	// VCD files must have integer timestamps, so we write all times in increments of time_resolution
+	if (!delta_cycle) { spTrace()->dump(sc_time_stamp().to_double() / sc_get_time_resolution().to_double()); }
 # else
 	if (!delta_cycle) { spTrace()->dump(sc_time_stamp()); }
 # endif

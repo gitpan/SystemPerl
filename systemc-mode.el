@@ -1,6 +1,6 @@
 ;; systemc-mode.el --- major mode for editing SystemC files
 ;;
-;; $Revision: 1.13 $$Date: 2005-03-01 17:59:56 -0500 (Tue, 01 Mar 2005) $$Author: wsnyder $
+;; $Revision: 1.13 $$Date: 2005-04-28 13:06:48 -0400 (Thu, 28 Apr 2005) $$Author: wsnyder $
 
 ;; Author          : Wilson Snyder <wsnyder@wsnyder.org>
 ;; Keywords        : languages
@@ -45,6 +45,7 @@
 
 (provide 'systemc-mode)
 (require 'cc-mode)
+(require 'compile)
 
 (defvar systemc-mode-hook nil
   "Run at the very end of `systemc-mode'.")
@@ -144,6 +145,4 @@ Key bindings:
   (c-update-modeline))
 
 
-(provide 'systemc-mode)
-
 ;;; systemc-mode.el ends here

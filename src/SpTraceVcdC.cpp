@@ -1,4 +1,4 @@
-// $Revision: 1.4 $$Date: 2005-03-02 11:20:22 -0500 (Wed, 02 Mar 2005) $$Author: wsnyder $ -*- SystemC -*-
+// $Revision: 1.4 $$Date: 2005-04-12 15:02:31 -0400 (Tue, 12 Apr 2005) $$Author: wsnyder $ -*- SystemC -*-
 //=============================================================================
 //
 // THIS MODULE IS PUBLICLY LICENSED
@@ -215,7 +215,7 @@ void SpTraceVcd::dumpHeader () {
     printStr("$date "); printStr(ctime(&time_str)); printStr(" $end\n");
 
     printStr("$timescale ");
-    printStr(m_timeUnit.c_str()); printStr("/"); printStr(m_timeRes.c_str());
+    printStr(m_timeRes.c_str());
     printStr(" $end\n");
 
     // Take signal information from each module and build m_namemapp
@@ -396,6 +396,8 @@ void SpTraceVcd::dump (double timestamp) {
 
 void SpTraceVcd::dumpPrep (double timestamp) {
     printStr("#");
+    // VCD file format specification does not allow non-integers for timestamps
+    // Dinotrace doesn't mind, but Cadence vvision seems to choke
     printInt((int)timestamp);
     printStr("\n");
 }

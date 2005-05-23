@@ -1,4 +1,4 @@
-# $Revision: 1.26 $$Date: 2005-03-14 11:52:33 -0500 (Mon, 14 Mar 2005) $$Author: wsnyder $ -*- Makefile -*-
+# $Revision: 1.26 $$Date: 2005-04-14 09:56:52 -0400 (Thu, 14 Apr 2005) $$Author: wsnyder $ -*- Makefile -*-
 # DESCRIPTION: SystemPerl: Example makefile for Cadence NC-SystemC
 #
 # This is executed in the "test_dir", not in this directory
@@ -46,7 +46,8 @@ ifeq ($(NCSC_USE_MAKEFILE),)
  OUR_NCSC_FLAGS += -static -sc_main
 
  # The below is required to work around a bug in ncsc 05.40-p004
- OUR_NCSC_FLAGS += -noedg
+ # This is fixed in ncsc 5.4 s8
+ #OUR_NCSC_FLAGS += -noedg
 
  ncall: ncbuild ncrun
 

@@ -1,4 +1,4 @@
-// $Revision: 1.2 $$Date: 2005-03-01 17:59:56 -0500 (Tue, 01 Mar 2005) $$Author: wsnyder $ -*- SystemC -*-
+// $Revision: 1.2 $$Date: 2005-04-15 09:40:20 -0400 (Fri, 15 Apr 2005) $$Author: wsnyder $ -*- SystemC -*-
 //=============================================================================
 //
 // THIS MODULE IS PUBLICLY LICENSED
@@ -28,7 +28,7 @@
 //=============================================================================
 
 /// Report SystemPerl internal error message and abort
-#if defined(UERROR) && defined(UERROR_NLN)
+#if defined(UERROR) && defined(UERROR_NL)
 # define SP_ABORT(msg) { UERROR(msg); }
 #else
 # define SP_ABORT(msg) { cerr<<msg; abort(); }

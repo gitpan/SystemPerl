@@ -1,5 +1,5 @@
 #/* SystemC.xs -- SystemC Booter  -*- Mode: C -*-
-#* $Revision: 1.25 $$Date: 2005-03-01 17:59:56 -0500 (Tue, 01 Mar 2005) $$Author: wsnyder $
+#* $Revision: 1.25 $$Date: 2005-05-23 11:24:02 -0400 (Mon, 23 May 2005) $$Author: wsnyder $
 #*********************************************************************
 #*
 #* Vl SystemC perl utility library
@@ -186,7 +186,7 @@ SV *CLASS
 PROTOTYPE: $
 CODE:
 {
-    if (CLASS) {}  // Prevent unused warning
+    if (CLASS) {}  /* Prevent unused warning */
     RETVAL = scParserState.lastLineno;
 }
 OUTPUT: RETVAL
@@ -200,7 +200,7 @@ SV *CLASS
 PROTOTYPE: $
 CODE:
 {
-    if (CLASS) {}  // Prevent unused warning
+    if (CLASS) {}  /* Prevent unused warning */
     RETVAL = scParserLex.filename;
 }
 OUTPUT: RETVAL
@@ -214,7 +214,7 @@ SV *CLASS
 PROTOTYPE: $
 CODE:
 {
-    if (CLASS) {}  // Prevent unused warning
+    if (CLASS) {}  /* Prevent unused warning */
     RETVAL = scParserState.symbols;
 }
 OUTPUT: RETVAL

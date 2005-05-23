@@ -1,5 +1,5 @@
 %{
-/* $Revision: 1.51 $$Date: 2005-03-03 11:33:15 -0500 (Thu, 03 Mar 2005) $$Author: wsnyder $
+/* $Revision: 1.51 $$Date: 2005-04-20 10:25:16 -0400 (Wed, 20 Apr 2005) $$Author: wsnyder $
  ******************************************************************************
  * DESCRIPTION: SystemC bison parser
  *
@@ -100,14 +100,15 @@ int scgrammerlex() {
 %token		COLONCOLON
 
 %token		CLASS
+%token		CONST
 %token		ENUM
-%token		PUBLIC
 %token		PRIVATE
 %token		PROTECTED
-%token		CONST
+%token		PUBLIC
 
 %token		AUTO
 
+%token		NCSC_MODULE
 %token		SC_MODULE
 %token<string>	SC_SIGNAL
 %token<string>	SC_INOUT_CLK
@@ -195,6 +196,7 @@ exp:		auto
 		| CONST
 		| symbol
 		| clAccess
+		| NCSC_MODULE
 		;
 
 auto:		AUTO
@@ -214,6 +216,8 @@ module:		SC_MODULE '(' SYMBOL ')'
 class:		CLASS clSymScoped '{'	{ scparser_call(-1,"class",$2); }
 		| CLASS clSymScoped ':' clColList '{'
 			{ scparser_call(-2,"class",$2,$4); }
+		| CLASS clSymScoped ':' PUBLIC NCSC_MODULE '{'
+			{ scparser_call(-1,"module",$2); }
 		| CLASS clSymScoped ';'	{ }	/* Fwd decl */
 		| CLASS clSymScoped '>'	{ }	/* template <class SYMBOL> */
 		| CLASS clSymScoped clSymScoped { }	/* struct SYM sym; */

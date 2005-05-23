@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Revision: 1.52 $$Date: 2005-03-21 09:43:43 -0500 (Mon, 21 Mar 2005) $$Author: wsnyder $
+# $Revision: 1.52 $$Date: 2005-05-23 11:26:07 -0400 (Mon, 23 May 2005) $$Author: wsnyder $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -20,7 +20,7 @@ use Class::Struct;
 use Verilog::Netlist;
 use SystemC::Netlist;
 @ISA = qw(Verilog::Netlist::Net);
-$VERSION = '1.190';
+$VERSION = '1.200';
 use strict;
 
 # List of basic C++ types and their sizes
@@ -99,7 +99,9 @@ sub lint {
     if ((0 || !$self->module->lesswarn)
 	&& $self->_used_in() && !$self->_used_inout() && !$self->_used_out()
 	&& !$self->array
-	&& !defined $self->module->_code_symbols->{$self->name}) {
+	&& !defined $self->module->_code_symbols->{$self->name}
+	&& $self->module->netlist->{lint_checking}
+	) {
 	$self->warn("Signal has no drivers: ",$self->name(), "\n");
 	$self->dump_drivers(8);
 	$self->module->dump() if $Verilog::Netlist::Debug;

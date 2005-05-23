@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Revision: 1.130 $$Date: 2005-03-21 09:43:43 -0500 (Mon, 21 Mar 2005) $$Author: wsnyder $
+# $Revision: 1.130 $$Date: 2005-05-23 11:26:07 -0400 (Mon, 23 May 2005) $$Author: wsnyder $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -23,7 +23,7 @@ use SystemC::Template;
 use Verilog::Netlist::Subclass;
 @ISA = qw(SystemC::Netlist::File::Struct
 	Verilog::Netlist::Subclass);
-$VERSION = '1.190';
+$VERSION = '1.200';
 use strict;
 
 structs('new',
@@ -167,6 +167,9 @@ sub auto {
     elsif ($line =~ /^(\s*)\/\*AUTOINST\*\//) {
 	if (!$cellref) {
 	    return $self->error ("AUTOINST outside of cell definition", $line);
+	}
+	elsif ($cellref->_autoinst()) {
+	    return $self->error ("AUTOINST already declared earlier for same cell", $line);
 	}
 	$cellref->_autoinst(1);
 	push @Text, [ 1, $self->filename, $self->lineno,
@@ -515,7 +518,7 @@ sub preproc_sp {
 	    my $filename = $1;
 	    print "#include $filename\n" if $SystemC::Netlist::Debug;
 	    $filename = $self->{netlist}->resolve_filename($filename)
-		or $self->error("%Error: Cannot find $filename\n");
+		or $self->error("Cannot find include $filename\n");
 	    $self->read_include (filename=>$filename);
 	}
 	else {
@@ -640,13 +643,18 @@ sub _link {
     foreach my $incref (values %{$self->_uses()}) {
 	if (!$incref->{fileref}) {
 	    print "FILE LINK $incref->{name}\n" if $SystemC::Netlist::Debug;
-	    my $filename = $self->netlist->resolve_filename($incref->{name})
-		or $self->error("Cannot find $incref->{name}\n");
+	    my $filename = $self->netlist->resolve_filename($incref->{name});
+	    if (!$filename) {
+		if (!$self->netlist->{link_read_nonfatal}) {
+		    $self->error("Cannot find module $incref->{name}\n");
+		}
+		next;
+	    }
 	    $incref->{fileref} = $self->netlist->find_file($filename);
 	    if (!$incref->{fileref} && $self->netlist->{link_read}) {
 		print "  use_Link_Read ",$filename,"\n" if $Verilog::Netlist::Debug;
 		my $filepath = $self->netlist->resolve_filename($filename)
-		    or $self->error("Cannot find $filename\n");
+		    or $self->error("Cannot find module $filename\n");
 		(my $filename_h = $filename) =~ s/\.sp$/.h/;
 		if (!$filepath && $self->netlist->resolve_filename($filename_h)) {
 		    # There's a .h.  Just consider it as a regular #include
@@ -832,6 +840,8 @@ sub _write_use {
 		if ($top) {
 		    # Look for a top level module with same name
 		    $curmodref = $self->netlist->find_module($subname);
+		} else {
+		    $curmodref = $subcell->submod;
 		}
 		if (!$curmodref || (!$top && !$subcell)) {
 		    # We put out a #error for C++ to complain about instead
@@ -839,7 +849,6 @@ sub _write_use {
 		    $self->printf("#error sp_preproc didnt find subcell of name '$subname' in sp use: $incname\n");
 		    return;
 		}
-		$curmodref = $subcell->submod if !$top;
 		$self->printf ("#include \"%-22s  // For sp use %s\n",
 			       $curmodref->name.'.h"', $path)
 		    if (!$_Write_Use_Did_Includes{$curmodref->name});

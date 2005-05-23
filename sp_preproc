@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-#$Revision: 1.45 $$Date: 2005-03-04 10:13:14 -0500 (Fri, 04 Mar 2005) $$Author: wsnyder $
+#$Revision: 1.45 $$Date: 2005-04-20 08:29:19 -0400 (Wed, 20 Apr 2005) $$Author: wsnyder $
 ######################################################################
 #
 # Copyright 2001-2005 by Wilson Snyder.  This program is free software;
@@ -49,6 +49,7 @@ my @sp_files_nolib;
 my @sp_libs;
 my $opt_libcell = 0;
 my $opt_libfile;
+my $opt_lint = 1;
 my $opt_ncsc;
 my $opt_tree;
 my $opt_trace_duplicates = 0;
@@ -65,13 +66,14 @@ if (! GetOptions (
 		  "MMD:s"	=> \$opt_makedeps,
 		 # "lint!"	=> \$Opt_Lint,
 		  "autos!"	=> \$opt_autos,
-		  "libcell!"	=> \$opt_libcell,
-		  "preproc!"	=> \$opt_preproc,
 		  "inline!"	=> \$opt_inline,
+		  "libcell!"	=> \$opt_libcell,
 		  "libfile=s"	=> \$opt_libfile,
+		  "lint!"	=> \$opt_lint,
 		  "ncsc!"	=> \$opt_ncsc,
-		  "tree=s"	=> \$opt_tree,
+		  "preproc!"	=> \$opt_preproc,
 		  "trace-duplicates!" => \$opt_trace_duplicates,
+		  "tree=s"	=> \$opt_tree,
 		  "write-verilog=s"   => \$opt_write_verilog,
 		  "<>"		=> \&parameter,
 		  )) {
@@ -89,6 +91,8 @@ my $nl = new SystemC::Netlist (options=>$opt,
 			       link_read=>1,
 			       strip_autos=>1,
 			       ncsc => $opt_ncsc,
+			       link_read_nonfatal => !$opt_lint,
+			       lint_checking => $opt_lint,
 			       );
 
 foreach my $file (@sp_libs) {
@@ -146,7 +150,7 @@ if ($opt_makedeps) {
 #----------------------------------------------------------------------
 
 sub usage {
-    print '$Revision: 1.45 $$Date: 2005-03-04 10:13:14 -0500 (Fri, 04 Mar 2005) $$Author: wsnyder $ ', "\n";
+    print '$Revision: 1.45 $$Date: 2005-04-20 08:29:19 -0400 (Wed, 20 Apr 2005) $$Author: wsnyder $ ', "\n";
     $SIG{__WARN__} = sub{};	#pod2text isn't clean.
     pod2text($0);
     exit (1);
@@ -234,10 +238,10 @@ sub tree_recurse {
     my $cellname = shift;
 
     my $cmt = "";
-    $cmt = "[LIBCELL] " if $modref->is_libcell;
     if (!$modref) {
 	printf $fh "# %-40s %-30s %s\n",$cellname,$this_indent."?",$cmt."?";
     } else {
+	$cmt = "[LIBCELL] " if $modref->is_libcell;
 	printf $fh "# %-40s %-30s %s\n",$cellname,$this_indent.$modref->name,$cmt.($modref->filename||"");
 	my @cells = ($modref->cells_sorted);
 	my $ncell = 0;
@@ -342,6 +346,11 @@ references, they will not be linked, linted, or otherwise checked.
 =item --ncsc
 
 Create output files compatible with Cadence NC-SystemC.
+
+=item --nolint
+
+Disable lint style error checks, such as required to run doxygen on the
+SystemPerl output.
 
 =item --preproc
 

@@ -1,6 +1,6 @@
 %option noyywrap align never-interactive prefix="sclex"
 %{
-/* $Revision: 1.42 $$Date: 2005-03-03 11:33:15 -0500 (Thu, 03 Mar 2005) $$Author: wsnyder $
+/* $Revision: 1.42 $$Date: 2005-04-20 10:25:16 -0400 (Wed, 20 Apr 2005) $$Author: wsnyder $
  ******************************************************************************
  * DESCRIPTION: SystemC lexer
  * 
@@ -100,15 +100,19 @@ FLOATNUM	[0-9]+"."*[0-9]*[eE][0-9]+
 "VL_OUT"{Z9}	{ return(VL_OUT); }
 "VL_OUTW"	{ return(VL_OUTW); }
 "VL_PIN_NOP"	{ return(SP_PIN); }
-"sc_main"	{ return(SC_MAIN); }
-"enum"		{ return(ENUM); }
+
 "class"		{ return(CLASS); }
-"struct"	{ return(CLASS); }
-"public"	{ return(PUBLIC); }
+"const"		{ return(CONST); }
+"enum"		{ return(ENUM); }
 "private"	{ return(PRIVATE); }
 "protected"	{ return(PROTECTED); }
-"const"		{ return(CONST); }
+"public"	{ return(PUBLIC); }
+"sc_main"	{ return(SC_MAIN); }
+"struct"	{ return(CLASS); }
+
 "::"		{ return(COLONCOLON); }
+
+"ncsc_foreign_module"		{ return(NCSC_MODULE); }
 
 "sc_signal"	|
 "sc_in"		|
