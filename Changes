@@ -2,6 +2,10 @@ Revision history for Perl extension SystemC::Netlist
 
 The contributors that suggested a given feature are shown in [].
 
+* SystemC 1.201 5/30/2005
+
+****	Support SystemC 2.1 Beta. [Fuat Keceli]
+
 * SystemC 1.200 5/23/2005
 
 ***	Parse pinouts from ncshell (ncsc_foreign_modules).
@@ -275,7 +279,7 @@ The contributors that suggested a given feature are shown in [].
 
 
 ----------------------------------------------------------------------
-$Revision: 1.2 $$Date: 2005-05-23 11:26:07 -0400 (Mon, 23 May 2005) $$Author: wsnyder $
+$Revision: 1.2 $$Date: 2005-05-31 16:37:11 -0400 (Tue, 31 May 2005) $$Author: wsnyder $
 ----------------------------------------------------------------------
 
 This uses outline mode in Emacs.  See C-h m [M-x describe-mode].

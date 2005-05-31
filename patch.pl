@@ -4,10 +4,12 @@ use Cwd;
 use IO::File;
 BEGIN { require "t/test_utils.pl"; }
 use strict;
+our $Debug;
 
 if (!$ENV{SYSTEMC} || !-d $ENV{SYSTEMC}) {
     warn "%Error: The SYSTEMC environment variable needs to point to your SystemC distribution.\n";
-    die  "%Error: and the SYSTEMC_KIT environment variable needs to point to your SystemC original kit.\n";
+    warn "%Error: and the SYSTEMC_KIT environment variable needs to point to your SystemC original kit.\n";
+    die  "%Error: (SYSTEMC_KIT is not needed, if you run from the distribution dir).\n";
 }
 $ENV{SYSTEMC_KIT} ||= $ENV{SYSTEMC};  # Where the source tree is
 
@@ -15,23 +17,28 @@ if (!-r "$ENV{SYSTEMC_KIT}/src/systemc/datatypes/bit/sc_bv_base.h") {
     die "%Error: Unknown version of SystemC,";
 }
 
+my $ver_2_0_1 = (sc_version() < 20040101);
+
 patch ("patch-2-0-1", $ENV{SYSTEMC_KIT},
        "$ENV{SYSTEMC_KIT}/src/systemc/datatypes/bit/sc_bv_base.h",
        qr/For SystemPerl/);
 
-if (-d "$ENV{SYSTEMC}/include") {	# May not exist if user hasn't installed systemc
+if (-d "$ENV{SYSTEMC}/include/systemc/datatypes") {	# May not exist if user hasn't installed systemc
     patch ("patch-2-0-1-include", $ENV{SYSTEMC},
 	   "$ENV{SYSTEMC}/include/systemc/datatypes/bit/sc_bv_base.h",
 	   qr/For SystemPerl/);
 }
 
-if (-r "/usr/include/c++/3.2.2/backward/strstream") {
+if ($ver_2_0_1
+    && -r "/usr/include/c++/3.2.2/backward/strstream") {
     patch ("patch-2-0-1-gcc322", $ENV{SYSTEMC},
 	   "/usr/include/c++/3.2.2/backward/strstream",
 	   qr/SC_IOSTREAM_H/);
 } else {
     print "Patch patch-2-0-1-gcc322 unneeded\n";
 }
+
+######################################################################
 
 sub patch {
     my $pname = shift;
@@ -70,3 +77,32 @@ sub wholefile {
     $fh->close();
     return $wholefile;
 }
+
+our $Sc_Version;
+sub sc_version {
+    my $self = shift;
+    # Return version of SystemC in use
+    $ENV{SYSTEMC} or die "%Error: SYSTEMC env var not set,";
+    if (!$Sc_Version) {
+	my $fh;
+	foreach my $fn ("$ENV{SYSTEMC_KIT}/src/systemc/kernel/sc_ver.h",
+			"$ENV{SYSTEMC}/include/systemc/kernel/sc_ver.h",
+			"$ENV{SYSTEMC}/include/sc_ver.h") {
+	    $fh = IO::File->new($fn);
+	    last if $fh;
+	}
+	if ($fh) {
+	    while (defined (my $line = $fh->getline)) {
+		if ($line =~ /^\s*#\s*define\s+SYSTEMC_VERSION\s+(\S+)/) {
+		    $Sc_Version = $1;
+		    print "SC_VERSION = $1\n" if $Debug;
+		    last;
+		}
+	    }
+	}
+    }
+    defined $Sc_Version
+	or die "%Error: Can't determine SystemC version";
+    return $Sc_Version;
+}
+

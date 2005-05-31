@@ -1,4 +1,4 @@
-// $Revision: 1.30 $$Date: 2005-03-01 17:59:56 -0500 (Tue, 01 Mar 2005) $$Author: wsnyder $ -*- SystemC -*-
+// $Revision: 1.30 $$Date: 2005-05-31 16:37:11 -0400 (Tue, 31 May 2005) $$Author: wsnyder $ -*- SystemC -*-
 //=============================================================================
 //
 // THIS MODULE IS PUBLICLY LICENSED
@@ -51,6 +51,10 @@ void SpTraceFile::trace (const unsigned int &, const sc_string &, const char **)
     DECL_TRACE_METHOD_B( unsigned long )
 #ifdef SYSTEMC_64BIT_PATCHES
     DECL_TRACE_METHOD_B( unsigned long long)
+#endif
+#if (SYSTEMC_VERSION>20041000)
+    DECL_TRACE_METHOD_B( unsigned long long)
+    DECL_TRACE_METHOD_B( long long)
 #endif
     DECL_TRACE_METHOD_B( char )
     DECL_TRACE_METHOD_B( short )

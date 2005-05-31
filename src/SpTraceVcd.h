@@ -1,4 +1,4 @@
-// $Revision: 1.31 $$Date: 2005-04-12 15:02:31 -0400 (Tue, 12 Apr 2005) $$Author: wsnyder $ -*- SystemC -*-
+// $Revision: 1.31 $$Date: 2005-05-31 16:37:11 -0400 (Tue, 31 May 2005) $$Author: wsnyder $ -*- SystemC -*-
 //=============================================================================
 //
 // THIS MODULE IS PUBLICLY LICENSED
@@ -82,6 +82,10 @@ private:
     DECL_TRACE_METHOD_B( unsigned long )
 #ifdef SYSTEMC_64BIT_PATCHES
     DECL_TRACE_METHOD_B( unsigned long long)
+#endif
+#if (SYSTEMC_VERSION>20041000)
+    DECL_TRACE_METHOD_B( unsigned long long)
+    DECL_TRACE_METHOD_B( long long)
 #endif
     DECL_TRACE_METHOD_B( char )
     DECL_TRACE_METHOD_B( short )
