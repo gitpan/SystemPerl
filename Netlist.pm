@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Revision: 1.57 $$Date: 2005-05-31 16:38:41 -0400 (Tue, 31 May 2005) $$Author: wsnyder $
+# $Revision: 1.57 $$Date: 2005-07-27 09:41:16 -0400 (Wed, 27 Jul 2005) $$Author: wsnyder $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -19,6 +19,7 @@ use Carp;
 use IO::File;
 
 use Verilog::Netlist;
+use SystemC::Netlist::Class;
 use SystemC::Netlist::Module;
 use SystemC::Netlist::File;
 use Verilog::Netlist::Subclass;
@@ -26,7 +27,7 @@ use Verilog::Netlist::Subclass;
 use strict;
 use vars qw($Debug $Verbose $VERSION);
 
-$VERSION = '1.201';
+$VERSION = '1.210';
 
 ######################################################################
 #### Error Handling
@@ -48,6 +49,7 @@ sub new {
 	 ncsc => undef,
 	 lint_checking => 1,
 	 _enum_classes => {},
+	 _classes => {},
 	 @_);
     bless $self, $class;
     $self->_set_features();
@@ -85,6 +87,28 @@ sub sc_version {
     return $self->{sc_version};
 }
 
+sub sc_numeric_version {
+    my $self = shift;
+    # Return version of SystemC in use
+    if (!exists $self->{sc_numeric_version}) {
+	my $scv = $self->sc_version;
+	if (!$scv) { # Undeterminate
+	    $self->{sc_numeric_version} = undef;
+	} elsif ($scv > 20041000) {
+	    $self->{sc_numeric_version} = 2.100;
+	} elsif ($scv > 20011000) {
+	    $self->{sc_numeric_version} = 2.010;
+	} elsif ($scv > 20010100) {
+	    $self->{sc_numeric_version} = 1.211;
+	} else {
+	    warn "%Warning: SystemC Version isn't recognized: $scv,";
+	    $self->{sc_numeric_version} = undef;
+	}
+	print "SC_NUMERIC_VERSION = $self->{sc_numeric_version}\n" if $Debug;
+    }
+    return $self->{sc_numeric_version};
+}
+
 sub _set_features {
     my $self = shift;
     # Determine what features are in this SystemC version
@@ -94,7 +118,7 @@ sub _set_features {
 	$self->{sp_allow_bv_tracing} = $patched;
     }
     if (!defined $self->{sp_allow_output_tracing}) {
-	if ($ver && $ver>20011000) {
+	if (($self->sc_numeric_version||0) >= 2.000) {
 	    $self->{sp_allow_output_tracing} = 1;
 	} elsif ($patched) {
 	    $self->{sp_allow_output_tracing} = 'hack';
@@ -119,6 +143,40 @@ sub autos {
 	$modref->autos2();
     }
     $self->link();
+}
+
+sub link {
+    my $self = shift;
+    $self->SUPER::link(@_);
+    foreach my $modref ($self->classes) {
+	$modref->_link();
+    }
+}
+
+######################################################################
+#### Class access
+
+sub new_class {
+    my $self = shift;
+    my $modref = new SystemC::Netlist::Class
+	(netlist=>$self,
+	 @_);
+    $self->{_classes}{$modref->name} = $modref;
+    return $modref;
+}
+
+sub classes {
+    return (values %{$_[0]->{_classes}});
+}
+sub classes_sorted {
+    return (sort {$a->name() cmp $b->name()} (values %{$_[0]->{_classes}}));
+}
+
+sub find_class {
+    my $self = shift;
+    my $search = shift;
+    # Return file maching name
+    return $self->{_classes}{$search};
 }
 
 ######################################################################
@@ -194,13 +252,16 @@ sub read_cell_library {
 	if ($line =~ /^MODULE\s+(\S+)$/) {
 	    $modref = $self->find_module($1);
 	    if (!$modref) {
-		$modref = $self->new_module(name=>$1, is_libcell=>1,);
+		$modref = $self->new_module(name=>$1, is_libcell=>1,
+					    filename=>$params{filename}, lineno=>$.);
 	    }
 	}
 	elsif ($line =~ /^CELL\s+(\S+)\s+(\S+)$/) {
-	    my $cellref = $modref->find_cell($1);
+	    my $cellname = $1; my $submodname = $2;
+	    my $cellref = $modref->find_cell($cellname);
 	    if (!$cellref) {
-		$cellref = $modref->new_cell(name=>$1, submodname=>$2,);
+		$cellref = $modref->new_cell(name=>$cellname, submodname=>$submodname,
+					     filename=>$params{filename}, lineno=>$.);
 	    }
 	}
 	else {
@@ -208,6 +269,17 @@ sub read_cell_library {
 	}
     }
     $fh->close;
+}
+
+######################################################################
+#### Debug
+
+sub dump {
+    my $self = shift;
+    $self->SUPER::dump();
+    foreach my $modref ($self->classes_sorted) {
+	$modref->dump();
+    }
 }
 
 ######################################################################
@@ -287,6 +359,7 @@ Wilson Snyder <wsnyder@wsnyder.org>
 =head1 SEE ALSO
 
 L<SystemC::Netlist::Cell>,
+L<SystemC::Netlist::Class>,
 L<SystemC::Netlist::File>,
 L<SystemC::Netlist::Module>,
 L<SystemC::Netlist::Net>,

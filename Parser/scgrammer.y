@@ -1,5 +1,5 @@
 %{
-/* $Revision: 1.51 $$Date: 2005-04-20 10:25:16 -0400 (Wed, 20 Apr 2005) $$Author: wsnyder $
+/* $Revision: 1.51 $$Date: 2005-07-26 15:45:35 -0400 (Tue, 26 Jul 2005) $$Author: wsnyder $
  ******************************************************************************
  * DESCRIPTION: SystemC bison parser
  *
@@ -117,6 +117,7 @@ int scgrammerlex() {
 %token		SC_MAIN
 %token		SP_CELL
 %token		SP_CELL_DECL
+%token		SP_MODULE_CONTINUED
 %token		SP_PIN
 %token		SP_TEMPLATE
 %token		SP_TRACED
@@ -176,6 +177,7 @@ expList:	exp
 
 exp:		auto
 		| module
+		| module_continued
 		| ctor
 		| cell
 		| cell_decl
@@ -211,6 +213,10 @@ module:		SC_MODULE '(' SYMBOL ')'
 			{ scparser_call(-1,"module",$3); }
 		| SC_MAIN
 			{ scparser_call(1,"module","sc_main"); }
+		;
+
+module_continued: SP_MODULE_CONTINUED '(' SYMBOL ')'
+			{ scparser_call(-1,"module_continued",$3); }
 		;
 
 class:		CLASS clSymScoped '{'	{ scparser_call(-1,"class",$2); }
@@ -324,7 +330,7 @@ sp:		SP	{ scparser_call(1,"preproc_sp",sclextext);}
 //************************************
 // Tracables
 
-traceable:	SP_TRACED SYMBOL SYMBOL vector ';'
+traceable:	SP_TRACED declType SYMBOL vector ';'
  			{ scparser_call(4,"signal","sp_traced",$2,$3,$4);
  			  SCFree($2); SCFree($3); SCFree($4)}
 		| VL_SIG '(' SYMBOL vector ',' NUMBER ',' NUMBER ')' ';'

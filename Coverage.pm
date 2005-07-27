@@ -1,4 +1,4 @@
-# $Revision: 1.7 $$Date: 2005-05-31 16:38:41 -0400 (Tue, 31 May 2005) $$Author: wsnyder $
+# $Revision: 1.7 $$Date: 2005-07-27 09:41:16 -0400 (Wed, 27 Jul 2005) $$Author: wsnyder $
 ######################################################################
 #
 # Copyright 2001-2005 by Wilson Snyder.  This program is free software;
@@ -28,7 +28,7 @@ use vars qw($_Default_Self);
 ######################################################################
 #### Configuration Section
 
-$VERSION = '1.201';
+$VERSION = '1.210';
 
 use constant DEFAULT_FILENAME => 'logs/coverage.pl';
 

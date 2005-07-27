@@ -1,27 +1,26 @@
 # SystemC - SystemC Perl Interface
-# $Revision: 1.60 $$Date: 2005-05-31 16:38:41 -0400 (Tue, 31 May 2005) $$Author: wsnyder $
+# $Revision: 1.60 $$Date: 2005-07-27 09:41:16 -0400 (Wed, 27 Jul 2005) $$Author: wsnyder $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
 # Copyright 2001-2005 by Wilson Snyder.  This program is free software;
 # you can redistribute it and/or modify it under the terms of either the GNU
 # General Public License or the Perl Artistic License.
-# 
+#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 ######################################################################
 
 package SystemC::Netlist::AutoTrace;
 use File::Basename;
 
 use SystemC::Netlist::Module;
-$VERSION = '1.201';
+$VERSION = '1.210';
 use strict;
 
-use vars qw ($Setup_Ident_Code);	# Local use for recursion only
 use vars qw ($Debug_Check_Code);
 #$Debug_Check_Code=1;	# Compile in debugging check of sig identifiers
 
@@ -42,19 +41,25 @@ sub _write_autotrace {
 	return;
     }
 
+    # State common to all routines
+    my $trinfo = {
+	ident_code => 0,	# Next code to assign
+	tracesref => {},	# Top of hiearchy of traces for each cell
+	dupsref => {},		# Hash of {signal} = orig signal
+	dupscoderef => {},	# Hash of {signal} = code#
+	recurse => ($self->_autotrace('recurse')),
+    };
+
     # Detect duplicate signal information
-    my $dupsref = {};
     if ($self->_autotrace('recurse') && !$self->netlist->{sp_trace_duplicates}) {
-	_tracer_dups_recurse($self,$dupsref);
-	_tracer_dups_show($self,$dupsref) if $Debug_Check_Code;
+	_tracer_dups_recurse($self,$trinfo);
+	_tracer_dups_show($self,$trinfo) if $Debug_Check_Code;
     }
 
     # Flatten out all hiearchy under this into a array of signal information
-    my $tracesref = {};
-    local $Setup_Ident_Code = 0;
-    _tracer_setup($self,$tracesref,
-		  $dupsref, {},
-		  ($self->_autotrace('recurse')),
+    _tracer_setup($self,
+		  $trinfo,
+		  $trinfo->{tracesref},
 		  );
 
     # Output the data
@@ -65,11 +70,11 @@ sub _write_autotrace {
     } else {
 	$fileref->print ("#if WAVES\n",
 			 "# include \"SpTraceVcd.h\"\n",);
-	_tracer_include_recurse($self,$fileref,$tracesref);
-	_write_tracer_trace($self, $fileref, $tracesref);
-	_write_tracer_init ($self, $fileref, $tracesref);
-	_write_tracer_change($self, $fileref, $tracesref, "full");
-	_write_tracer_change($self, $fileref, $tracesref, "chg");
+	_tracer_include_recurse($self,$trinfo, $fileref,$trinfo->{tracesref});
+	_write_tracer_trace ($self, $trinfo, $fileref, $trinfo->{tracesref});
+	_write_tracer_init  ($self, $trinfo, $fileref, $trinfo->{tracesref});
+	_write_tracer_change($self, $trinfo, $fileref, $trinfo->{tracesref}, "full");
+	_write_tracer_change($self, $trinfo, $fileref, $trinfo->{tracesref}, "chg");
 	$fileref->print ("#endif // WAVES\n");
     }
     $fileref->print ("${prefix}// End of SystemPerl automatic trace file routine\n"),
@@ -77,10 +82,12 @@ sub _write_autotrace {
 
 sub _tracer_dups_recurse {
     my $modref = shift or return;   # Submodule may not exist if library cell
-    my $dupsref = shift;	# global entry to write to
+    my $trinfo = shift;
     my $modhier = shift || "";	# ".cellname" appended each recursion
     # Goal: For each signal, try to find the lowest level in the hiearchy that
     # sources that signal.  (There are the fewest changedetects at lower levels.)
+
+    my $dupsref = $trinfo->{dupsref};	# global entry to write to
 
     # Add our nets to the layout
     foreach my $cellref ($modref->cells_sorted()) {
@@ -91,8 +98,8 @@ sub _tracer_dups_recurse {
 		&& $pinref->port->net->type eq $pinref->net->type
 		&& $pinref->port->net->msb eq $pinref->net->msb
 		&& $pinref->port->net->lsb eq $pinref->net->lsb
-		&& !_net_ignore($pinref->port->net, $modref)
-		&& !_net_ignore($pinref->net, $modref)
+		&& !_net_ignore($pinref->port->net)
+		&& !_net_ignore($pinref->net)
 		) {
 		# Thus, it's the same signal passed across the hiearchy.
 		#print "PIN ",$cellref->name," XX ", $pinref->name,"\n";
@@ -113,7 +120,7 @@ sub _tracer_dups_recurse {
 	    }
 	}
 	_tracer_dups_recurse ($cellref->submod,
-			      $dupsref,
+			      $trinfo,
 			      $submodhier,
 			      );
     }
@@ -121,11 +128,11 @@ sub _tracer_dups_recurse {
 
 sub _tracer_dups_show {
     my $modref = shift;
-    my $dupsref = shift;	# global entry to write to
+    my $trinfo = shift;
     print "DUPS ",$modref->name,"\n";
     printf "  %-40s %s\n", "NET", "Gets data from NET";
-    foreach my $netname (sort (keys %{$dupsref})) {
-	my $outputter_name = ${$dupsref->{$netname}};
+    foreach my $netname (sort (keys %{$trinfo->{dupsref}})) {
+	my $outputter_name = ${$trinfo->{dupsref}->{$netname}};
 	if ($outputter_name ne $netname) {
 	    printf "  %-40s %s\n", $netname, $outputter_name;
 	}
@@ -134,7 +141,6 @@ sub _tracer_dups_show {
 
 sub _net_ignore {
     my $netref = shift;
-    my $modref = shift;
     # Return a reason for ignoring this signal, or undef
     return "Leading _" if ($netref->name =~ /^_/ 	# Skip leading _ signals
 			   && $netref->name !~ /^__PVT__[^_]/);
@@ -144,14 +150,14 @@ sub _net_ignore {
 				     && ($netref->array=~/^[0-9]/)
 				     && (($netref->array()||0)>32));
     my $scbv = ($netref->type =~ /^sc_bv/);
+    if ($scbv && !$netref->netlist->{sp_allow_bv_tracing}) {
+	return "Memory Vector - need patch";
+    }
     if (!$netref->simple_type) {
 	if ($netref->port && $netref->port->direction eq "out") {
-	    if (!$modref->netlist->{sp_allow_output_tracing}) {
+	    if (!$netref->netlist->{sp_allow_output_tracing}) {
 		return "Can't read output ports -- need patch";
 	    }
-	}
-	if ($scbv && !$modref->netlist->{sp_allow_bv_tracing}) {
-	    return "Memory Vector - need patch";
 	}
     }
     return undef;
@@ -159,10 +165,8 @@ sub _net_ignore {
 
 sub _tracer_setup {
     my $modref = shift or return;   # Submodule may not exist if library cell
+    my $trinfo = shift;		# Global trace information
     my $tracesref = shift;	# *PARENT's* {cells} entry to write to
-    my $dupsref = shift;	# global duplicate information
-    my $dupscoderef = shift;	# global duplicate code number info
-    my $recurse = shift;	# static across recursions; AUTOTRACE(,recurse) switch
     my $level = shift || 1;	# increments each recursion
     my $nethier = shift || "t";	# "->cellname" appended each recursion
     my $modhier = shift || "";	# ".cellname" appended each recursion
@@ -172,96 +176,17 @@ sub _tracer_setup {
     $tracesref->{modhier} = $modhier;
     $tracesref->{nethier} = $nethier,
     $tracesref->{cells} = [];
-	    
-    my %our_codes;
+
     foreach my $netref ($modref->nets_sorted()) {
-	my $ignore = _net_ignore($netref,$modref);
-
-	my $accessor = "";	# Function call to get the value of the signal
-	my $scbv = ($netref->type =~ /^sc_bv/);
-	if ($scbv) {
-	    $accessor .= "(((uint32_t*)";
-	}
-	$accessor .= 'ts->'.$netref->name;
-	if ($netref->array) {
-	    $accessor .= "[i]";
-	}
-	if (($netref->width||0) > 64 && !$scbv) {
-	    $accessor .= "[0]";
-	}
-	if (!$netref->simple_type) {
-	    if ($netref->port && $netref->port->direction eq "out") {
-		# This is nasty, and might even result in bad data
-		# It also requires a library patch
-		if (!$modref->netlist->{sp_allow_output_tracing}) {
-		    $ignore or die "%Error: Should have ignored, Can't read output ports,";
-		} elsif ($modref->netlist->{sp_allow_output_tracing} eq 'hack') {
-		    # SystemC 1.0.1a
-		    $accessor .= ".const_signal()->get_cur_value()";
-		} else {
-		    $accessor .= ".read()";
-		}
-	    } else {
-		$accessor .= ".read()";
-	    }
-	    if ($scbv) {
-		$accessor .= ".get_datap())[0])";
-		$ignore or die "%Error: Should have ignored, memory vector,"
-		    if (!$ignore && !$modref->netlist->{sp_allow_bv_tracing});
-	    }
-	}
-
-	my $code_inc = 0;
-	if (!$ignore) {
-	    $code_inc = (int($netref->width()/32) + 1);
-	}
-
-	# Check identicals
-	my $nethiername = $modhier."->".$netref->name;
-	my $identical = $dupsref->{$nethiername} && ${$dupsref->{$nethiername}};
-	my $identical_decl; my $identical_use;
-	if ($identical && !$ignore) {
-	    # Thus, it's the same signal passed across the hiearchy.
-	    if (!defined $dupscoderef->{$identical}) {
-		# First module that references it gets to choose the code for it
-		# This isn't necessarially the same cell that generates the *value*
-		$dupscoderef->{$identical}{code} = ++$Setup_Ident_Code;
-	    }
-	    if ($identical ne $nethiername) { 	# Driven from somewhere else
-		# Use previous declaration
-		$identical_use = $dupscoderef->{$identical}{code};
-	    } else {
-		$identical_decl = $dupscoderef->{$identical}{code};
-	    }
-	}
-
-	# Report errors
-	if ($netref->sp_traced && $ignore) {
-	    $netref->warn("Ignoring SP_TRACED, $ignore: ".$netref->name."\n");
-	}
-
-	# Store info for this var
-	my $tref = {
-	    netref => $netref,
-	    code_inc => $code_inc,
-	    ignore => $ignore,
-	    identical_decl => $identical_decl,
-	    identical_use => $identical_use,
-	    accessor => $accessor,
-	};
-	push @{$tracesref->{vars}}, $tref;
-	$our_codes{$netref->name} = $tref if $recurse;
-	$tref->{check_code} = $Debug_Check_Code++ if $Debug_Check_Code;
+	_tracer_setup_net($trinfo, $tracesref, $modhier."->", $netref, "", "ts->");
     }
-    if ($recurse) {
+    if ($trinfo->{recurse}) {
 	foreach my $cellref ($modref->cells_sorted()) {
 	    my $subref = {};
 	    push @{$tracesref->{cells}}, $subref;
 	    _tracer_setup($cellref->submod,
+			  $trinfo,
 			  $subref,
-			  $dupsref,
-			  $dupscoderef,
-			  $recurse,
 			  $level+1,
 			  $nethier."->".$cellref->name,
 			  $modhier.".".$cellref->name,
@@ -270,8 +195,123 @@ sub _tracer_setup {
     }
 }
 
+sub _tracer_setup_accessor {
+    my $netref = shift;
+    my $orig_accessor = shift || "";
+
+    my $ignore = _net_ignore($netref);
+    my $accessor = "";	# Function call to get the value of the signal
+    my $scbv = ($netref->type =~ /^sc_bv/);
+    if ($scbv) {
+	$accessor .= "(((uint32_t*)(";
+    }
+    $accessor .= $orig_accessor.$netref->name;
+    if ($netref->array) {
+	$accessor .= "[i]";
+    }
+    if (($netref->width||0) > 64 && !$scbv) {
+	$accessor .= "[0]";
+    }
+    if (!$netref->simple_type) {
+	if ($netref->port && $netref->port->direction eq "out") {
+	    # This is nasty, and might even result in bad data
+	    # It also requires a library patch
+	    if (!$netref->netlist->{sp_allow_output_tracing}) {
+		$ignore or die "%Error: Should have ignored, Can't read output ports,";
+	    } elsif ($netref->netlist->{sp_allow_output_tracing} eq 'hack') {
+		# SystemC 1.0.1a
+		$accessor .= ".const_signal()->get_cur_value()";
+	    } else {
+		$accessor .= ".read()";
+	    }
+	} else {
+	    $accessor .= ".read()";
+	}
+    }
+    if ($scbv) {
+	$accessor .= ".get_datap()))[0])";
+	$ignore or die "%Error: Should have ignored, memory vector,"
+	    if (!$ignore && !$netref->netlist->{sp_allow_bv_tracing});
+    }
+
+    return $accessor;
+}
+
+sub _tracer_setup_net {
+    my $trinfo = shift;		# Global trace information
+    my $tracesref = shift;	# *PARENT's* {cells} entry to write to
+    my $modhier = shift;
+    my $netref = shift;
+    my $humanprefix = shift;
+    my $upper_accessor = shift;
+
+    if (!$netref->width()) {
+	if (my $classref = $netref->netlist->find_class($netref->type)) {
+	    # It's a structure we know about.  Recurse all of the members of the struct
+	    foreach my $subnetref ($classref->nets_sorted()) {
+		_tracer_setup_net($trinfo, $tracesref,
+				  $modhier.".".$netref->name,
+				  $subnetref,
+				  $humanprefix._dedot($netref->name).".",
+				  _tracer_setup_accessor($netref, $upper_accessor).".",
+				  );
+	    }
+	    return;
+	}
+    }
+
+    my $ignore = _net_ignore($netref);
+    my $accessor = _tracer_setup_accessor($netref, $upper_accessor);
+
+    my $code_inc = 0;
+    if (!$ignore) {
+	$code_inc = (int($netref->width()/32) + 1);
+    }
+
+    # Check identicals
+    my $dupsref = $trinfo->{dupsref};	# global duplicate information
+    my $dupscoderef = $trinfo->{dupscoderef};	# global duplicate code number info
+
+    my $nethiername = $modhier.$netref->name;
+    my $identical = $dupsref->{$nethiername} && ${$dupsref->{$nethiername}};
+    my $identical_decl; my $identical_use;
+    if ($identical && !$ignore) {
+	# Thus, it's the same signal passed across the hiearchy.
+	if (!defined $dupscoderef->{$identical}) {
+	    # First module that references it gets to choose the code for it
+	    # This isn't necessarially the same cell that generates the *value*
+	    $dupscoderef->{$identical}{code} = ++$trinfo->{ident_code};
+	}
+	if ($identical ne $nethiername) { 	# Driven from somewhere else
+	    # Use previous declaration
+	    $identical_use = $dupscoderef->{$identical}{code};
+	} else {
+	    $identical_decl = $dupscoderef->{$identical}{code};
+	}
+    }
+
+    # Report errors
+    if ($netref->sp_traced && $ignore) {
+	$netref->warn("Ignoring SP_TRACED, $ignore: ".$netref->name."\n");
+    }
+
+    # Store info for this var
+    my $tref = {
+	netref => $netref,
+	code_inc => $code_inc,
+	ignore => $ignore,
+	identical_decl => $identical_decl,
+	identical_use => $identical_use,
+	accessor => $accessor,
+	human_name => $humanprefix._dedot($netref->name()),
+    };
+    push @{$tracesref->{vars}}, $tref;
+    $tref->{check_code} = $Debug_Check_Code++ if $Debug_Check_Code;
+}
+
 sub _tracer_include_recurse {
     my $self = shift;
+    my $trinfo = shift;
     my $fileref = shift;
     my $tracesref = shift;
     my $level = shift||0;
@@ -282,15 +322,16 @@ sub _tracer_include_recurse {
     $fileref->print("#".(" "x$level)."include \"${header}\"\n");
 
     foreach my $cellref (@{$tracesref->{cells}}) {
-	_tracer_include_recurse($self,$fileref,$cellref,$level);
+	_tracer_include_recurse($self,$trinfo,$fileref,$cellref,$level);
     }
 }
 
 sub _write_tracer_trace {
     my $self = shift;
+    my $trinfo = shift;
     my $fileref = shift;
     #my $tracesref = shift;
-    
+
     my $mod = $self->name;
 
     $fileref->print
@@ -298,7 +339,7 @@ sub _write_tracer_trace {
 	 "    if(0 && options) {}  // Prevent unused\n",
 	 "    tfp->spTrace()->addCallback (&${mod}::traceInit, &${mod}::traceFull,  &${mod}::traceChg, this);\n",);
     my $cmt = "";
-    if ($self->_autotrace('recurse')) {
+    if ($trinfo->{recurse}) {
 	$fileref->print ("    // Inline child recursion, so don't need:\n");
 	$cmt = "//";
     }
@@ -318,15 +359,18 @@ sub _write_tracer_trace {
 
 sub _write_tracer_init {
     my $self = shift;
+    my $trinfo = shift;
     my $fileref = shift;
     my $tracesref = shift;
-    
+
     my $mod = $self->name;
     $fileref->printf("static int ${mod}_checkcode[%d];\n\n", $Debug_Check_Code+1) if $Debug_Check_Code;
 
     $fileref->print("void ${mod}::traceInit (SpTraceVcd* vcdp, void* userthis, uint32_t code) {\n");
-    $fileref->printf("  int _identcode[%d];\n", $Setup_Ident_Code+1) if $Setup_Ident_Code;
-    $fileref->printf("  for (int i=0; i<%d; i++) { _identcode[i]=0; }\n", $Setup_Ident_Code+1) if $Setup_Ident_Code;
+    if ($trinfo->{ident_code}) {
+	$fileref->printf("  int _identcode[%d];\n", $trinfo->{ident_code}+1);
+	$fileref->printf("  for (int i=0; i<%d; i++) { _identcode[i]=0; }\n", $trinfo->{ident_code});
+    }
     $fileref->print("  // Callback from vcd->open()\n");
     $fileref->print("  if (0 && vcdp && userthis && code) {}  // Prevent unused\n");
     if ($#{$tracesref->{vars}} >= 0) {
@@ -335,13 +379,13 @@ sub _write_tracer_init {
 	$fileref->print("  string prefix = t->name();\n");
 	$fileref->print("  // Calculate identical signal codes\n");
     }
-    
-    _write_tracer_init_recurse($self,$fileref,$tracesref, 1);
+
+    _write_tracer_init_recurse($self,$trinfo,$fileref,$tracesref, 1);
     if ($#{$tracesref->{vars}} >= 0) {
 	$fileref->print("  // Setup signal names\n");
 	$fileref->print("  c=code;\n");
     }
-    _write_tracer_init_recurse($self,$fileref,$tracesref, 0);
+    _write_tracer_init_recurse($self,$trinfo,$fileref,$tracesref, 0);
     $fileref->print("}\n");
 }
 
@@ -354,6 +398,7 @@ sub _dedot {
 
 sub _write_tracer_init_recurse {
     my $self = shift;
+    my $trinfo = shift;
     my $fileref = shift;
     my $tracesref = shift;
     my $doident = shift;
@@ -379,7 +424,7 @@ sub _write_tracer_init_recurse {
 	# Scope to correct parent module
 	# Now do the signal
 	if ($doident) {
-	    $fileref->printf("${aindent}  // ".$netref->name."\n") if $Debug_Check_Code;
+	    $fileref->printf("${aindent}  // ".$tref->{human_name}."\n") if $Debug_Check_Code;
 	    if ($tref->{identical_decl}) {   # This code is reused by a child module.
 		$fileref->printf("${aindent}  _identcode[".$tref->{identical_decl}."] = c;\n");
 	    }
@@ -395,7 +440,7 @@ sub _write_tracer_init_recurse {
 	my $ket = "";
 	if ($tref->{identical_use} && !$tref->{ignore}) {
 	    $c = "lc";
-	    $fileref->printf("${aindent}  {int lc=_identcode[".$tref->{identical_use}."];\n"); 
+	    $fileref->printf("${aindent}  {int lc=_identcode[".$tref->{identical_use}."];\n");
 	    $ket .= "}";
 	}
 	if ($netref->array && !$tref->{ignore}) {
@@ -417,7 +462,7 @@ sub _write_tracer_init_recurse {
 	my $width = $netref->width || 1;
 	my $arraynum = ($netref->array ? " i":"-1");
 	$fileref->printf("");
-	my $name = _dedot($netref->name());
+	my $name = $tref->{human_name};
 	if (!$doident) {
 	    if ($width == 1) {
 		$fileref->printf("vcdp->declBit  (${c},\"%s\",%s"
@@ -443,13 +488,14 @@ sub _write_tracer_init_recurse {
     }
 
     foreach my $tref (@{$tracesref->{cells}}) {
-	_write_tracer_init_recurse($self, $fileref, $tref, $doident, $level+1);
+	_write_tracer_init_recurse($self, $trinfo, $fileref, $tref, $doident, $level+1);
     }
     $fileref->printf("${indent}\}\n");
 }
 
 sub _write_tracer_change {
     my $self = shift;
+    my $trinfo = shift;
     my $fileref = shift;
     my $tracesref = shift;
     my $mode = shift;   # full or chg
@@ -463,13 +509,14 @@ sub _write_tracer_change {
 	$fileref->print("  int c=code;\n");
 	$fileref->print("  ${mod}* t=(${mod}*)userthis;\n");
     }
-    _write_tracer_change_recurse($self,$fileref,$tracesref,$mode);
+    _write_tracer_change_recurse($self,$trinfo,$fileref,$tracesref,$mode);
 
     $fileref->print("}\n");
 }
 
 sub _write_tracer_change_recurse {
     my $self = shift;
+    my $trinfo = shift;
     my $fileref = shift;
     my $tracesref = shift;
     my $mode = shift;   # full or chg
@@ -544,8 +591,8 @@ sub _write_tracer_change_recurse {
 	}
     }
     foreach my $tref (@{$tracesref->{cells}}) {
-	my ($subcode_inc, $subcode_math) 
-	    = _write_tracer_change_recurse($self, $fileref, $tref, $mode, $level+1);
+	my ($subcode_inc, $subcode_math)
+	    = _write_tracer_change_recurse($self, $trinfo, $fileref, $tref, $mode, $level+1);
 	$code_inc += $subcode_inc;
 	$code_math .= $subcode_math;
     }

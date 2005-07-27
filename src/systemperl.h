@@ -1,4 +1,4 @@
-// $Revision: 1.34 $$Date: 2005-03-17 08:16:52 -0500 (Thu, 17 Mar 2005) $$Author: wsnyder $ -*- SystemC -*-
+// $Revision: 1.34 $$Date: 2005-07-26 15:45:35 -0400 (Tue, 26 Jul 2005) $$Author: wsnyder $ -*- SystemC -*-
 //********************************************************************
 //
 // THIS MODULE IS PUBLICLY LICENSED
@@ -55,24 +55,24 @@ using namespace std;
 //********************************************************************
 // Macros
 
-// Like SC_MODULE but not managed as a module (for coverage, etc)
+/// Like SC_MODULE but not managed as a module (for coverage, etc)
 #define SP_CLASS(name) class name
 
-// Allows constructor to be in implementation rather then the header
+/// Allows constructor to be in implementation rather then the header
 #define SP_CTOR_IMP(name) name::name(sc_module_name)
 
-// Declaration of cell for interface
+/// Declaration of cell for interface
 #define SP_CELL_DECL(type,instname) type *instname
 
-// Instantiation of a cell in CTOR
+/// Instantiation of a cell in CTOR
 #define SP_CELL(instname,type) (instname = new type (# instname))
 
-// Instantiation of a cell in CTOR
+/// Instantiation of a cell in CTOR
 // Allocate using a formatted name
 #define SP_CELL_FORM(instname,type,format...) \
 	(instname = new type (sp_cell_sprintf(format)))
 
-// Connection of a pin to a SC_CELL
+/// Connection of a pin to a SC_CELL
 #define SP_PIN(instname,port,net) (instname->port(net))
 
 // Tracing types
@@ -147,7 +147,7 @@ class SpUInt32Zeroed { public:
 #endif
 
 extern "C" {
-    // Print to cout, but with C style arguments
+    /// Print to cout, but with C style arguments
     extern void sp_log_printf(const char *format, ...) UTIL_ATTR_PRINTF(1);
 }
 
@@ -155,6 +155,7 @@ extern "C" {
 // SystemC Automatics
 
 #define SP_AUTO_CTOR
+#define SP_MODULE_CONTINUED(modname)
 #define SP_TEMPLATE(cellregexp, pinregexp, netregexp)
 
 // Multiple flavors as all compilers don't support variable define arguments

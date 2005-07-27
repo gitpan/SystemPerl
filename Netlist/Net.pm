@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Revision: 1.52 $$Date: 2005-05-31 16:38:41 -0400 (Tue, 31 May 2005) $$Author: wsnyder $
+# $Revision: 1.52 $$Date: 2005-07-27 09:41:16 -0400 (Wed, 27 Jul 2005) $$Author: wsnyder $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -20,7 +20,7 @@ use Class::Struct;
 use Verilog::Netlist;
 use SystemC::Netlist;
 @ISA = qw(Verilog::Netlist::Net);
-$VERSION = '1.201';
+$VERSION = '1.210';
 use strict;
 
 # List of basic C++ types and their sizes
@@ -46,6 +46,10 @@ use vars qw (%TypeInfo);
 ######################################################################
 # Accessors
 
+sub netlist {
+    return $_[0]->module->netlist;
+}
+
 sub cast_type {
     my $self = shift;
     if ($self->is_enum_type) {
@@ -58,7 +62,7 @@ sub cast_type {
 
 sub is_enum_type {
     my $self = shift;
-    return defined $self->module->netlist->{_enum_classes}{$self->type};    
+    return defined $self->netlist->{_enum_classes}{$self->type};    
 }
 
 sub inherited {
@@ -100,7 +104,7 @@ sub lint {
 	&& $self->_used_in() && !$self->_used_inout() && !$self->_used_out()
 	&& !$self->array
 	&& !defined $self->module->_code_symbols->{$self->name}
-	&& $self->module->netlist->{lint_checking}
+	&& $self->netlist->{lint_checking}
 	) {
 	$self->warn("Signal has no drivers: ",$self->name(), "\n");
 	$self->dump_drivers(8);

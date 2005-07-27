@@ -1,4 +1,4 @@
-#$Revision: 1.33 $$Date: 2005-03-17 11:21:50 -0500 (Thu, 17 Mar 2005) $$Author: wsnyder $
+#$Revision: 1.33 $$Date: 2005-07-26 15:45:35 -0400 (Tue, 26 Jul 2005) $$Author: wsnyder $
 ######################################################################
 #
 # Copyright 2001-2005 by Wilson Snyder.  This program is free software;
@@ -87,6 +87,13 @@ public sc_module" must instead be coded as "SC_MODULE(mod1)".
 
     SP_CELL_FORM(slice[i], smm_pi_slice, "slice[%d]", i);
 
+=item SP_MODULE_CONTINUED (I<modulename>)
+
+SP_MODULE_CONTINUED allows a new source file to continue declaration of
+functions that were declared in a different .sp file.  This will not put
+any code into the output, it is only required for proper parsing of
+Verilated files.
+
 =item SP_PIN (I<instname>, I<portname>, I<netname>)
 
 SP_PIN declares a connection of a instantiation's port to the specified net.
@@ -128,7 +135,12 @@ $1 has "1", so the resulting connection will be to "foo_array1".
 =item SP_TRACED
 
 SP_TRACED is used as an attribute like static or const.  It indicates the
-simple variable should be added to any waves files that AUTOTRACE creates.
+simple variable inside a SC_MODULE or another class should be added to any
+waves files that AUTOTRACE creates.
+
+SP_TRACED may also be used on the member variables inside standard classes.
+This allows the class to be traced if it is used as the type of a
+sc_in/sc_out/sc_signal.  For a sample, see MySigStruct in the examples.
 
 Note you cannot trace output ports without patching the SystemC library,
 see the README file.

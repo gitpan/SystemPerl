@@ -1,6 +1,6 @@
 %option noyywrap align never-interactive prefix="sclex"
 %{
-/* $Revision: 1.42 $$Date: 2005-04-20 10:25:16 -0400 (Wed, 20 Apr 2005) $$Author: wsnyder $
+/* $Revision: 1.42 $$Date: 2005-07-26 15:45:35 -0400 (Tue, 26 Jul 2005) $$Author: wsnyder $
  ******************************************************************************
  * DESCRIPTION: SystemC lexer
  * 
@@ -79,8 +79,9 @@ FLOATNUM	[0-9]+"."*[0-9]*[eE][0-9]+
 	/* Special macros we recognise */
 "VL_MODULE"	{ return(SC_MODULE); }
 "SC_MODULE"	{ return(SC_MODULE); }
-"SP_CLASS"	{ return(SC_MODULE); }
-[S][PC]"_CELL"	{ return(SP_CELL); }
+"SP_MODULE_CONTINUED"	{ return(SP_MODULE_CONTINUED); }
+"SP_CLASS"		{ return(SC_MODULE); }
+[S][PC]"_CELL"		{ return(SP_CELL); }
 [S][PC]"_CELL_FORM"	{ return(SP_CELL); }
 [S][PC]"_CELL_DECL"	{ return(SP_CELL_DECL); }
 [S][PC]"_PIN"		{ return(SP_PIN); }

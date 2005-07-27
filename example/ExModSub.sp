@@ -1,4 +1,4 @@
-// $Revision: 1.13 $$Date: 2005-03-16 14:04:22 -0500 (Wed, 16 Mar 2005) $$Author: wsnyder $
+// $Revision: 1.13 $$Date: 2005-07-26 15:45:35 -0400 (Tue, 26 Jul 2005) $$Author: wsnyder $
 // DESCRIPTION: SystemPerl: Example source module
 //
 // Copyright 2001-2005 by Wilson Snyder.  This program is free software;
@@ -7,13 +7,30 @@
 
 #sp interface
 #include <systemperl.h>
+#include <iostream>
 /*AUTOSUBCELL_CLASS*/
+
+class MySigStruct {
+public:
+    SP_TRACED bool	m_in;
+    SP_TRACED bool	m_out;
+    sc_bv<72>		m_outbx;	// You can trace this, but a SC patch is required
+    MySigStruct() {}
+    MySigStruct(bool i, bool o, bool ob) : m_in(i), m_out(o), m_outbx(ob) {}
+};
+inline bool operator== (const MySigStruct &lhs, const MySigStruct &rhs) {
+    return 0==memcmp(&lhs, &rhs, sizeof(lhs)); };
+inline ostream& operator<< (ostream& lhs, const MySigStruct& rhs) {
+    return lhs;}
 
 SC_MODULE (__MODULE__) {
     sc_in_clk		clk;		  // **** System Inputs
     sc_in<bool>		in;
     sc_out<bool>	out;
     sc_out<bool>	outbx;
+
+    sc_signal<MySigStruct>  m_sigstr1;
+    SP_TRACED MySigStruct   m_sigstr2;
 
   private:
     /*AUTOSUBCELL_DECL*/
@@ -41,6 +58,8 @@ void __MODULE__::clock (void) {
     SP_AUTO_COVER1("clocking");  // not in line report
     out.write(in.read());
     outbx.write(in.read());
+    m_sigstr1.write(MySigStruct(in,out,outbx));
+    m_sigstr2 = MySigStruct(in,out,outbx);
     SP_AUTO_COVER();
 }
 

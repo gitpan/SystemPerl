@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Revision: 1.130 $$Date: 2005-05-31 16:38:41 -0400 (Tue, 31 May 2005) $$Author: wsnyder $
+# $Revision: 1.130 $$Date: 2005-07-27 09:41:16 -0400 (Wed, 27 Jul 2005) $$Author: wsnyder $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -23,7 +23,7 @@ use SystemC::Template;
 use Verilog::Netlist::Subclass;
 @ISA = qw(SystemC::Netlist::File::Struct
 	Verilog::Netlist::Subclass);
-$VERSION = '1.201';
+$VERSION = '1.210';
 use strict;
 
 structs('new',
@@ -111,11 +111,31 @@ sub module {
     $fileref->_modules($module, $self->{modref});
 }
 
+sub module_continued {
+    my $self = shift;
+    my $module = shift;
+    my $fileref = $self->{fileref};
+    my $netlist = $self->{netlist};
+    $module = $fileref->basename if $module eq "__MODULE__";
+    print "Module_Continued $module\n" if $SystemC::Netlist::Debug;
+    $self->endmodule();	  # May be previous module in file
+    $self->{modref} = $netlist->find_module($module);
+    if (!$self->{modref}) {
+	$self->error ("SP_MODULE_CONTINUED of module that doesn't exist: $module\n");
+	$self->module($module);
+    }
+}
+
 sub endmodule {
     my $self = shift;
     return if !$self->{modref};
     my $modref = $self->{modref};
-    $modref->_code_symbols($self->symbols());
+    if (!$modref->_code_symbols) {
+	$modref->_code_symbols($self->symbols());
+    } else { # Add to existing hash
+	my %syms = (%{$modref->_code_symbols}, %{$self->symbols()});
+	$modref->_code_symbols(\%syms);
+    }
     $self->{modref} = undef;
 }
 
@@ -400,6 +420,21 @@ sub pin_template {
 			       netregexp => $netregexp,);
 }
 
+sub _find_or_new_class {
+    my $self = shift;
+    if (!$self->{class}) {
+	$self->error("Not inside a class declaration");
+	$self->{class} = '_undeclared';
+    }
+    my $class = $self->{netlist}->find_class($self->{class});
+    if (!$class) {
+	$class = $self->{netlist}->new_class
+	    (name=>$self->{class},
+	     filename=>$self->filename, lineno=>$self->lineno);
+    }
+    return $class;
+}
+
 sub signal {
     my $self = shift;
     my $inout = shift;
@@ -416,6 +451,10 @@ sub signal {
     }
 
     my $modref = $self->{modref};
+    if (!$modref && $inout eq "sp_traced") {
+	$modref = $self->_find_or_new_class();
+    }
+
     if (!$modref) {
 	return $self->error ("Signal declaration outside of module definition", $netname);
     }
@@ -834,14 +873,13 @@ sub _write_use {
 	    while ($line =~ s/^\.([^.]+)//) {
 		my $subname = $1;
 		$path .= ".".$subname;
-		#print "xxxx $subname\n";
 		my $subcell = $curmodref && $curmodref->find_cell($subname);
 		$top = 0 if $subcell;
 		if ($top) {
 		    # Look for a top level module with same name
 		    $curmodref = $self->netlist->find_module($subname);
 		} else {
-		    $curmodref = $subcell->submod;
+		    $curmodref = $subcell->submod if $subcell;  # else error printed below
 		}
 		if (!$curmodref || (!$top && !$subcell)) {
 		    # We put out a #error for C++ to complain about instead

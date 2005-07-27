@@ -2,6 +2,12 @@ Revision history for Perl extension SystemC::Netlist
 
 The contributors that suggested a given feature are shown in [].
 
+* SystemC 1.210 7/27/2005
+
+**	Parse SP_TRACED inside classes used inside sp_in/outs.  [Matt Reilly]
+
+***	Add SP_MODULE_CONTINUED for huge Verilated files.
+
 * SystemC 1.201 5/30/2005
 
 ****	Support SystemC 2.1 Beta. [Fuat Keceli]
@@ -279,7 +285,7 @@ The contributors that suggested a given feature are shown in [].
 
 
 ----------------------------------------------------------------------
-$Revision: 1.2 $$Date: 2005-05-31 16:37:11 -0400 (Tue, 31 May 2005) $$Author: wsnyder $
+$Revision: 1.2 $$Date: 2005-07-27 09:41:16 -0400 (Wed, 27 Jul 2005) $$Author: wsnyder $
 ----------------------------------------------------------------------
 
 This uses outline mode in Emacs.  See C-h m [M-x describe-mode].

@@ -1,4 +1,4 @@
-#$Revision: 1.45 $$Date: 2005-05-31 16:38:41 -0400 (Tue, 31 May 2005) $$Author: wsnyder $
+#$Revision: 1.45 $$Date: 2005-07-27 09:41:16 -0400 (Wed, 27 Jul 2005) $$Author: wsnyder $
 ######################################################################
 #
 # Copyright 2001-2005 by Wilson Snyder.  This program is free software;
@@ -21,7 +21,7 @@ require DynaLoader;
 use strict;
 use vars qw($VERSION);
 
-$VERSION = '1.201';
+$VERSION = '1.210';
 
 ######################################################################
 #### Configuration Section
@@ -69,6 +69,7 @@ sub cell_decl {}
 sub ctor {}
 sub enum_value {}
 sub module {}
+sub module_continued {}
 sub pin {}
 sub pin_template {}
 sub preproc_sp {}

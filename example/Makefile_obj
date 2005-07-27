@@ -1,4 +1,4 @@
-# $Revision: 1.26 $$Date: 2005-03-04 10:13:14 -0500 (Fri, 04 Mar 2005) $$Author: wsnyder $ -*- Makefile -*-
+# $Revision: 1.26 $$Date: 2005-06-24 16:09:28 -0400 (Fri, 24 Jun 2005) $$Author: wsnyder $ -*- Makefile -*-
 # DESCRIPTION: SystemPerl: Example makefile
 #
 # This is executed in the "test_dir", not in this directory
@@ -30,7 +30,7 @@ LIBS   =  $(SC_LIBS) -lm $(EXTRA_LIBS)
 
 SP_SP = $(wildcard ../example/*.sp)
 # /*AUTOTRACE*/ Looks for this
-CFLAGS += -DWAVES
+CFLAGS += -DWAVES -Wno-deprecated
 
 ifeq ($(VERILATOR_AUTHOR_SITE),1)	# Local... Else don't burden users
 CFLAGS += -Wall -Wno-char-subscripts -Werror -m32

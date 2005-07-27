@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-#$Revision: 1.45 $$Date: 2005-04-20 08:29:19 -0400 (Wed, 20 Apr 2005) $$Author: wsnyder $
+#$Revision: 1.45 $$Date: 2005-07-26 17:11:08 -0400 (Tue, 26 Jul 2005) $$Author: wsnyder $
 ######################################################################
 #
 # Copyright 2001-2005 by Wilson Snyder.  This program is free software;
@@ -95,10 +95,6 @@ my $nl = new SystemC::Netlist (options=>$opt,
 			       lint_checking => $opt_lint,
 			       );
 
-foreach my $file (@sp_libs) {
-    $nl->read_cell_library(filename=>$file);
-}
-
 foreach my $file (@sp_files_nolib) {
     $nl->read_file (filename=>$file,
 		    strip_autos=>1,
@@ -108,6 +104,10 @@ foreach my $file (@sp_files_lib) {
     $nl->read_file (filename=>$file,
 		    strip_autos=>1,
 		    is_libcell=>1,);
+}
+# read_cell_library doesn't create a mod/cell if it exists, thus should be after read_file
+foreach my $file (@sp_libs) {
+    $nl->read_cell_library(filename=>$file);
 }
 
 $nl->link();
@@ -150,7 +150,7 @@ if ($opt_makedeps) {
 #----------------------------------------------------------------------
 
 sub usage {
-    print '$Revision: 1.45 $$Date: 2005-04-20 08:29:19 -0400 (Wed, 20 Apr 2005) $$Author: wsnyder $ ', "\n";
+    print '$Revision: 1.45 $$Date: 2005-07-26 17:11:08 -0400 (Tue, 26 Jul 2005) $$Author: wsnyder $ ', "\n";
     $SIG{__WARN__} = sub{};	#pod2text isn't clean.
     pod2text($0);
     exit (1);
