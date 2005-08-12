@@ -1,6 +1,6 @@
 ;; systemc-mode.el --- major mode for editing SystemC files
 ;;
-;; $Revision: 1.13 $$Date: 2005-04-28 13:06:48 -0400 (Thu, 28 Apr 2005) $$Author: wsnyder $
+;; $Id: systemc-mode.el 4305 2005-08-02 13:21:57Z wsnyder $
 
 ;; Author          : Wilson Snyder <wsnyder@wsnyder.org>
 ;; Keywords        : languages
@@ -91,6 +91,7 @@
 	   '("^\\s *AUTO[A-Z0-9_]+" 0 'font-lock-builtin-face t)
 	   '("\\bsc_bv\\b" 0 'font-lock-type-face t)
 	   '("\\bS[PC]_\\(TRACED\\|CELL\\|PIN\\|METHOD\\)\\b" 0 'font-lock-keyword-face t)
+	   '("\\bSP_AUTO[A-Z0-9_]+" 0 'font-lock-keyword-face t)
 	   )))
 
 ;;;;

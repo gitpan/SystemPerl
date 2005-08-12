@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-#$Revision: 1.45 $$Date: 2005-07-26 17:11:08 -0400 (Tue, 26 Jul 2005) $$Author: wsnyder $
+#$Id: sp_preproc 4305 2005-08-02 13:21:57Z wsnyder $
 ######################################################################
 #
 # Copyright 2001-2005 by Wilson Snyder.  This program is free software;
@@ -150,7 +150,7 @@ if ($opt_makedeps) {
 #----------------------------------------------------------------------
 
 sub usage {
-    print '$Revision: 1.45 $$Date: 2005-07-26 17:11:08 -0400 (Tue, 26 Jul 2005) $$Author: wsnyder $ ', "\n";
+    print '$Id: sp_preproc 4305 2005-08-02 13:21:57Z wsnyder $ ', "\n";
     $SIG{__WARN__} = sub{};	#pod2text isn't clean.
     pod2text($0);
     exit (1);

@@ -18,6 +18,7 @@ Netlist.pm
 Netlist/AutoCover.pm
 Netlist/AutoTrace.pm
 Netlist/Cell.pm
+Netlist/Class.pm
 Netlist/File.pm
 Netlist/Module.pm
 Netlist/Net.pm

@@ -1,5 +1,5 @@
 #/* SystemC.xs -- SystemC Booter  -*- Mode: C -*-
-#* $Revision: 1.25 $$Date: 2005-05-23 11:24:02 -0400 (Mon, 23 May 2005) $$Author: wsnyder $
+#* $Id: Parser.xs 4305 2005-08-02 13:21:57Z wsnyder $
 #*********************************************************************
 #*
 #* Vl SystemC perl utility library

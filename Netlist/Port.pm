@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Revision: 1.41 $$Date: 2005-07-27 09:41:16 -0400 (Wed, 27 Jul 2005) $$Author: wsnyder $
+# $Id: Port.pm 4833 2005-08-12 13:25:06Z wsnyder $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -20,7 +20,7 @@ use Class::Struct;
 use Verilog::Netlist;
 use SystemC::Netlist;
 @ISA = qw(Verilog::Netlist::Port);
-$VERSION = '1.210';
+$VERSION = '1.220';
 use strict;
 
 ######################################################################
@@ -34,6 +34,26 @@ sub inherited {
 sub _decl_order {
     $_[0]->attributes("_sp_decl_order", $_[1]) if exists $_[1];
     return $_[0]->attributes("_sp_decl_order")||0;
+}
+
+sub iotype {
+    # Type including I/O direction
+    return "sc_".$_[0]->direction."<".$_[0]->type." >";
+}
+
+######################################################################
+#### Methods
+
+sub lint {
+    my $self = shift;
+    $self->SUPER::lint();
+    if ($self->module->attributes('check_outputs_used')
+	&& ($self->direction eq "out")
+	&& !defined $self->module->_code_symbols->{$self->name}
+	) {
+	$self->warn("Module with AUTOATTR(check_outputs_used) is missing reference: ",$self->name(), "\n");
+	$self->dump_drivers(8);
+    }
 }
 
 ######################################################################

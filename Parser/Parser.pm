@@ -1,4 +1,4 @@
-#$Revision: 1.45 $$Date: 2005-07-27 09:41:16 -0400 (Wed, 27 Jul 2005) $$Author: wsnyder $
+#$Id: Parser.pm 4833 2005-08-12 13:25:06Z wsnyder $
 ######################################################################
 #
 # Copyright 2001-2005 by Wilson Snyder.  This program is free software;
@@ -21,7 +21,7 @@ require DynaLoader;
 use strict;
 use vars qw($VERSION);
 
-$VERSION = '1.210';
+$VERSION = '1.220';
 
 ######################################################################
 #### Configuration Section

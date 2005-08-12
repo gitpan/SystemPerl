@@ -1,4 +1,4 @@
-// $Revision: 1.11 $$Date: 2005-03-16 14:04:22 -0500 (Wed, 16 Mar 2005) $$Author: wsnyder $
+// $Id: ExModNull.sp 4305 2005-08-02 13:21:57Z wsnyder $
 // DESCRIPTION: SystemPerl: Example "null" module
 //
 // Copyright 2001-2005 by Wilson Snyder.  This program is free software;
@@ -28,6 +28,8 @@ SC_MODULE (__MODULE__) {
 
 SP_CTOR_IMP(__MODULE__) /*AUTOCTOR*/
 {
+    SP_AUTO_CTOR;
+
 #ifdef NEVER
     out.write(0);
 #endif

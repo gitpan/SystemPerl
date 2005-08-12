@@ -1,4 +1,4 @@
-// $Revision: 1.5 $$Date: 2005-03-16 14:04:22 -0500 (Wed, 16 Mar 2005) $$Author: wsnyder $
+// $Id: ExParse.sp 4305 2005-08-02 13:21:57Z wsnyder $
 // DESCRIPTION: SystemPerl: Example source module for parser testing
 // This module used for parsing testing, and isn't a good generic example
 //

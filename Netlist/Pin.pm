@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Revision: 1.45 $$Date: 2005-07-27 09:41:16 -0400 (Wed, 27 Jul 2005) $$Author: wsnyder $
+# $Id: Pin.pm 4833 2005-08-12 13:25:06Z wsnyder $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -24,7 +24,7 @@ use SystemC::Netlist::Net;
 use SystemC::Netlist::Cell;
 use SystemC::Netlist::Module;
 @ISA = qw(Verilog::Netlist::Pin);
-$VERSION = '1.210';
+$VERSION = '1.220';
 use strict;
 
 ######################################################################
@@ -71,6 +71,8 @@ structs('new',
 	   cellre	=> '$', #'	# Cell regular expression compiled
 	   pinregexp	=> '$', #'	# Pin regular expression as string
 	   pinre	=> '$', #'	# Pin regular expression compiled
+	   typeregexp	=> '$', #'	# Type regular expression as string
+	   typere	=> '$', #'	# Type regular expression compiled
 	   netregexp	=> '$', #'	# Net regular expression as string
 	   ]);
 

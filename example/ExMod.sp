@@ -1,4 +1,4 @@
-// $Revision: 1.12 $$Date: 2005-03-16 14:04:22 -0500 (Wed, 16 Mar 2005) $$Author: wsnyder $
+// $Id: ExMod.sp 4305 2005-08-02 13:21:57Z wsnyder $
 // DESCRIPTION: SystemPerl: Example source module
 //
 // Copyright 2001-2005 by Wilson Snyder.  This program is free software;
@@ -42,11 +42,12 @@ SC_MODULE (__MODULE__) {
 
 SP_CTOR_IMP(__MODULE__) /*AUTOCTOR*/
 {
+    SP_AUTO_CTOR;
     //====
 
     // Example template rule:
     SP_TEMPLATE("sub\[(\d+)\]", "(outb)x", "$2_from$1");
-    SP_TEMPLATE(subwontmatch, "(baraz)", "floish");
+    SP_TEMPLATE(subwontmatch, "(baraz)", "floish", "sc_in.*");
     // Expands to:
     //SP_PIN  (sub[0], outbx, outb_from0);
     //SP_PIN  (sub[1], outbx, outb_from1);

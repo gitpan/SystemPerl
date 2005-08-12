@@ -1,4 +1,4 @@
-// $Revision: 1.8 $$Date: 2005-02-21 10:11:49 -0500 (Mon, 21 Feb 2005) $$Author: wsnyder $ -*- SystemC -*-
+// $Id: Sp.cpp 4305 2005-08-02 13:21:57Z wsnyder $ -*- SystemC -*-
 //=============================================================================
 //
 // THIS MODULE IS PUBLICLY LICENSED

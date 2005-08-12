@@ -1,4 +1,4 @@
-# $Revision: 1.7 $$Date: 2005-07-27 09:41:16 -0400 (Wed, 27 Jul 2005) $$Author: wsnyder $
+# $Id: Coverage.pm 4833 2005-08-12 13:25:06Z wsnyder $
 ######################################################################
 #
 # Copyright 2001-2005 by Wilson Snyder.  This program is free software;
@@ -28,7 +28,7 @@ use vars qw($_Default_Self);
 ######################################################################
 #### Configuration Section
 
-$VERSION = '1.210';
+$VERSION = '1.220';
 
 use constant DEFAULT_FILENAME => 'logs/coverage.pl';
 

@@ -1,4 +1,4 @@
-// $Revision: 1.13 $$Date: 2005-07-26 15:45:35 -0400 (Tue, 26 Jul 2005) $$Author: wsnyder $
+// $Id: ExModSub.sp 4305 2005-08-02 13:21:57Z wsnyder $
 // DESCRIPTION: SystemPerl: Example source module
 //
 // Copyright 2001-2005 by Wilson Snyder.  This program is free software;

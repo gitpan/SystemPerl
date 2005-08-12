@@ -1,4 +1,4 @@
-#$Revision: 1.33 $$Date: 2005-07-26 15:45:35 -0400 (Tue, 26 Jul 2005) $$Author: wsnyder $
+#$Id: SystemPerl.pod 4305 2005-08-02 13:21:57Z wsnyder $
 ######################################################################
 #
 # Copyright 2001-2005 by Wilson Snyder.  This program is free software;
@@ -98,7 +98,7 @@ Verilated files.
 
 SP_PIN declares a connection of a instantiation's port to the specified net.
 
-=item SP_TEMPLATE ("<instregexp>", "<portregexp>", "<netregexp>");
+=item SP_TEMPLATE ("<instregexp>", "<portregexp>", "<netregexp>", ["<typeregexp>"]);
 
 SP_TEMPLATE defines a rule for connecting pins with AUTOINST that can apply
 to a regular expression of instance names and port names.  This is useful
@@ -120,6 +120,10 @@ anchored for you.
 The third parameter is the net to connect when the template matches.  The
 regular expression may contain $1, $2 etc, which correspond to the
 parenthesis in both the instance and port regular expressions concatenated.
+
+The optional fourth parameter is a regular expression which must match the
+type of the cell's pin.  For example "sc_out" would make a template that
+matches only outputs.
 
 For example, 
 
@@ -163,6 +167,11 @@ For example:
 
     SC_MODULE (__MODULE__) {
       ...
+
+=item /*AUTOATTR("I<attribute>")*/
+
+Sets a internal attribute.  There are no attributes currently specified for
+general usage.
 
 =item /*AUTOCTOR*/
 

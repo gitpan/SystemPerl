@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Revision: 1.46 $$Date: 2005-07-27 09:41:16 -0400 (Wed, 27 Jul 2005) $$Author: wsnyder $
+# $Id: Cell.pm 4833 2005-08-12 13:25:06Z wsnyder $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -20,7 +20,7 @@ use Class::Struct;
 use Verilog::Netlist;
 use SystemC::Netlist;
 @ISA = qw(Verilog::Netlist::Cell);
-$VERSION = '1.210';
+$VERSION = '1.220';
 use strict;
 
 ######################################################################
@@ -43,6 +43,7 @@ sub _autos_connect_port {
     my $portref = shift;
 
     my $netname = $portref->name;
+    my $typename = $portref->iotype;
     # Search for a template for this
     my $cellname = $self->name;
     my $comment;
@@ -51,20 +52,26 @@ sub _autos_connect_port {
 	if ($cellname =~ /$cellre/) {
 	    my $pinre = $templref->pinre;
 	    if ($netname =~ /$pinre/) {
-		my $cellpin_regexp = "^".$templref->cellregexp . "####" . $templref->pinregexp.'$';
-		my $cellpin = $cellname . "####" . $netname;
-		my $replace = $templref->netregexp;
-		# You can't use s/$compile/$compile/ directly.  We could make a eval{}, but
-		# we'll do it the way some C code might eventually have to...
-		if ($cellpin =~ m/$cellpin_regexp/) {
-		    my $a=$1; my $b=$2; my $c=$3; my $d=$4; my $e=$5; my $f=$6; my $g=$7; my $h=$8; my $i=$9;
-		    $replace =~ s/\$1/$a/g; $replace =~ s/\$2/$b/g;  $replace =~ s/\$3/$c/g; $replace =~ s/\$4/$d/g;
-		    $replace =~ s/\$5/$e/g; $replace =~ s/\$6/$f/g;  $replace =~ s/\$g/$c/g; $replace =~ s/\$8/$h/g;
-		    $replace =~ s/\$9/$i/g;
-		    $netname = $replace;
-		    $comment = "Templated on ".$templref->filename.":".$templref->lineno;
-		} else {
-		    $self->error("Bad regexp in expanding AUTO_TEMPLATE, Cellpin='$cellpin_regexp', Cellpin='$cellpin', Replace='$replace'\n");
+		my $typere = $templref->typere;
+		if ($typename =~ /$typere/) {
+		    my $cellpin_regexp = ("^".$templref->cellregexp
+					  ."####".$templref->pinregexp
+					  ."####".$templref->typeregexp
+					  .'$');
+		    my $cellpin = $cellname."####".$netname."####".$typename;
+		    my $replace = $templref->netregexp;
+		    # You can't use s/$compile/$compile/ directly.  We could make a eval{}, but
+		    # we'll do it the way some C code might eventually have to...
+		    if ($cellpin =~ m/$cellpin_regexp/) {
+			my $a=$1; my $b=$2; my $c=$3; my $d=$4; my $e=$5; my $f=$6; my $g=$7; my $h=$8; my $i=$9;
+			$replace =~ s/\$1/$a/g; $replace =~ s/\$2/$b/g;  $replace =~ s/\$3/$c/g; $replace =~ s/\$4/$d/g;
+			$replace =~ s/\$5/$e/g; $replace =~ s/\$6/$f/g;  $replace =~ s/\$g/$c/g; $replace =~ s/\$8/$h/g;
+			$replace =~ s/\$9/$i/g;
+			$netname = $replace;
+			$comment = "Templated on ".$templref->filename.":".$templref->lineno;
+		    } else {
+			$self->error("Bad regexp in expanding AUTO_TEMPLATE, Cellpin='$cellpin_regexp', Cellpin='$cellpin', Replace='$replace'\n");
+		    }
 		}
 	    }
 	}

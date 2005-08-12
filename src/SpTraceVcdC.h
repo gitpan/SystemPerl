@@ -1,4 +1,4 @@
-// $Revision: 1.5 $$Date: 2005-03-02 11:03:12 -0500 (Wed, 02 Mar 2005) $$Author: wsnyder $ -*- SystemC -*-
+// $Id: SpTraceVcdC.h 4305 2005-08-02 13:21:57Z wsnyder $ -*- SystemC -*-
 //=============================================================================
 //
 // THIS MODULE IS PUBLICLY LICENSED

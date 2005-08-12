@@ -1,5 +1,5 @@
 %{
-/* $Revision: 1.51 $$Date: 2005-07-26 15:45:35 -0400 (Tue, 26 Jul 2005) $$Author: wsnyder $
+/* $Id: scgrammer.y 4760 2005-08-11 12:41:11Z wsnyder $
  ******************************************************************************
  * DESCRIPTION: SystemC bison parser
  *
@@ -97,7 +97,7 @@ int scgrammerlex() {
 %token		PP
 %token		SP
 
-%token		COLONCOLON
+%token		COLONCOLON "::"
 
 %token		CLASS
 %token		CONST
@@ -105,6 +105,7 @@ int scgrammerlex() {
 %token		PRIVATE
 %token		PROTECTED
 %token		PUBLIC
+%token		VIRTUAL
 
 %token		AUTO
 
@@ -198,6 +199,7 @@ exp:		auto
 		| CONST
 		| symbol
 		| clAccess
+		| VIRTUAL
 		| NCSC_MODULE
 		;
 
@@ -226,6 +228,7 @@ class:		CLASS clSymScoped '{'	{ scparser_call(-1,"class",$2); }
 			{ scparser_call(-1,"module",$2); }
 		| CLASS clSymScoped ';'	{ }	/* Fwd decl */
 		| CLASS clSymScoped '>'	{ }	/* template <class SYMBOL> */
+		| CLASS clSymScoped ','	{ }	/* template <class SYMBOL, ... */
 		| CLASS clSymScoped clSymScoped { }	/* struct SYM sym; */
 		| CLASS clSymScoped '*'	{ }	/* (struct SYM*) */
 		| CLASS clSymScoped ')'	{ }	/* (struct SYM) */
@@ -242,6 +245,8 @@ clList:		clSymAccess			{ $$ = $1; }
 
 clSymAccess:	clSymParamed		{ $$ = $1; }
 		| clAccess clSymParamed	{ $$ = $2; }
+		| VIRTUAL clSymParamed	{ $$ = $2; }
+		| VIRTUAL clAccess clSymParamed	{ $$ = $3; }
 		;
 
 clSymParamed:	clSymRef		{ $$ = $1; }
@@ -277,6 +282,8 @@ decl:		SC_SIGNAL '<' declType '>' SYMBOL vector ';'
 
 pin_template:	SP_TEMPLATE '(' string_or_cellname ',' STRING ',' STRING ')' ';'
 			{ scparser_call(-3,"pin_template",$3,$5,$7); }
+		| SP_TEMPLATE '(' string_or_cellname ',' STRING ',' STRING ',' STRING ')' ';'
+			{ scparser_call(-4,"pin_template",$3,$5,$7,$9); }
 		;
 
 string_or_cellname: STRING		{ $$ = $1; }

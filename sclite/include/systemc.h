@@ -1,4 +1,4 @@
-// $Revision: 1.6 $$Date: 2005-03-01 17:59:56 -0500 (Tue, 01 Mar 2005) $$Author: wsnyder $
+// $Id: systemc.h 4305 2005-08-02 13:21:57Z wsnyder $
 //********************************************************************
 //
 // Copyright 2001-2005 by Wilson Snyder.  This program is free software;

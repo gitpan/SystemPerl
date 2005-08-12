@@ -1,4 +1,4 @@
-// $Revision: 1.34 $$Date: 2005-07-26 15:45:35 -0400 (Tue, 26 Jul 2005) $$Author: wsnyder $ -*- SystemC -*-
+// $Id: systemperl.h 4305 2005-08-02 13:21:57Z wsnyder $ -*- SystemC -*-
 //********************************************************************
 //
 // THIS MODULE IS PUBLICLY LICENSED
@@ -156,7 +156,7 @@ extern "C" {
 
 #define SP_AUTO_CTOR
 #define SP_MODULE_CONTINUED(modname)
-#define SP_TEMPLATE(cellregexp, pinregexp, netregexp)
+#define SP_TEMPLATE(cellregexp, pinregexp, netregexp...)
 
 // Multiple flavors as all compilers don't support variable define arguments
 #define SP_AUTO_COVER()

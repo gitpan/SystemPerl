@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Revision: 1.130 $$Date: 2005-07-27 09:41:16 -0400 (Wed, 27 Jul 2005) $$Author: wsnyder $
+# $Id: File.pm 4833 2005-08-12 13:25:06Z wsnyder $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -23,7 +23,7 @@ use SystemC::Template;
 use Verilog::Netlist::Subclass;
 @ISA = qw(SystemC::Netlist::File::Struct
 	Verilog::Netlist::Subclass);
-$VERSION = '1.210';
+$VERSION = '1.220';
 use strict;
 
 structs('new',
@@ -32,6 +32,7 @@ structs('new',
 	   basename	=> '$', #'	# Basename of the file
 	   netlist	=> '$', #'	# Netlist is a member of
 	   userdata	=> '%',		# User information
+	   module_exp	=> '$', #'	# What to expand __module__ into
 	   #
 	   text		=> '$',	#'	# ARRAYREF: Lines of text
 	   is_libcell	=> '$',	#'	# True if is a library cell
@@ -101,7 +102,7 @@ sub module {
     my $module = shift;
     my $fileref = $self->{fileref};
     my $netlist = $self->{netlist};
-    $module = $fileref->basename if $module eq "__MODULE__";
+    $module = $self->{fileref}->module_exp if $module eq "__MODULE__";
     print "Module $module\n" if $SystemC::Netlist::Debug;
     $self->endmodule();	  # May be previous module in file
     $self->{modref} = $netlist->new_module
@@ -116,7 +117,7 @@ sub module_continued {
     my $module = shift;
     my $fileref = $self->{fileref};
     my $netlist = $self->{netlist};
-    $module = $fileref->basename if $module eq "__MODULE__";
+    $module = $self->{fileref}->module_exp if $module eq "__MODULE__";
     print "Module_Continued $module\n" if $SystemC::Netlist::Debug;
     $self->endmodule();	  # May be previous module in file
     $self->{modref} = $netlist->find_module($module);
@@ -218,7 +219,7 @@ sub auto {
     }
     elsif ($line =~ /^(\s*)\/\*AUTOTRACE\(([a-zA-Z0-9_]+)((,manual)?(,recurse)?(,activity)?(,exists)?)\)\*\//) {
 	my $prefix = $1; my $modname = $2; my $manual = $3;
-	$modname = $self->{fileref}->basename if $modname eq "__MODULE__";
+	$modname = $self->{fileref}->module_exp if $modname eq "__MODULE__";
 	my $mod = $self->{netlist}->find_module ($modname);
 	$mod or $self->error ("Declaration for module not found: $modname\n");
 	$mod->_autotrace('on',1);
@@ -232,12 +233,13 @@ sub auto {
     }
     elsif ($line =~ /^(\s*)\/\*AUTOATTR\(([a-zA-Z0-9_,]+)\)\*\//) {
 	my $attrs = $2 . ",";
+	$modref or $self->error ("Attribute outside of module declaration\n");
 	foreach my $attr (split (",", $attrs)) {
 	    if ($attr eq "verilated") {
-		$modref or $self->error ("Attribute outside of module declaration\n");
 	    } elsif ($attr eq "no_undriven_warning") {
-		$modref or $self->error ("Attribute outside of module declaration\n");
 		$modref->lesswarn(1);
+	    } elsif ($attr eq "check_outputs_used") {
+		$modref->attributes($attr,1);
 	    } else {
 		$self->error ("Unknown attribute $attr\n");
 	    }
@@ -391,7 +393,7 @@ sub _pin_template_check_regexp {
     };
     if (my $err = $@) {
 	$err =~ s/ at .*$//;
-	$self->{fileref}->error ("SP_TEMPLATE compile error: ",$err);
+	$self->error ("SP_TEMPLATE compile error: ",$err);
     }
 
     return ($regexp,$compiled);
@@ -402,22 +404,26 @@ sub pin_template {
     my $cellregexp = shift;
     my $pinregexp = shift;
     my $netregexp = shift;
+    my $typeregexp = shift || ".*";
 
     my $modref = $self->{modref};
     if (!$modref) {
 	return $self->error ("SP_TEMPLATE outside of module definition");
     }
 
-    my ($cellre, $pinre, $netre);
+    my ($cellre, $pinre, $netre, $typere);
 
     ($cellregexp,$cellre) = $self->_pin_template_check_regexp($cellregexp);
     ($pinregexp,$pinre) = $self->_pin_template_check_regexp($pinregexp);
     ($netregexp,$netre) = $self->_pin_template_check_regexp($netregexp);
+    ($typeregexp,$typere) = $self->_pin_template_check_regexp($typeregexp);
 
     $modref->new_pin_template (filename=>$self->filename, lineno=>$self->lineno,
 			       cellregexp => $cellregexp, cellre => $cellre,
 			       pinregexp => $pinregexp, pinre => $pinre,
-			       netregexp => $netregexp,);
+			       typeregexp => $typeregexp, typere => $typere,
+			       netregexp => $netregexp,
+			       );
 }
 
 sub _find_or_new_class {
@@ -571,7 +577,7 @@ sub class {
     my $class = shift;
     my $inhs = shift;
     # Track class x { enum y ...}
-    $class = $self->{fileref}->basename if $class eq "__MODULE__";
+    $class = $self->{fileref}->module_exp if $class eq "__MODULE__";
     $self->{class} = $class;
     #print "CLASS $class  INH $inhs   $self->{netlist}\n" if $Debug;
     if ($inhs) {
@@ -657,6 +663,7 @@ sub read {
     print __PACKAGE__."::read_file $filepath\n" if $SystemC::Netlist::Debug;
 
     my $fileref = $netlist->new_file (name=>$filepath,
+				      module_exp=>(Verilog::Netlist::Module::modulename_from_filename($filepath)),
 				      is_libcell=>$params{is_libcell}||0,
 				      );
 
@@ -769,7 +776,7 @@ sub write {
 	$tpl->printf("#include \"%s.h\"\n", $self->basename) if $as_imp;
     }
 
-    my $basename = $self->basename;
+    my $module_exp = $self->module_exp;
     foreach my $line (@{$self->text}) {
 	# [autos, filename, lineno, text]
 	# [autos, filename, lineno, function, args, ...]
@@ -787,7 +794,7 @@ sub write {
 		my $text = $line->[3];
 		if (defined $text && $outputting) {
 		    # This will also substitute in strings.  This was deemed a feature.
-		    $text =~ s/\b__MODULE__\b/$basename/g;
+		    $text =~ s/\b__MODULE__\b/$module_exp/g;
 		    $tpl->print_ln ($src_filename, $src_lineno, $text);
 		}
 	    }

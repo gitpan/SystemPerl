@@ -1,4 +1,4 @@
-// $Revision: 1.2 $$Date: 2005-04-15 09:40:20 -0400 (Fri, 15 Apr 2005) $$Author: wsnyder $ -*- SystemC -*-
+// $Id: SpCommon.h 4305 2005-08-02 13:21:57Z wsnyder $ -*- SystemC -*-
 //=============================================================================
 //
 // THIS MODULE IS PUBLICLY LICENSED

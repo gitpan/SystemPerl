@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-#$Revision: 1.16 $$Date: 2005-03-01 17:59:56 -0500 (Tue, 01 Mar 2005) $$Author: wsnyder $
+#$Id: sp_makecheck 4305 2005-08-02 13:21:57Z wsnyder $
 ######################################################################
 #
 # Copyright 2001-2005 by Wilson Snyder.  This program is free software;
@@ -61,7 +61,7 @@ Dependency::unlink_out_of_date();
 #----------------------------------------------------------------------
 
 sub usage {
-    print '$Revision: 1.16 $$Date: 2005-03-01 17:59:56 -0500 (Tue, 01 Mar 2005) $$Author: wsnyder $ ', "\n";
+    print '$Id: sp_makecheck 4305 2005-08-02 13:21:57Z wsnyder $ ', "\n";
     $SIG{__WARN__} = sub{};	#pod2text isn't clean.
     pod2text($0);
     exit (1);

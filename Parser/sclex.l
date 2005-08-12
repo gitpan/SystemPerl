@@ -1,6 +1,6 @@
 %option noyywrap align never-interactive prefix="sclex"
 %{
-/* $Revision: 1.42 $$Date: 2005-07-26 15:45:35 -0400 (Tue, 26 Jul 2005) $$Author: wsnyder $
+/* $Id: sclex.l 4760 2005-08-11 12:41:11Z wsnyder $
  ******************************************************************************
  * DESCRIPTION: SystemC lexer
  * 
@@ -110,6 +110,7 @@ FLOATNUM	[0-9]+"."*[0-9]*[eE][0-9]+
 "public"	{ return(PUBLIC); }
 "sc_main"	{ return(SC_MAIN); }
 "struct"	{ return(CLASS); }
+"virtual"	{ return(VIRTUAL); }
 
 "::"		{ return(COLONCOLON); }
 
