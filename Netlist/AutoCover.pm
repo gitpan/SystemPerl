@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Id: AutoCover.pm 4833 2005-08-12 13:25:06Z wsnyder $
+# $Id: AutoCover.pm 6461 2005-09-20 18:28:58Z wsnyder $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -21,7 +21,7 @@ use Verilog::Netlist;
 use Verilog::Netlist::Subclass;
 @ISA = qw(SystemC::Netlist::AutoCover::Struct
 	Verilog::Netlist::Subclass);
-$VERSION = '1.220';
+$VERSION = '1.230';
 use strict;
 
 structs('new',
@@ -82,9 +82,8 @@ sub _write_autocover_decl {
     return if !$SystemC::Netlist::File::outputting;
     my $maxId = $modref->autocover_max_id;
     return if !$maxId;
-    $fileref->printf ("%sSpUInt32Zeroed\t_sp_coverage[%d];\t// SP_AUTO_COVER declaration\n"
+    $fileref->printf ("%sSpZeroed<uint32_t>\t_sp_coverage[%d];\t// SP_AUTO_COVER declaration\n"
 		      ,$prefix, $maxId);
-    $fileref->print ("${prefix}void\t\tcoverageWrite(void*);\n");
 }
 
 sub _write_autocover_incl {
@@ -102,30 +101,30 @@ sub _write_autocover_ctor {
     my $modref = shift;
     return if !$SystemC::Netlist::File::outputting;
     return if !$modref->autocover_max_id;
-    $fileref->printf ("%sSpFunctorNamed::add(\"coverageWrite\",&%s::coverageWrite,this);\t// SP_AUTO_COVER declaration\n"
-		      ,$prefix,$modref->name);
+    #$fileref->printf ("%sSpFunctorNamed::add(\"coverageWrite\",&%s::coverageWrite,this);\t// SP_AUTO_COVER declaration\n"
+    #		      ,$prefix,$modref->name);
+
+    my $mod = $modref->name;
+    $fileref->print("    // Auto Coverage\n");
+    foreach my $cref (sort {$a->name cmp $b->name
+			    || $a->lineno <=> $b->lineno}
+		      (values %{$modref->_autocovers})) {
+	$fileref->printf('    SP_COVER_INSERT(&_sp_coverage[%d]', $cref->name);
+	$fileref->printf(',"filename","%s"', $cref->filename);
+	$fileref->printf(',"lineno","%s"', $cref->lineno);
+	$fileref->printf(',"hier",name()');
+	$fileref->printf(',"comment","%s"', $cref->comment);
+	$fileref->printf(");\n");
+    }
+    $fileref->print("\n");
 }
 
 sub _write_autocover_impl {
     my $fileref = shift;
     my $prefix = shift;
     my $modref = shift;
-    return if !$SystemC::Netlist::File::outputting;
-    my $maxId = $modref->autocover_max_id;
-    return if !$maxId;
-
-    my $mod = $modref->name;
-    $fileref->print("void ${mod}::coverageWrite(void*) {\n");
-    foreach my $cref (sort {$a->name cmp $b->name
-			    || $a->lineno <=> $b->lineno}
-		      (values %{$modref->_autocovers})) {
-	$fileref->printf("    SpCoverage::data (name(),\"%s\",\"%s\",%d,\"%s\",_sp_coverage[%d]);\n"
-			 ,$cref->what, $cref->filename, $cref->lineno, $cref->comment
-			 ,$cref->name);
-    }
-    $fileref->print("}\n\n");
+    # NOP
 }
-
 
 ######################################################################
 #### Package return

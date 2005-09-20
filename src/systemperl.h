@@ -1,4 +1,4 @@
-// $Id: systemperl.h 4305 2005-08-02 13:21:57Z wsnyder $ -*- SystemC -*-
+// $Id: systemperl.h 6445 2005-09-20 15:19:22Z wsnyder $ -*- SystemC -*-
 //********************************************************************
 //
 // THIS MODULE IS PUBLICLY LICENSED
@@ -128,12 +128,17 @@ class SpTraceFile;
 //********************************************************************
 // Simple classes.  If get bigger, move to optional include
 
-/// Uint32_t which constructs to zero.
-class SpUInt32Zeroed { public:
-    uint32_t m_l;
-    SpUInt32Zeroed(): m_l(0) {};
-    inline operator const uint32_t () const { return m_l; };
+/// Templated class which constructs to zero.
+template <class T> class SpZeroed { public:
+    T m_v;
+    SpZeroed(): m_v(0) {};
+    inline operator const T () const { return m_v; };
+    inline SpZeroed& operator++() {++m_v; return *this;};	// prefix
+    // There is no post-increment; pre-increment may be faster.
 };
+
+/// Uint32_t which constructs to zero.  (Backward compatible)
+typedef SpZeroed<uint32_t> SpUInt32Zeroed;
 
 //********************************************************************
 // sp_log.h has whole thing... This one function may be used everywhere
@@ -160,11 +165,11 @@ extern "C" {
 
 // Multiple flavors as all compilers don't support variable define arguments
 #define SP_AUTO_COVER()
-#define SP_AUTO_COVER1(what)
-#define SP_AUTO_COVER3(what,file,line)
-#define SP_AUTO_COVER4(what,file,line,cmt)
+#define SP_AUTO_COVER1(type)
+#define SP_AUTO_COVER3(type,file,line)
+#define SP_AUTO_COVER4(type,file,line,cmt)
 // Below inserted by preprocessor, not for internal use
-#define SP_AUTO_COVERinc(id,what,file,line,cmt) {this->_sp_coverage[(id)].m_l++;}
+#define SP_AUTO_COVERinc(id,type,file,line,cmt) {++(this->_sp_coverage[(id)]);}
 
 //********************************************************************
 

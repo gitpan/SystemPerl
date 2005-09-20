@@ -1,6 +1,7 @@
 Changes
 COPYING
 Coverage.pm
+Coverage/Item.pm
 example/ExBench.sp
 example/ExEnum.sp
 example/ExInclude.spinc

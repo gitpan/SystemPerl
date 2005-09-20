@@ -1,4 +1,4 @@
-# $Id: Coverage.pm 4833 2005-08-12 13:25:06Z wsnyder $
+# $Id: Coverage.pm 6461 2005-09-20 18:28:58Z wsnyder $
 ######################################################################
 #
 # Copyright 2001-2005 by Wilson Snyder.  This program is free software;
@@ -18,9 +18,10 @@ use Carp;
 
 require Exporter;
 @ISA = ('Exporter');
-@EXPORT = qw( covline );
+@EXPORT = qw( inc );
 
 use strict;
+use SystemC::Coverage::Item;
 use vars qw($VERSION $Debug);
 
 use vars qw($_Default_Self);
@@ -28,7 +29,7 @@ use vars qw($_Default_Self);
 ######################################################################
 #### Configuration Section
 
-$VERSION = '1.220';
+$VERSION = '1.230';
 
 use constant DEFAULT_FILENAME => 'logs/coverage.pl';
 
@@ -41,6 +42,7 @@ sub new {
     my $class = shift;
     my $self = {
 	filename => DEFAULT_FILENAME,
+	strings => {},  # value/key = id#
 	coverage => {},	# {coverage_key}=count
 	filedata => {},	# {filename} = {counts => {line}=count, needed},
     };
@@ -79,30 +81,24 @@ sub write {
 		   @_
 		   );
     # Write out the coverage array
+    # Use a temp file, so it's less likely a abort in the middle of writing will trash data.
 
     $params{filename} or croak "%Error: Undefined filename,";
-    my $fh = IO::File->new($params{filename},"w") or croak "%Error: $! $params{filename},";
+    my $tempfilename = $params{filename}.".tmp";
+    unlink $tempfilename;
+    my $fh = IO::File->new($tempfilename,"w") or croak "%Error: $! $tempfilename,";
 
     print $fh "# -*- Mode:perl -*-\n";
     print $fh "package SystemC::Coverage;\n";
     foreach my $key (sort keys %{$self->{coverage}}) {
-	my $val = $self->{coverage}{$key};
-	my @splitkey = map { _write_format_key($_); } (split /%/, $key);
-	printf $fh "inc(%s, %7d);\n", join(",",@splitkey), $val;
+	my $item = SystemC::Coverage::Item->new($key, $self->{coverage}{$key});
+	printf $fh $item->write_string."\n";
     }
 
     printf $fh "\n1;\n";	# So eval will succeed
     $fh->close();
-}
 
-sub _write_format_key {
-    #INTERNAL use
-    my $pkey = $_[0];
-    if ($pkey =~ /^-?[0-9]+$/) {
-	return sprintf ("0x%08x", $pkey);
-    } else {
-	return "'$pkey'";
-    }
+    rename $tempfilename, $params{filename};
 }
 
 ######################################################################
@@ -110,21 +106,8 @@ sub _write_format_key {
 
 sub inc {
     my $self = (ref $_[0] ? shift : $_Default_Self);
-    my $key = shift;
-    my @left = @_;
-    while (defined $left[1]) {
-        $key .= '%'.shift @left;
-    }
-    $self->{coverage}{$key} += $left[0];
-}
-
-sub covline {
-    my $self = (ref $_[0] ? shift : $_Default_Self);
-    my ($what,$hier,$filename,$lineno,$cmt,$cnt) = @_;
-    my $key = join('%',$what,$hier,$filename,$lineno,$cmt);
-    # Increment per-line counts by specified value
-    # Used only by first-time read of a SystemPerl written coverage file
-    $self->{coverage}{$key} += $cnt;
+    my ($string,$count) = SystemC::Coverage::Item::_dehash(@_);
+    $self->{coverage}{$string} += $count;
 }
 
 ######################################################################
@@ -133,15 +116,27 @@ sub covline {
 sub clear {
     my $self = shift;
     # Clear the coverage array
+    $self->{strings} = {};
     $self->{coverage} = {};
     $self->{filedata} = {};
 }
 
 ######################################################################
-#### Line-number based utilities
+#### Accessors
 
-sub split_line {
-    return split /%/, $_[0];
+sub items {
+    my $self = shift;
+    my @items;
+    foreach my $key (keys %{$self->{coverage}}) {
+	my $item = SystemC::Coverage::Item->new($key, $self->{coverage}{$key});
+	push @items, $item;
+    }
+    return @items;
+}
+
+sub items_sorted {
+    my $self = shift;
+    return sort {$a->[0] cmp $b->[0]} $self->items;
 }
 
 ######################################################################
@@ -153,7 +148,7 @@ __END__
 
 =head1 NAME
 
-SystemC::Coverage - Coverage analysys utilities
+SystemC::Coverage - Coverage analysis utilities
 
 =head1 SYNOPSIS
 
@@ -167,7 +162,8 @@ SystemC::Coverage - Coverage analysys utilities
 =head1 DESCRIPTION
 
 SystemC::Coverage provides utilities for reading and writing coverage data,
-usually produced by the SP_AUTO_COVER function of the SystemPerl package.
+usually produced by the SP_COVER_INSERT or SP_AUTO_COVER function of the
+SystemPerl package.
 
 The coverage data is stored in a global hash called %Coverage, thus
 subsequent reads will increment the same global structure.
@@ -180,16 +176,30 @@ subsequent reads will increment the same global structure.
 
 Clear the coverage variables
 
-=item inc (args..., value)
+=item inc (args..., count=>value)
 
 Increment the coverage statistics, entering keys for every value.  The last
-value is the increment amount.
+value is the increment amount.  See SystemC::Coverage::Item for the list of
+standard named parameters.
 
-=item read (filename=>I<filename>)
+=item items
+
+Return all coverage items, as a list of SystemC::Coverage::Item objects.
+
+=item items_sorted
+
+Return all coverage items in sorted order, as a list of
+SystemC::Coverage::Item objects.
+
+=item new  ([filename=>I<filename>])
+
+Make a new empty coverage container.
+
+=item read ([filename=>I<filename>])
 
 Read the coverage data from the file, with error checking.
 
-=item write (filename=>I<filename>)
+=item write ([filename=>I<filename>])
 
 Write the coverage variables to the file in a form where they can be read
 back by simply evaluating the file.
@@ -198,7 +208,8 @@ back by simply evaluating the file.
 
 =head1 SEE ALSO
 
-vcoverage
+vcoverage,
+SystemC::Coverage::Item
 
 =head1 AUTHORS
 

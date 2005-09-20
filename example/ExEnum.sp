@@ -1,4 +1,4 @@
-// $Id: ExEnum.sp 4305 2005-08-02 13:21:57Z wsnyder $
+// $Id: ExEnum.sp 6159 2005-09-13 20:36:56Z wsnyder $
 // DESCRIPTION: SystemPerl: Example source module
 //
 // Copyright 2001-2005 by Wilson Snyder.  This program is free software;
@@ -17,7 +17,7 @@ public:
     static const unsigned SIX_DEF = 6;
     enum en {
 	IDLE = 0,
-	ONE, TWO, THREE, FOUR, FIVE,
+	ONE, TWO, THREE, FOUR,
 	SIX = SIX_DEF,
 	SEVEN = FUNC0(),
 	EIGHT = FUNC1(FUNC4(1,2,3,FUNC0()))

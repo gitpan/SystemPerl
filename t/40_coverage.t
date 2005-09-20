@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# $Id: 40_coverage.t 4305 2005-08-02 13:21:57Z wsnyder $
+# $Id: 40_coverage.t 6132 2005-09-13 15:10:41Z wsnyder $
 # DESCRIPTION: Perl ExtUtils: Type 'make test' to test this package
 #
 # Copyright 2001-2005 by Wilson Snyder.  This program is free software;
@@ -9,7 +9,7 @@
 use strict;
 use Test;
 
-BEGIN { plan tests => 8 }
+BEGIN { plan tests => 9 }
 BEGIN { require "t/test_utils.pl"; }
 
 use SystemC::Coverage;
@@ -18,13 +18,20 @@ ok(1);
 my $cov = new SystemC::Coverage;
 ok($cov);
 
-$cov->inc('foo','bar',10);
+$cov->inc(comment=>'foo',filename=>__FILE__,lineno=>__LINE__,bar=>'bar',count=>10);
 ok(1);
 
-covline('line','a.b.c',__FILE__,__LINE__,'testok',100);
-covline('line','a.b.c',__FILE__,__LINE__,'testlow',1);
-covline('line','a.b.c',__FILE__,__LINE__,'testnone',0);
+inc(type=>'block',comment=>'line',hier=>'a.b.c',filename=>__FILE__,lineno=>__LINE__,com2=>'testok',  count=>100);
+inc(type=>'block',comment=>'line',hier=>'a.b.c',filename=>__FILE__,lineno=>__LINE__,com2=>'testlow', count=>1);
+inc(type=>'block',comment=>'line',hier=>'a.b.c',filename=>__FILE__,lineno=>__LINE__,com2=>'testnone',count=>0);
 ok(1);
+
+my $icount=0;
+foreach my $item ($cov->items_sorted) {
+    print "  Filename ",$item->filename.":".$item->lineno," Count ",$item->count,"\n";
+    $icount++;
+}
+ok($icount==4);
 
 mkdir 'test_dir/logs', 0777;
 $cov->write(filename=>'test_dir/logs/coverage.pl');

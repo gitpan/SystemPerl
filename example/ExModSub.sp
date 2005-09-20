@@ -1,4 +1,4 @@
-// $Id: ExModSub.sp 4305 2005-08-02 13:21:57Z wsnyder $
+// $Id: ExModSub.sp 6132 2005-09-13 15:10:41Z wsnyder $
 // DESCRIPTION: SystemPerl: Example source module
 //
 // Copyright 2001-2005 by Wilson Snyder.  This program is free software;
@@ -52,6 +52,12 @@ SP_CTOR_IMP(__MODULE__) /*AUTOCTOR*/ {
     sensitive_pos(clk);
 
     SP_AUTO_COVER(); // only once
+
+    // Other coverage scheme
+    for (int i=0; i<3; i++) {
+	static uint32_t coverValue = 100;
+	SP_COVER_INSERT(&coverValue, "comment","Hello World",  "instance",i);
+    }
 }
 
 void __MODULE__::clock (void) {

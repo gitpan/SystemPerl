@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Id: File.pm 4833 2005-08-12 13:25:06Z wsnyder $
+# $Id: File.pm 6461 2005-09-20 18:28:58Z wsnyder $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -23,7 +23,7 @@ use SystemC::Template;
 use Verilog::Netlist::Subclass;
 @ISA = qw(SystemC::Netlist::File::Struct
 	Verilog::Netlist::Subclass);
-$VERSION = '1.220';
+$VERSION = '1.230';
 use strict;
 
 structs('new',
@@ -213,6 +213,9 @@ sub auto {
     }
     elsif ($line =~ /^(\s*)\/\*AUTOMETHODS\*\//) {
 	my $prefix = $1;
+	if (!$modref) {
+	    return $self->error ("AUTOMETHODS outside of module definition", $line);
+	}
 	push @Text, [ 1, $self->filename, $self->lineno,
 		      \&SystemC::Netlist::Module::_write_autodecls,
 		      $modref, $self->{fileref}, $prefix];
@@ -963,6 +966,7 @@ sub _write_autoenum_class {
 	 ."${prefix}operator const char* () const { return ascii(); };\n"
 	 ."${prefix}operator ${enumtype} () const { return e_${enumtype}; };\n"
 	 ."${prefix}const char* ascii () const;\n"
+	 ."${prefix}${enumtype} next () const;\n"
 	 );
 
     #Can do this, but then also need setting functions...
