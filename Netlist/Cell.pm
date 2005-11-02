@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Id: Cell.pm 6461 2005-09-20 18:28:58Z wsnyder $
+# $Id: Cell.pm 8326 2005-11-02 19:13:56Z wsnyder $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -20,7 +20,7 @@ use Class::Struct;
 use Verilog::Netlist;
 use SystemC::Netlist;
 @ISA = qw(Verilog::Netlist::Cell);
-$VERSION = '1.230';
+$VERSION = '1.240';
 use strict;
 
 ######################################################################
@@ -64,11 +64,16 @@ sub _autos_connect_port {
 		    # we'll do it the way some C code might eventually have to...
 		    if ($cellpin =~ m/$cellpin_regexp/) {
 			my $a=$1; my $b=$2; my $c=$3; my $d=$4; my $e=$5; my $f=$6; my $g=$7; my $h=$8; my $i=$9;
+			($replace !~ /\$1[0-9]/) or $self->error("AUTO_TEMPLATE only supports up to \$9, Replace='$replace'\n");
+			$replace =~ s/\$\{1\}/$a/g; $replace =~ s/\$\{2\}/$b/g;  $replace =~ s/\$\{3\}/$c/g; $replace =~ s/\$\{4\}/$d/g;
+			$replace =~ s/\$\{5\}/$e/g; $replace =~ s/\$\{6\}/$f/g;  $replace =~ s/\$\{7\}/$g/g; $replace =~ s/\$\{8\}/$h/g;
+			$replace =~ s/\$\{9\}/$i/g;
 			$replace =~ s/\$1/$a/g; $replace =~ s/\$2/$b/g;  $replace =~ s/\$3/$c/g; $replace =~ s/\$4/$d/g;
-			$replace =~ s/\$5/$e/g; $replace =~ s/\$6/$f/g;  $replace =~ s/\$g/$c/g; $replace =~ s/\$8/$h/g;
+			$replace =~ s/\$5/$e/g; $replace =~ s/\$6/$f/g;  $replace =~ s/\$7/$g/g; $replace =~ s/\$8/$h/g;
 			$replace =~ s/\$9/$i/g;
 			$netname = $replace;
 			$comment = "Templated on ".$templref->filename.":".$templref->lineno;
+			print " SP_TEMPLATE replaced (cell=$cellname,net=$netname,type=$typename) with $netname\n" if $SystemC::Netlist::Debug;
 		    } else {
 			$self->error("Bad regexp in expanding AUTO_TEMPLATE, Cellpin='$cellpin_regexp', Cellpin='$cellpin', Replace='$replace'\n");
 		    }

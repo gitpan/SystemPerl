@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Id: Netlist.pm 6461 2005-09-20 18:28:58Z wsnyder $
+# $Id: Netlist.pm 8326 2005-11-02 19:13:56Z wsnyder $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -27,7 +27,7 @@ use Verilog::Netlist::Subclass;
 use strict;
 use vars qw($Debug $Verbose $VERSION);
 
-$VERSION = '1.230';
+$VERSION = '1.240';
 
 ######################################################################
 #### Error Handling
@@ -176,7 +176,9 @@ sub find_class {
     my $self = shift;
     my $search = shift;
     # Return file maching name
-    return $self->{_classes}{$search};
+    my $class = $self->{_classes}{$search};
+    return $class if $class;
+    return SystemC::Netlist::Class::generate_class($self, $search);
 }
 
 ######################################################################
@@ -229,9 +231,10 @@ sub write_cell_library {
     $self->dependency_out($params{filename});
     my $fh = IO::File->new($params{filename},"w") or die "%Error: $! $params{filename}\n";
     foreach my $modref ($self->modules_sorted) {
+	next if $modref->is_libcell();
 	print $fh "MODULE ",$modref->name,"\n";
 	foreach my $cellref ($modref->cells_sorted) {
-	    print $fh "  CELL ",$cellref->name," ",$cellref->submodname,"\n";
+	    print $fh "  CELL ",$cellref->name," ",$self->remove_defines($cellref->submodname),"\n";
 	}
     }
     $fh->close;
@@ -245,10 +248,9 @@ sub read_cell_library {
     my $fh = IO::File->new($params{filename}) or die "%Error: $! $params{filename}\n";
     my $modref;
     while (defined (my $line = $fh->getline)) {
-	chomp $line;
 	$line =~ s/#.*$//;
-	$line =~ s/^\s+//;
-	$line =~ s/\s+$//;
+	$line =~ s/^[ \t]+//;
+	$line =~ s/[ \t\n\t]+$//;
 	if ($line =~ /^MODULE\s+(\S+)$/) {
 	    $modref = $self->find_module($1);
 	    if (!$modref) {

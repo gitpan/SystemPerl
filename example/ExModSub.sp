@@ -1,4 +1,4 @@
-// $Id: ExModSub.sp 6132 2005-09-13 15:10:41Z wsnyder $
+// $Id: ExModSub.sp 7641 2005-10-19 17:33:49Z wsnyder $
 // DESCRIPTION: SystemPerl: Example source module
 //
 // Copyright 2001-2005 by Wilson Snyder.  This program is free software;
@@ -26,16 +26,19 @@ inline ostream& operator<< (ostream& lhs, const MySigStruct& rhs) {
 SC_MODULE (__MODULE__) {
     sc_in_clk		clk;		  // **** System Inputs
     sc_in<bool>		in;
-    sc_out<bool>	out;
+    sc_out<sp_ui<0,0> >	out;
     sc_out<bool>	outbx;
 
-    sc_signal<MySigStruct>  m_sigstr1;
-    SP_TRACED MySigStruct   m_sigstr2;
+    sc_signal<MySigStruct>	m_sigstr1;
+    SP_TRACED MySigStruct	m_sigstr2;
+
+    sc_signal<sp_ui<96,5> >	m_sigstr3;	// becomes sc_bv
+    SP_TRACED sp_ui<39,1>	m_sigstr4;	// becomes uint64_t
+    SP_TRACED sp_ui<10,1>	m_sigstr5;	// becomes uint32_t
 
   private:
     /*AUTOSUBCELL_DECL*/
     /*AUTOSIGNAL*/
-    void clock (void);
 
   public:
     /*AUTOMETHODS*/
@@ -45,22 +48,38 @@ SC_MODULE (__MODULE__) {
 #sp implementation
 /*AUTOSUBCELL_INCLUDE*/
 
-SP_CTOR_IMP(__MODULE__) /*AUTOCTOR*/ {
+SP_CTOR_IMP(__MODULE__) /*AUTOINIT*/ {
     SP_AUTO_CTOR;
-
-    SC_METHOD(clock);
-    sensitive_pos(clk);
 
     SP_AUTO_COVER(); // only once
 
+#sp ifdef NEVER
+    // We ignore this
+    SP_CELL(ignored,IGNORED_CELL);
+    SP_PIN (ignored,ignore_pin,ignore_pin);
+    /*AUTO_IGNORED_IF_OFF*/
+#sp else
+    SP_AUTO_COVER();
+#sp endif
+
+#sp ifndef NEVER
+    SP_AUTO_COVER();
+#sp else
+    SP_CELL(ifdefoff,IGNORED_CELL);
+#sp endif
+
     // Other coverage scheme
+    SP_AUTO_COVER_CMT("Commentary");
     for (int i=0; i<3; i++) {
 	static uint32_t coverValue = 100;
 	SP_COVER_INSERT(&coverValue, "comment","Hello World",  "instance",i);
     }
 }
 
-void __MODULE__::clock (void) {
+void __MODULE__::clock() {
+    // Below will declare the SC_METHOD and sensitivity to the clock
+    SP_AUTO_METHOD(clock, clk.pos());
+
     SP_AUTO_COVER1("clocking");  // not in line report
     out.write(in.read());
     outbx.write(in.read());

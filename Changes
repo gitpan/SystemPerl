@@ -2,6 +2,24 @@ Revision history for Perl extension SystemC::Netlist
 
 The contributors that suggested a given feature are shown in [].
 
+* SystemC 1.240 11/2/2005
+
+**	Added SP_AUTO_METHOD for declaring methods and sensitivities.
+
+**	AUTOCTOR is renamed AUTOINIT to avoid confusion with SP_AUTO_CTOR.
+
+**	Added sp_ui<#,#> magic data type.
+
+**	Added #sp ifdef/ifndef/else/endif.
+
+***	Added SP_AUTO_COVER_CMT. [Bobby Woods-Corwin]
+
+****	Warn users if misconnects and missing AUTOINST.  [Vasu Arasanipalai]
+
+****	Fix truncation of timescales in vcd files.  [Prabhat Gupta]
+
+****	Fix SP_TEMPLATE with ${#} replacements.  [Bryce Denney]
+
 * SystemC 1.230 9/20/2005
 
 **	Rewrote the coverage analysis classes to allow cross products.
@@ -42,7 +60,7 @@ The contributors that suggested a given feature are shown in [].
 
 * SystemC 1.190 3/21/2005
 
-**	Add AUTOCTOR for constructing port names in SC_CTORs.
+**	Add AUTOINIT for constructing port names in SC_CTORs.
 
 * SystemC 1.180 3/14/2005
 
@@ -301,7 +319,7 @@ The contributors that suggested a given feature are shown in [].
 
 
 ----------------------------------------------------------------------
-$Id: Changes 6461 2005-09-20 18:28:58Z wsnyder $
+$Id: Changes 8326 2005-11-02 19:13:56Z wsnyder $
 ----------------------------------------------------------------------
 
 This uses outline mode in Emacs.  See C-h m [M-x describe-mode].

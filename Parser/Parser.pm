@@ -1,4 +1,4 @@
-#$Id: Parser.pm 6461 2005-09-20 18:28:58Z wsnyder $
+#$Id: Parser.pm 8326 2005-11-02 19:13:56Z wsnyder $
 ######################################################################
 #
 # Copyright 2001-2005 by Wilson Snyder.  This program is free software;
@@ -21,7 +21,7 @@ require DynaLoader;
 use strict;
 use vars qw($VERSION);
 
-$VERSION = '1.230';
+$VERSION = '1.240';
 
 ######################################################################
 #### Configuration Section
@@ -75,6 +75,11 @@ sub pin_template {}
 sub preproc_sp {}
 sub signal {}
 sub text {}
+
+sub fileline {
+    my $self = shift;
+    return ($self->filename||"").":".($self->lineno||"");
+}
 
 sub error {
     my ($self,$text,$token)=@_;

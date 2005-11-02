@@ -21,6 +21,7 @@ Netlist/AutoTrace.pm
 Netlist/Cell.pm
 Netlist/Class.pm
 Netlist/File.pm
+Netlist/Method.pm
 Netlist/Module.pm
 Netlist/Net.pm
 Netlist/Pin.pm

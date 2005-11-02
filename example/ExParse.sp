@@ -1,4 +1,4 @@
-// $Id: ExParse.sp 4305 2005-08-02 13:21:57Z wsnyder $
+// $Id: ExParse.sp 6572 2005-09-22 20:47:58Z wsnyder $
 // DESCRIPTION: SystemPerl: Example source module for parser testing
 // This module used for parsing testing, and isn't a good generic example
 //
@@ -36,7 +36,7 @@ struct __MODULE__ : public InhModule, public InhModule2 {
 #sp implementation
 /*AUTOSUBCELL_INCLUDE*/
 
-SP_CTOR_IMP(__MODULE__) /*AUTOCTOR*/ {
+SP_CTOR_IMP(__MODULE__) /*AUTOINIT*/ {
 }
 
 #ifdef NEVER_JUST_CHECKING_PARSER

@@ -1,4 +1,4 @@
-#$Id: SystemPerl.pod 4305 2005-08-02 13:21:57Z wsnyder $
+#$Id: SystemPerl.pod 7077 2005-10-06 15:11:00Z wsnyder $
 ######################################################################
 #
 # Copyright 2001-2005 by Wilson Snyder.  This program is free software;
@@ -60,6 +60,21 @@ changed in any way, but are simply required for SystemPerl to be able to
 derive required information from the source code.
 
 =over 4
+
+=item SP_CLASS (I<class>)
+
+SP_CLASS declares a SC_MODULE like structure, most likely to accomplish
+special inheritance.  If a new base class is derived from sc_module, you
+must use SP_CLASS when the derived class is used, so that SystemPerl knows
+the final class is a child of a sc_module.  For example:
+
+    class FooBase : public sc_module {...};
+
+  Then to use FooBase, instead of
+    class Foo : public FooBase {...};
+
+  use
+    SP_CLASS(Foo) : public FooBase {...};
 
 =item SP_CELL_DECL (I<refname>, I<instname[s]>)
 
@@ -173,9 +188,11 @@ For example:
 Sets a internal attribute.  There are no attributes currently specified for
 general usage.
 
-=item /*AUTOCTOR*/
+=item /*AUTOINIT*/
 
-AUTOCTOR creates signal and port name initializers for SC_CTOR's.
+AUTOINIT creates signal and port name initializers for SC_CTOR's.
+/*AUTOCTOR*/ is a backward compatible alias, but was depreciated due to the
+similarity in name with SP_AUTO_CTOR.
 
 For example:
 
@@ -184,15 +201,15 @@ For example:
 	...
     
     SC_MODULE(mod) {
-	SC_CTOR(mod) /*AUTOCTOR*/ {
+	SC_CTOR(mod) /*AUTOINIT*/ {
 
 Becomes:
 
     SC_MODULE(mod) {
 	SC_CTOR(mod)
-	      // Beginning of SystemPerl automatic constructor
+	      // Beginning of SystemPerl automatic initializer
 	      : clk("clk")
-	      // End of SystemPerl automatic constructor
+	      // End of SystemPerl automatic initializer
 
 =item /*AUTOENUM_I<CLASS|GLOBAL>(I<enum>)*/
 
@@ -428,12 +445,71 @@ SP_AUTO_CTOR should be called first in every constructor.  It will call
 internal functions needed for coverage analysis, and other possible future
 enhancements.
 
+=item SP_AUTO_METHOD
+
+SP_AUTO_METHOD is placed in a SC_METHOD function.  It takes a method name
+and a sensitivity argument, and declares the specified method under the
+AUTOMETHODS auto, and declares the SC_METHOD and sensitivity under the
+SP_AUTO_CTOR area.
+
+For example the below
+
+    void __MODULE__::clockMethod() {
+        SP_AUTO_METHOD(clockMethod, clk.pos());
+
+This will automatically insert the following:
+   in the class declaration under AUTOMETHODS:
+	private:
+	   void clockMethod();
+
+   in the constructor under SP_AUTO_CTOR:
+	SC_METHOD(clockMethod);
+	sensitive << clk.pos();
+
 =item SP_CTOR_IMP
 
 SP_CTOR_IMP provides the implementation function corresponding to SC_CTOR.
 This allows the header to use "SC_CTOR;" and the body of the constructor
 to be moved into the implementation file.   This greatly decreases the number
 of includes needed in the header file, and thus speeds compilation.
+
+=item sp_ui
+
+Sp_ui acts a magic SystemC signal type.  Sp_ui takes two template-like
+arguments, representing the MSB and LSB of the data.  SystemPerl will
+replace the sp_ui with a bool, uint32_t, uint64_t or sc_bv depending on the
+width of the required type, using MSB alone.  This matches the rules that
+Verilator requires for created shells.  Thus a Verilog definition
+
+     input [35:3]  signal;
+
+is equivelent to the SystemPerl declaration:
+
+     sc_in<sp_ui<35,3> >   signal;
+
+Sp_ui's can interconnect with the standard uint types. Only the bits up to
+the MSB will be traced in waves files, while the LSB is only for Verilog
+interconnecting; it's presumed the lower bits are still stored and zero
+inside SystemC.  Note it is the programmers job to insure that bits above
+the MSB and below the LSB are zero, this is not done for you.
+
+=item #sp else
+
+Inverts the last #sp ifdef/ifndef.
+
+=item #sp endif
+
+Ends a #sp ifdef/ifndef.
+
+=item #sp ifdef I<define>
+
+Turns off processing until the next #sp endif, if the specified define is not
+defined.  Allows SystemPerl preprocessing similar to C++ #ifdef.
+
+=item #sp ifndef I<define>
+
+Turns off processing until the next #sp endif, if the specified define is
+defined.  Allows SystemPerl preprocessing similar to C++ #ifdef.
 
 =item #sp include
 

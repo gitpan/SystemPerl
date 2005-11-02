@@ -1,4 +1,4 @@
-// $Id: ExModNull.sp 4305 2005-08-02 13:21:57Z wsnyder $
+// $Id: ExModNull.sp 6572 2005-09-22 20:47:58Z wsnyder $
 // DESCRIPTION: SystemPerl: Example "null" module
 //
 // Copyright 2001-2005 by Wilson Snyder.  This program is free software;
@@ -26,8 +26,7 @@ SC_MODULE (__MODULE__) {
 #sp implementation
 /*AUTOSUBCELL_INCLUDE*/
 
-SP_CTOR_IMP(__MODULE__) /*AUTOCTOR*/
-{
+SP_CTOR_IMP(__MODULE__) /*AUTOINIT*/ {
     SP_AUTO_CTOR;
 
 #ifdef NEVER

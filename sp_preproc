@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-#$Id: sp_preproc 4305 2005-08-02 13:21:57Z wsnyder $
+#$Id: sp_preproc 7485 2005-10-15 14:06:54Z wsnyder $
 ######################################################################
 #
 # Copyright 2001-2005 by Wilson Snyder.  This program is free software;
@@ -54,6 +54,7 @@ my $opt_ncsc;
 my $opt_tree;
 my $opt_trace_duplicates = 0;
 my $opt_write_verilog;
+my $opt_hier_only;
 
 my $opt = new Verilog::Getopt(gcc_style=>1, vcs_style=>0);
 $opt->libext([".sp"]);
@@ -64,8 +65,8 @@ if (! GetOptions (
 		  "debug"	=> \&debug,
 		  "M:s"		=> \$opt_makedeps,
 		  "MMD:s"	=> \$opt_makedeps,
-		 # "lint!"	=> \$Opt_Lint,
 		  "autos!"	=> \$opt_autos,
+		  "hier-only!"	=> \$opt_hier_only,
 		  "inline!"	=> \$opt_inline,
 		  "libcell!"	=> \$opt_libcell,
 		  "libfile=s"	=> \$opt_libfile,
@@ -80,6 +81,8 @@ if (! GetOptions (
     usage();
 }
 
+($opt_hier_only && ($opt_preproc || $opt_inline)) && die "%Error: -hier_only can't be used w/ --preproc or --inline";
+
 # Compatibility hack so that verilator can just specify --tree and get
 # libfiles only if user has the latest sp_preproc.  Can be removed ~2003/08
 # by adding --libfile to verilated.mk.in
@@ -93,16 +96,16 @@ my $nl = new SystemC::Netlist (options=>$opt,
 			       ncsc => $opt_ncsc,
 			       link_read_nonfatal => !$opt_lint,
 			       lint_checking => $opt_lint,
+			       need_text=>($opt_preproc||$opt_inline),
+			       need_signals=>!$opt_hier_only,
 			       );
 
 foreach my $file (@sp_files_nolib) {
     $nl->read_file (filename=>$file,
-		    strip_autos=>1,
 		    is_libcell=>0,);
 }
 foreach my $file (@sp_files_lib) {
     $nl->read_file (filename=>$file,
-		    strip_autos=>1,
 		    is_libcell=>1,);
 }
 # read_cell_library doesn't create a mod/cell if it exists, thus should be after read_file
@@ -115,7 +118,7 @@ $nl->autos();
 tree_report($nl, $opt_tree) if ($opt_tree);
 write_verilog($nl, $opt_write_verilog) if $opt_write_verilog;
 $nl->write_cell_library(filename=>$opt_libfile) if $opt_libfile;
-$nl->lint();
+$nl->lint() if $opt_lint;
 our_rulecheck($nl);
 $nl->dump() if $Debug;
 $nl->exit_if_error();
@@ -150,7 +153,7 @@ if ($opt_makedeps) {
 #----------------------------------------------------------------------
 
 sub usage {
-    print '$Id: sp_preproc 4305 2005-08-02 13:21:57Z wsnyder $ ', "\n";
+    print '$Id: sp_preproc 7485 2005-10-15 14:06:54Z wsnyder $ ', "\n";
     $SIG{__WARN__} = sub{};	#pod2text isn't clean.
     pod2text($0);
     exit (1);
@@ -330,6 +333,11 @@ It is generally only executed from the standard build scripts.
 =item --help
 
 Displays this message and program version and exits.
+
+=item --hier-only
+
+Read only hiearchy information, ignore all signal information.  Useful for
+faster generation of sp_lib files.
 
 =item --inline
 

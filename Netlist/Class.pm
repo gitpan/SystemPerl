@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Id: Class.pm 6461 2005-09-20 18:28:58Z wsnyder $
+# $Id: Class.pm 8326 2005-11-02 19:13:56Z wsnyder $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -24,7 +24,7 @@ use SystemC::Template;
 use Verilog::Netlist::Subclass;
 @ISA = qw(SystemC::Netlist::Class::Struct
 	  Verilog::Netlist::Subclass);
-$VERSION = '1.230';
+$VERSION = '1.240';
 use strict;
 
 structs('new',
@@ -32,6 +32,12 @@ structs('new',
 	=>[name     	=> '$', #'	# Name of the module
 	   filename 	=> '$', #'	# Filename this came from
 	   lineno	=> '$', #'	# Linenumber this came from
+	   msb	 	=> '$', #'	# MSB bit #
+	   lsb		=> '$', #'	# LSB bit #
+	   stored_lsb	=> '$', #'	# Bit number of signal stored in bit 0  (generally lsb)
+	   cast_type	=> '$', #'	# What to cast to for tracing
+	   convert_type	=> '$', #'	# What to output if transforming sp_ui's
+	   is_enum	=> '$', #'	# Maps to enum type
 	   netlist	=> '$', #'	# Netlist is a member of
 	   userdata	=> '%',		# User information
 	   #
@@ -39,6 +45,72 @@ structs('new',
 	   _nets	=> '%',		# List of nets if this is tracable
 	   ]);
 	
+######################################################################
+# List of basic C++ types and their sizes
+
+our %GenerateInfo
+    = (bool=>		[ msb=>0,  lsb=>0, cast_type=>undef, ],
+       sc_clock=>	[ msb=>0,  lsb=>0, cast_type=>'bool', ],
+       int8_t=>		[ msb=>7,  lsb=>0, cast_type=>undef, ],
+       int16_t=>	[ msb=>15, lsb=>0, cast_type=>undef, ],
+       int32_t=>	[ msb=>31, lsb=>0, cast_type=>undef, ],
+       int64_t=>	[ msb=>63, lsb=>0, cast_type=>undef, ],
+#      int =>		[ msb=>31, lsb=>0, cast_type=>undef, ],
+       uint8_t=>	[ msb=>7,  lsb=>0, cast_type=>undef, ],
+       uint16_t=>	[ msb=>15, lsb=>0, cast_type=>undef, ],
+       uint32_t=>	[ msb=>31, lsb=>0, cast_type=>undef, ],
+       uint64_t=>	[ msb=>63, lsb=>0, cast_type=>undef, ],
+#      uint =>		[ msb=>0,  lsb=>0, cast_type=>undef, ],
+       nint8_t=> 	[ msb=>7,  lsb=>0, cast_type=>undef, ],
+       nint16_t=>	[ msb=>15, lsb=>0, cast_type=>undef, ],
+       nint32_t=>	[ msb=>31, lsb=>0, cast_type=>undef, ],
+       nint64_t=>	[ msb=>63, lsb=>0, cast_type=>undef, ],
+       );
+
+######################################################################
+######################################################################
+#### Netlist construction
+
+sub generate_class {
+    my $netlist = shift;
+    my $name = shift;
+    # We didn't find a class already declared of the specified type.
+    # See if it matches a C++ standard type, and if so, add it.
+    if ($GenerateInfo{$name}) {
+	return $netlist->new_class(name=>$name,
+				   @{$GenerateInfo{$name}});
+    }
+    elsif ($name =~ /^sc_bv<(\d+)>$/) {
+	return $netlist->new_class(name=>$name,
+				   msb=>($1-1), lsb=>0, cast_type=>undef);
+    }
+    elsif ($name =~ /^sp_ui<(\d+),(\d+)>$/) {
+	my $msb = $1;  my $lsb = $2;
+	my $out = ((($msb==0 && $lsb==0) && "bool")
+		   || (($msb<=31) && "uint32_t")
+		   || (($msb<=63) && "uint64_t")
+		   || "sc_bv<".($msb+1).">");
+	return $netlist->new_class(name=>$name, convert_type=>$out,
+				   msb=>$msb, lsb=>$lsb, stored_lsb=>0, cast_type=>undef);
+    }
+    elsif ($netlist->{_enum_classes}{$name}) {
+	return $netlist->new_class(name=>$name, is_enum=>1,
+				   msb=>31, lsb=>0, cast_type=>'uint32_t');
+    }
+    return undef;
+}
+
+######################################################################
+######################################################################
+#### Accessors
+
+sub sc_type { return $_[0]->convert_type || $_[0]->name; }
+
+sub is_sc_bv {
+    my $self = shift;
+    return ($self->sc_type =~ /^sc_bv/);
+}
+
 ######################################################################
 ######################################################################
 #### Nets

@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Id: Pin.pm 6461 2005-09-20 18:28:58Z wsnyder $
+# $Id: Pin.pm 8326 2005-11-02 19:13:56Z wsnyder $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -24,11 +24,28 @@ use SystemC::Netlist::Net;
 use SystemC::Netlist::Cell;
 use SystemC::Netlist::Module;
 @ISA = qw(Verilog::Netlist::Pin);
-$VERSION = '1.230';
+$VERSION = '1.240';
 use strict;
 
 ######################################################################
 #### Automatics (preprocessing)
+
+sub type_match {
+    my $self = shift;
+    # Override base method
+    return 1 if $self->net->type eq $self->port->type;
+    my $type1 = $self->net->type;
+    my $type2 = $self->port->type;
+    my $type1ref = $self->netlist->find_class($type1);
+    my $type2ref = $self->netlist->find_class($type2);
+    if ($type1ref && $type2ref) {
+	# Ok if sp_ui connects to uint32_t
+	# But don't allow two different sized sp_ui's to connect.
+	return 1 if (($type1ref->convert_type || "") eq $type2
+		     || ($type2ref->convert_type || "") eq $type1);
+    }
+    return undef;
+}
 
 sub _autos {
     my $self = shift;

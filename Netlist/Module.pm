@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Id: Module.pm 6461 2005-09-20 18:28:58Z wsnyder $
+# $Id: Module.pm 8326 2005-11-02 19:13:56Z wsnyder $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -21,15 +21,21 @@ use Verilog::Netlist;
 use SystemC::Netlist;
 use SystemC::Netlist::Port;
 use SystemC::Netlist::Net;
+use SystemC::Netlist::Method;
 use SystemC::Netlist::Cell;
 use SystemC::Netlist::Pin;
 use SystemC::Netlist::AutoCover;
 use SystemC::Netlist::AutoTrace;
 
 @ISA = qw(Verilog::Netlist::Module);
-$VERSION = '1.230';
+$VERSION = '1.240';
 use strict;
 
+# Some attributes we use:
+#	check_outputs_used => $,	# AUTOATTR setting
+#	_sp_methods => @,		# SP_AUTO_METHOD pairings, as array of [func,sensitive]
+
+######################################################################
 # Constructors
 sub new_net {
     my $self = shift;
@@ -67,12 +73,29 @@ sub new_pin_template {
     return $templref;
 }
 
+sub new_method {
+    my $self = shift;
+    # @_ params
+    my $attrref = $self->attributes("_sp_methods");
+    if (!$attrref) { $attrref={}; $self->attributes("_sp_methods", $attrref); }
+    my $methref = new SystemC::Netlist::Method (@_,);
+    $attrref->{$methref->name} = $methref;
+}
+
 ######################################################################
 # Accessors
 
 sub _decl_max {
     $_[0]->attributes("_sp_decl_max", $_[1]) if exists $_[1];
     return $_[0]->attributes("_sp_decl_max")||0;
+}
+
+sub methods {
+    my $attrref = $_[0]->attributes("_sp_methods") || {};
+    return values %{$attrref};
+}
+sub methods_sorted {
+    return sort {$a->name cmp $b->name || $a->sensitive cmp $b->sensitive} ($_[0]->methods);
 }
 
 ######################################################################
@@ -166,12 +189,12 @@ sub autos2 {
     $self->link();
 }
 
-sub _write_autoctor {
+sub _write_autoinit {
     my $self = shift;
     my $fileref = shift;
     my $prefix = shift;
     return if !$SystemC::Netlist::File::outputting;
-    $fileref->print ("${prefix}// Beginning of SystemPerl automatic constructor\n");
+    $fileref->print ("${prefix}// Beginning of SystemPerl automatic initializer\n");
     my $sep = ":";
     foreach my $netref (sort {($a->_decl_order <=> $b->_decl_order
 			       || $a->name cmp $b->name)   # AUTOSIGNALS appear in name order
@@ -182,7 +205,7 @@ sub _write_autoctor {
 	    $sep = ",";
 	}
     }
-    $fileref->print ("${prefix}// End of SystemPerl automatic constructor\n");
+    $fileref->print ("${prefix}// End of SystemPerl automatic initializer\n");
 }
 
 sub _write_autosignal {
@@ -195,7 +218,8 @@ sub _write_autosignal {
 	 if ($netref->sp_autocreated) {
 	     my $vec = $netref->array || "";
 	     $fileref->printf ("%ssc_signal%-20s %-20s //%s\n"
-		 ,$prefix,"<".$netref->type." >",$netref->name.$vec.";", $netref->comment);
+			       ,$prefix,"<".$netref->sc_type." >",$netref->name.$vec.";",
+			       $netref->comment);
 	 }
     }
     $fileref->print ("${prefix}// End of SystemPerl automatic signals\n");
@@ -212,7 +236,7 @@ sub _write_autoinout {
 	     my $vec = $portref->array || "";
 	     $vec = "[$vec]" if $vec;
 	     # Space below in " >" to prevent >> C++ operator
-	     my $type = "sc_".$portref->direction."<".$portref->type." >";
+	     my $type = "sc_".$portref->direction."<".$portref->net->sc_type." >";
 	     $fileref->printf ("%s%-29s %-20s //%s\n"
 			       ,$prefix
 			       ,$type
@@ -253,6 +277,18 @@ sub _write_autodecls {
     if (!$self->_ctor()) {
 	$fileref->print("${prefix}SC_CTOR(",$self->name,");\n");
     }
+
+    # Methods
+    my $last_meth = "";
+    foreach my $meth ($self->methods_sorted) {
+	$fileref->print($prefix."private:\n") if ($last_meth eq "");
+	if ($last_meth ne $meth) {
+	    $last_meth = $meth;
+	    $fileref->print($prefix."void ".$meth->name."();  // SP_AUTO_METHOD at ".$meth->fileline."\n");
+	}
+    }
+    $fileref->print($prefix."public:\n") if ($last_meth ne "");
+
     if ($self->_autotrace('on')
 	&& $self->netlist->tracing) {
 	$fileref->print

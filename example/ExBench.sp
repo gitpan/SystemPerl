@@ -1,4 +1,4 @@
-// $Id: ExBench.sp 4305 2005-08-02 13:21:57Z wsnyder $
+// $Id: ExBench.sp 6592 2005-09-23 13:56:26Z wsnyder $
 // DESCRIPTION: SystemPerl: Example main()
 //
 // Copyright 2001-2005 by Wilson Snyder.  This program is free software;
@@ -33,7 +33,6 @@ SC_MODULE (__MODULE__) {
 
     /*AUTOSUBCELL_DECL*/
     /*AUTOSIGNAL*/
-    void clock();
 
   public:
     /*AUTOMETHODS*/
@@ -47,13 +46,9 @@ SC_MODULE (__MODULE__) {
 # sp use  .mod.suba
 # sp use  .ExBench.mod.suba	// Same thing...
 
-SP_CTOR_IMP(__MODULE__) /*AUTOCTOR*/
-{
+SP_CTOR_IMP(__MODULE__) /*AUTOINIT*/ {
     SP_AUTO_CTOR;
 
-    SC_METHOD(clock);
-    sensitive_pos(clk);
-    
     SP_CELL (mod,ExMod);
      SP_PIN (mod,in,in);
      SP_PIN (mod,out,out);
@@ -76,7 +71,9 @@ SP_CTOR_IMP(__MODULE__) /*AUTOCTOR*/
     for (int i=0; i<ARRAYSIZE; i++) m_array[i] = i;
 }
 
-void __MODULE__::clock (void) {
+void __MODULE__::clock() {
+    SP_AUTO_METHOD(clock, clk.pos());
+
     static unsigned next_toggle_cycle = 0;
     // Trivial toggling for now
 

@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Id: Net.pm 6461 2005-09-20 18:28:58Z wsnyder $
+# $Id: Net.pm 8326 2005-11-02 19:13:56Z wsnyder $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -20,28 +20,8 @@ use Class::Struct;
 use Verilog::Netlist;
 use SystemC::Netlist;
 @ISA = qw(Verilog::Netlist::Net);
-$VERSION = '1.230';
+$VERSION = '1.240';
 use strict;
-
-# List of basic C++ types and their sizes
-use vars qw (%TypeInfo);
-%TypeInfo = (bool=>	{ msb=>0,  lsb=>0, cast_type=>undef, },
-	     sc_clock=>	{ msb=>0,  lsb=>0, cast_type=>'bool', },
-	     int8_t=>	{ msb=>7,  lsb=>0, cast_type=>undef, },
-	     int16_t=>	{ msb=>15, lsb=>0, cast_type=>undef, },
-	     int32_t=>	{ msb=>31, lsb=>0, cast_type=>undef, },
-	     int64_t=>	{ msb=>63, lsb=>0, cast_type=>undef, },
-#	     int =>	{ msb=>31, lsb=>0, cast_type=>undef, },
-	     uint8_t=>	{ msb=>7,  lsb=>0, cast_type=>undef, },
-	     uint16_t=>	{ msb=>15, lsb=>0, cast_type=>undef, },
-	     uint32_t=>	{ msb=>31, lsb=>0, cast_type=>undef, },
-	     uint64_t=>	{ msb=>63, lsb=>0, cast_type=>undef, },
-#	     uint =>	{ msb=>0,  lsb=>0, cast_type=>undef, },
-	     nint8_t=> 	{ msb=>7,  lsb=>0, cast_type=>undef, },
-	     nint16_t=>	{ msb=>15, lsb=>0, cast_type=>undef, },
-	     nint32_t=>	{ msb=>31, lsb=>0, cast_type=>undef, },
-	     nint64_t=>	{ msb=>63, lsb=>0, cast_type=>undef, },
-	 );
 
 ######################################################################
 # Accessors
@@ -52,17 +32,20 @@ sub netlist {
 
 sub cast_type {
     my $self = shift;
-    if ($self->is_enum_type) {
-	return 'uint32_t';
-    } else {
-	my $tiref = $TypeInfo{$self->type};
-	return $tiref && $tiref->{cast_type};
-    }
+    my $typeref = $self->netlist->find_class($self->type);
+    return $typeref && $typeref->cast_type;
 }
 
-sub is_enum_type {
+sub sc_type {
     my $self = shift;
-    return defined $self->netlist->{_enum_classes}{$self->type};    
+    my $typeref = $self->netlist->find_class($self->type);
+    return $typeref && $typeref->sc_type;
+}
+
+sub is_sc_bv {
+    my $self = shift;
+    my $typeref = $self->netlist->find_class($self->type);
+    return $typeref && $typeref->is_sc_bv;
 }
 
 sub inherited {
@@ -82,14 +65,11 @@ sub _link {
     my $self = shift;
     # If there is no msb defined, try to pull it based on the type of the signal
     if (!defined $self->msb && defined $self->type) {
-	my $tiref = $TypeInfo{$self->type};
-	$tiref = $TypeInfo{'uint32_t'} if !$tiref && $self->is_enum_type;
-	if (defined $tiref) {
-	    $self->msb($tiref->{msb});
-	    $self->lsb($tiref->{lsb});
-	} elsif ($self->type =~ /^sc_bv<(\d+)/) {
-	    $self->msb($1-1);
-	    $self->lsb(0);
+	my $typeref = $self->netlist->find_class($self->type);
+	if (defined $typeref) {
+	    $self->msb($typeref->msb);
+	    $self->lsb($typeref->lsb);
+	    $self->stored_lsb($typeref->stored_lsb);
 	}
     }
     $self->SUPER::_link();
@@ -100,14 +80,28 @@ sub lint {
     my $self = shift;
     $self->SUPER::lint();
     # We peek into simple sequential logic to see what symbols are referenced
-    if ((0 || !$self->module->lesswarn)
-	&& $self->_used_in() && !$self->_used_inout() && !$self->_used_out()
+    if (!$self->module->lesswarn
+	&& (($self->_used_in() && !$self->_used_out())
+	    || ($self->module->attributes('check_inputs_used')
+		&& $self->_used_out() && !$self->_used_in()))
+	&& !$self->_used_inout()
 	&& !$self->array
 	&& !defined $self->module->_code_symbols->{$self->name}
 	&& $self->netlist->{lint_checking}
 	) {
-	$self->warn("Signal has no drivers: ",$self->name(), "\n");
+	if ($self->_used_in()) {
+	    $self->warn("Signal has no drivers: ",$self->name(), "\n");
+	} else {
+	    $self->warn("Signal has no sinks: ",$self->name(), "\n");
+	}
 	$self->dump_drivers(8);
+	my @noautoinst;
+	foreach my $cellref ($self->module->cells_sorted) {
+	    push @noautoinst, $cellref->name if !$cellref->_autoinst();
+	}
+	if ($#noautoinst>-1) {
+	    print "        Note: No AUTOINST's for: ",join(", ",@noautoinst),"\n";
+	}
 	$self->module->dump() if $Verilog::Netlist::Debug;
     }
 }
@@ -115,8 +109,7 @@ sub lint {
 sub _scdecls {
     my $self = shift;
     my $type = $self->_decls;
-    $type = "wire" if $TypeInfo{$type};
-    $type = "wire" if $type =~ /^sc_bv\b/;
+    $type ||= "wire";
     return $type;
 }
 

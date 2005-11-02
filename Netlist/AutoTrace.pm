@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Id: AutoTrace.pm 6461 2005-09-20 18:28:58Z wsnyder $
+# $Id: AutoTrace.pm 8326 2005-11-02 19:13:56Z wsnyder $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -18,7 +18,7 @@ package SystemC::Netlist::AutoTrace;
 use File::Basename;
 
 use SystemC::Netlist::Module;
-$VERSION = '1.230';
+$VERSION = '1.240';
 use strict;
 
 use vars qw ($Debug_Check_Code);
@@ -98,6 +98,7 @@ sub _tracer_dups_recurse {
 		&& $pinref->port->net->type eq $pinref->net->type
 		&& $pinref->port->net->msb eq $pinref->net->msb
 		&& $pinref->port->net->lsb eq $pinref->net->lsb
+		&& $pinref->port->net->stored_lsb eq $pinref->net->stored_lsb
 		&& !_net_ignore($pinref->port->net)
 		&& !_net_ignore($pinref->net)
 		) {
@@ -149,7 +150,7 @@ sub _net_ignore {
     return "Wide Memory Vector"  if ($netref->array()
 				     && ($netref->array=~/^[0-9]/)
 				     && (($netref->array()||0)>32));
-    my $scbv = ($netref->type =~ /^sc_bv/);
+    my $scbv = $netref->is_sc_bv;
     if ($scbv && !$netref->netlist->{sp_allow_bv_tracing}) {
 	return "Memory Vector - need patch";
     }
@@ -177,8 +178,10 @@ sub _tracer_setup {
     $tracesref->{nethier} = $nethier,
     $tracesref->{cells} = [];
 
-    foreach my $netref ($modref->nets_sorted()) {
-	_tracer_setup_net($trinfo, $tracesref, $modhier."->", $netref, "", "ts->");
+    if (!$modref->_autotrace('exists')) {
+	foreach my $netref ($modref->nets_sorted()) {
+	    _tracer_setup_net($trinfo, $tracesref, $modhier."->", $netref, "", "ts->", []);
+	}
     }
     if ($trinfo->{recurse}) {
 	foreach my $cellref ($modref->cells_sorted()) {
@@ -198,16 +201,17 @@ sub _tracer_setup {
 sub _tracer_setup_accessor {
     my $netref = shift;
     my $orig_accessor = shift || "";
+    my $vecref = shift;
 
     my $ignore = _net_ignore($netref);
     my $accessor = "";	# Function call to get the value of the signal
-    my $scbv = ($netref->type =~ /^sc_bv/);
+    my $scbv = $netref->is_sc_bv;
     if ($scbv) {
 	$accessor .= "(((uint32_t*)(";
     }
     $accessor .= $orig_accessor.$netref->name;
     if ($netref->array) {
-	$accessor .= "[i]";
+	$accessor .= "[_i".($#{$vecref})."]";
     }
     if (($netref->width||0) > 64 && !$scbv) {
 	$accessor .= "[0]";
@@ -244,7 +248,12 @@ sub _tracer_setup_net {
     my $netref = shift;
     my $humanprefix = shift;
     my $upper_accessor = shift;
+    my $vecref = shift;
 
+    my $newvecref = $vecref;
+    if ($netref->array) {
+	$newvecref = [@{$vecref}, $netref->array];
+    }
     if (!$netref->width()) {
 	if (my $classref = $netref->netlist->find_class($netref->type)) {
 	    # It's a structure we know about.  Recurse all of the members of the struct
@@ -253,7 +262,8 @@ sub _tracer_setup_net {
 				  $modhier.".".$netref->name,
 				  $subnetref,
 				  $humanprefix._dedot($netref->name).".",
-				  _tracer_setup_accessor($netref, $upper_accessor).".",
+				  _tracer_setup_accessor($netref, $upper_accessor,$newvecref).".",
+				  $newvecref,
 				  );
 	    }
 	    return;
@@ -261,7 +271,7 @@ sub _tracer_setup_net {
     }
 
     my $ignore = _net_ignore($netref);
-    my $accessor = _tracer_setup_accessor($netref, $upper_accessor);
+    my $accessor = _tracer_setup_accessor($netref, $upper_accessor, $newvecref);
 
     my $code_inc = 0;
     if (!$ignore) {
@@ -304,6 +314,7 @@ sub _tracer_setup_net {
 	identical_use => $identical_use,
 	accessor => $accessor,
 	human_name => $humanprefix._dedot($netref->name()),
+	vectors => [@{$newvecref}],   # Not used yet; for multi-dim arraying
     };
     push @{$tracesref->{vars}}, $tref;
     $tref->{check_code} = $Debug_Check_Code++ if $Debug_Check_Code;
@@ -369,7 +380,7 @@ sub _write_tracer_init {
     $fileref->print("void ${mod}::traceInit (SpTraceVcd* vcdp, void* userthis, uint32_t code) {\n");
     if ($trinfo->{ident_code}) {
 	$fileref->printf("  int _identcode[%d];\n", $trinfo->{ident_code}+1);
-	$fileref->printf("  for (int i=0; i<%d; i++) { _identcode[i]=0; }\n", $trinfo->{ident_code});
+	$fileref->printf("  for (int _i=0; _i<%d; _i++) { _identcode[_i]=0; }\n", $trinfo->{ident_code});
     }
     $fileref->print("  // Callback from vcd->open()\n");
     $fileref->print("  if (0 && vcdp && userthis && code) {}  // Prevent unused\n");
@@ -443,11 +454,13 @@ sub _write_tracer_init_recurse {
 	    $fileref->printf("${aindent}  {int lc=_identcode[".$tref->{identical_use}."];\n");
 	    $ket .= "}";
 	}
-	if ($netref->array && !$tref->{ignore}) {
-	    $fileref->printf("${aindent}  for (int i=0; i<%s; ++i) {\n"
-			     ,$netref->array);
-	    $aindent .= "  ";
-	    $ket .= "}";
+	if (!$tref->{ignore}) {
+	    if ($netref->array) {
+		$fileref->printf("${aindent}  for (int _i0=0; _i0<%s; ++_i0) {\n"
+				 ,$netref->array);
+		$aindent .= "  ";
+		$ket .= "}";
+	    }
 	}
 
 	if ($tref->{ignore}) {
@@ -460,7 +473,7 @@ sub _write_tracer_init_recurse {
 	$ket .= "}";
 
 	my $width = $netref->width || 1;
-	my $arraynum = ($netref->array ? " i":"-1");
+	my $arraynum = ($netref->array ? " _i0":"-1");
 	$fileref->printf("");
 	my $name = $tref->{human_name};
 	if (!$doident) {
@@ -469,13 +482,13 @@ sub _write_tracer_init_recurse {
 				 ,$name, $arraynum);
 	    } elsif ($width <= 32) {
 		$fileref->printf("vcdp->declBus  (${c},\"%s\",%s,%d,%d"
-				 ,$name, $arraynum,$netref->msb, $netref->lsb);
+				 ,$name, $arraynum,$netref->msb, $netref->stored_lsb);
 	    } elsif ($width <= 64) {
 		$fileref->printf("vcdp->declQuad  (${c},\"%s\",%s,%d,%d"
-				 ,$name, $arraynum,$netref->msb, $netref->lsb);
+				 ,$name, $arraynum,$netref->msb, $netref->stored_lsb);
 	    } else {
 		$fileref->printf("vcdp->declArray(${c},\"%s\",%s,%d,%d",
-				 ,$name, $arraynum,$netref->msb, $netref->lsb);
+				 ,$name, $arraynum,$netref->msb, $netref->stored_lsb);
 	    }
 	    $fileref->printf("); ");
 	}
@@ -552,7 +565,7 @@ sub _write_tracer_change_recurse {
 
 	my $aindent = $indent;
 	if ($netref->array) {
-	    $fileref->printf("${indent}  for (int i=0; i<%s; ++i) {\n"
+	    $fileref->printf("${indent}  for (int _i0=0; _i0<%s; ++_i0) {\n"
 			     ,$netref->array);
 	    $aindent .= "  ";
 	    if ($netref->array =~ /^\d+$/) {

@@ -1,4 +1,4 @@
-// $Id: systemperl.h 6445 2005-09-20 15:19:22Z wsnyder $ -*- SystemC -*-
+// $Id: systemperl.h 7641 2005-10-19 17:33:49Z wsnyder $ -*- SystemC -*-
 //********************************************************************
 //
 // THIS MODULE IS PUBLICLY LICENSED
@@ -160,6 +160,7 @@ extern "C" {
 // SystemC Automatics
 
 #define SP_AUTO_CTOR
+#define SP_AUTO_METHOD(func, sensitive_expr)
 #define SP_MODULE_CONTINUED(modname)
 #define SP_TEMPLATE(cellregexp, pinregexp, netregexp...)
 
@@ -168,6 +169,7 @@ extern "C" {
 #define SP_AUTO_COVER1(type)
 #define SP_AUTO_COVER3(type,file,line)
 #define SP_AUTO_COVER4(type,file,line,cmt)
+#define SP_AUTO_COVER_CMT(cmt)
 // Below inserted by preprocessor, not for internal use
 #define SP_AUTO_COVERinc(id,type,file,line,cmt) {++(this->_sp_coverage[(id)]);}
 

@@ -1,4 +1,4 @@
-// $Id: SpTraceVcdC.cpp 4305 2005-08-02 13:21:57Z wsnyder $ -*- SystemC -*-
+// $Id: SpTraceVcdC.cpp 8045 2005-10-27 17:13:58Z wsnyder $ -*- SystemC -*-
 //=============================================================================
 //
 // THIS MODULE IS PUBLICLY LICENSED
@@ -398,7 +398,7 @@ void SpTraceVcd::dumpPrep (double timestamp) {
     printStr("#");
     // VCD file format specification does not allow non-integers for timestamps
     // Dinotrace doesn't mind, but Cadence vvision seems to choke
-    printInt((int)timestamp);
+    printInt((uint64_t)timestamp);
     printStr("\n");
 }
 

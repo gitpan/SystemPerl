@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Id: File.pm 6461 2005-09-20 18:28:58Z wsnyder $
+# $Id: File.pm 8326 2005-11-02 19:13:56Z wsnyder $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -23,7 +23,7 @@ use SystemC::Template;
 use Verilog::Netlist::Subclass;
 @ISA = qw(SystemC::Netlist::File::Struct
 	Verilog::Netlist::Subclass);
-$VERSION = '1.230';
+$VERSION = '1.240';
 use strict;
 
 structs('new',
@@ -68,6 +68,8 @@ sub new {
     my $parser = $class->SUPER::new (%params,
 				     modref=>undef,	# Module being parsed now
 				     cellref=>undef,	# Cell being parsed now
+				     _ifdef_stack => [], # For parsing, List of outstanding ifdefs
+				     _ifdef_off => 0,	# For parsing, True if not-processing
 				     );
     $parser->{filename} = $parser->{netlist}->resolve_filename($params{filename});
     if (!$parser->{filename}) {
@@ -78,11 +80,19 @@ sub new {
     return $parser;
 }
 
+sub netlist { return $_[0]->{netlist}; }
+
+sub push_text {
+    push @Text, $_[1] if $_[0]->{need_text};
+}
+
 sub text {
     my $self = shift;
     my $line = shift;
-    push @Text, [ 0, $self->filename, $self->lineno,
-		  $line ];
+    return if $self->{_ifdef_off};
+
+    push_text($self, [ 0, $self->filename, $self->lineno,
+		       $line ]);
     if ($self->{netref}) {
 	# Snarf comment following signal declaration
 	# Note comments must begin on the same line as the signal
@@ -100,6 +110,8 @@ sub text {
 sub module {
     my $self = shift;
     my $module = shift;
+    return if $self->{_ifdef_off};
+
     my $fileref = $self->{fileref};
     my $netlist = $self->{netlist};
     $module = $self->{fileref}->module_exp if $module eq "__MODULE__";
@@ -115,6 +127,8 @@ sub module {
 sub module_continued {
     my $self = shift;
     my $module = shift;
+    return if $self->{_ifdef_off};
+
     my $fileref = $self->{fileref};
     my $netlist = $self->{netlist};
     $module = $self->{fileref}->module_exp if $module eq "__MODULE__";
@@ -129,15 +143,24 @@ sub module_continued {
 
 sub endmodule {
     my $self = shift;
+    if ($#{$self->{_ifdef_stack}}>-1) {
+	$self->error("'#sp ifdef' never terminated with '#sp endif");
+    }
+    $self->_add_code_symbols($self->symbols());
+    $self->{modref} = undef;
+}
+
+sub _add_code_symbols {
+    my $self = shift;
+    my $hashref = shift;
     return if !$self->{modref};
     my $modref = $self->{modref};
     if (!$modref->_code_symbols) {
-	$modref->_code_symbols($self->symbols());
+	$modref->_code_symbols($hashref);
     } else { # Add to existing hash
-	my %syms = (%{$modref->_code_symbols}, %{$self->symbols()});
-	$modref->_code_symbols(\%syms);
+	my $csref = $modref->_code_symbols;
+	while (my ($key, $val) = each %{$hashref}) { $csref->{$key} = $val; }
     }
-    $self->{modref} = undef;
 }
 
 sub auto {
@@ -145,16 +168,18 @@ sub auto {
     my $line = shift;
 
     return if (!$self->{strip_autos});
+    return if $self->{_ifdef_off};
 
     my $modref = $self->{modref};
     my $cellref = $self->{cellref};
-    if ($line =~ /^(\s*)\/\*AUTOCTOR\*\//) {
+    if ($line =~ /^(\s*)\/\*AUTOCTOR\*\//	# Depreciated
+	|| $line =~ /^(\s*)\/\*AUTOINIT\*\//) {
 	if (!$modref) {
-	    return $self->error ("AUTOCTOR outside of module definition", $line);
+	    return $self->error ("AUTOINIT outside of module definition", $line);
 	}
-	push @Text, [ 1, $self->filename, $self->lineno,
-		      \&SystemC::Netlist::Module::_write_autoctor,
-		      $modref, $self->{fileref}, $1];
+	push_text($self, [ 1, $self->filename, $self->lineno,
+			   \&SystemC::Netlist::Module::_write_autoinit,
+			   $modref, $self->{fileref}, $1]);
     }
     elsif ($line =~ /^(\s*)\/\*AUTOSIGNAL\*\//) {
 	if (!$modref) {
@@ -162,28 +187,28 @@ sub auto {
 	}
 	$modref->_autosignal($modref->_decl_max + 10);
 	$modref->_decl_max(100000000+$modref->_decl_max);  # Leave space for autos
-	push @Text, [ 1, $self->filename, $self->lineno,
-		      \&SystemC::Netlist::Module::_write_autosignal,
-		      $modref, $self->{fileref}, $1];
+	push_text($self, [ 1, $self->filename, $self->lineno,
+			   \&SystemC::Netlist::Module::_write_autosignal,
+			   $modref, $self->{fileref}, $1]);
     }
     elsif ($line =~ /^(\s*)\/\*AUTOSUBCELL(S|_DECL)\*\//) {
 	if (!$modref) {
 	    return $self->error ("AUTOSUBCELL_DECL outside of module definition", $line);
 	}
 	$modref->_autosubcells(1);
-	push @Text, [ 1, $self->filename, $self->lineno,
-		      \&SystemC::Netlist::Module::_write_autosubcell_decl,
-		      $modref, $self->{fileref}, $1];
+	push_text($self, [ 1, $self->filename, $self->lineno,
+			   \&SystemC::Netlist::Module::_write_autosubcell_decl,
+			   $modref, $self->{fileref}, $1]);
     }
     elsif ($line =~ /^(\s*)\/\*AUTOSUBCELL_CLASS\*\//) {
-	push @Text, [ 1, $self->filename, $self->lineno,
-		      \&SystemC::Netlist::File::_write_autosubcell_class,
-		      $self->{fileref}, $self->{fileref}, $1];
+	push_text($self, [ 1, $self->filename, $self->lineno,
+			   \&SystemC::Netlist::File::_write_autosubcell_class,
+			   $self->{fileref}, $self->{fileref}, $1]);
     }
     elsif ($line =~ /^(\s*)\/\*AUTOSUBCELL_INCLUDE\*\//) {
-	push @Text, [ 1, $self->filename, $self->lineno,
-		      \&SystemC::Netlist::File::_write_autosubcell_include,
-		      $self->{fileref}, $self->{fileref}, $1];
+	push_text($self, [ 1, $self->filename, $self->lineno,
+			   \&SystemC::Netlist::File::_write_autosubcell_include,
+			   $self->{fileref}, $self->{fileref}, $1]);
     }
     elsif ($line =~ /^(\s*)\/\*AUTOINST\*\//) {
 	if (!$cellref) {
@@ -193,32 +218,32 @@ sub auto {
 	    return $self->error ("AUTOINST already declared earlier for same cell", $line);
 	}
 	$cellref->_autoinst(1);
-	push @Text, [ 1, $self->filename, $self->lineno,
-		      \&SystemC::Netlist::Cell::_write_autoinst,
-		      $cellref, $self->{fileref}, $1];
+	push_text($self, [ 1, $self->filename, $self->lineno,
+			   \&SystemC::Netlist::Cell::_write_autoinst,
+			   $cellref, $self->{fileref}, $1]);
     }
     elsif ($line =~ /^(\s*)\/\*AUTOENUM_CLASS\(([a-zA-Z0-9_]+)(\.|::)([a-zA-Z0-9_]+)\)\*\//) {
 	my $prefix = $1; my $class = $2;  my $enumtype = $4;
 	$self->{fileref}->_autoenums($class, $enumtype);
 	$self->{netlist}->{_enum_classes}{$class} = 1;
-	push @Text, [ 1, $self->filename, $self->lineno,
-		      \&SystemC::Netlist::File::_write_autoenum_class,
-		      $self->{fileref}, $class, $enumtype, $prefix,];
+	push_text($self, [ 1, $self->filename, $self->lineno,
+			   \&SystemC::Netlist::File::_write_autoenum_class,
+			   $self->{fileref}, $class, $enumtype, $prefix,]);
     }
     elsif ($line =~ /^(\s*)\/\*AUTOENUM_GLOBAL\(([a-zA-Z0-9_]+)(\.|::)([a-zA-Z0-9_]+)\)\*\//) {
 	my $prefix = $1; my $class = $2;  my $enumtype = $4;
-	push @Text, [ 1, $self->filename, $self->lineno,
-		      \&SystemC::Netlist::File::_write_autoenum_global,
-		      $self->{fileref}, $class, $enumtype, $prefix,];
+	push_text($self, [ 1, $self->filename, $self->lineno,
+			   \&SystemC::Netlist::File::_write_autoenum_global,
+			   $self->{fileref}, $class, $enumtype, $prefix,]);
     }
     elsif ($line =~ /^(\s*)\/\*AUTOMETHODS\*\//) {
 	my $prefix = $1;
 	if (!$modref) {
 	    return $self->error ("AUTOMETHODS outside of module definition", $line);
 	}
-	push @Text, [ 1, $self->filename, $self->lineno,
-		      \&SystemC::Netlist::Module::_write_autodecls,
-		      $modref, $self->{fileref}, $prefix];
+	push_text($self, [ 1, $self->filename, $self->lineno,
+			   \&SystemC::Netlist::Module::_write_autodecls,
+			   $modref, $self->{fileref}, $prefix]);
     }
     elsif ($line =~ /^(\s*)\/\*AUTOTRACE\(([a-zA-Z0-9_]+)((,manual)?(,recurse)?(,activity)?(,exists)?)\)\*\//) {
 	my $prefix = $1; my $modname = $2; my $manual = $3;
@@ -230,9 +255,9 @@ sub auto {
 	$mod->_autotrace('recurse',1) if $manual =~ /recurse/;
 	$mod->_autotrace('activity',1) if $manual =~ /activity/;
 	$mod->_autotrace('exists',1) if $manual =~ /exists/;
-	push @Text, [ 1, $self->filename, $self->lineno,
-		      \&SystemC::Netlist::AutoTrace::_write_autotrace,
-		      $mod, $self->{fileref}, $prefix,];
+	push_text($self, [ 1, $self->filename, $self->lineno,
+			   \&SystemC::Netlist::AutoTrace::_write_autotrace,
+			   $mod, $self->{fileref}, $prefix,]);
     }
     elsif ($line =~ /^(\s*)\/\*AUTOATTR\(([a-zA-Z0-9_,]+)\)\*\//) {
 	my $attrs = $2 . ",";
@@ -241,7 +266,8 @@ sub auto {
 	    if ($attr eq "verilated") {
 	    } elsif ($attr eq "no_undriven_warning") {
 		$modref->lesswarn(1);
-	    } elsif ($attr eq "check_outputs_used") {
+	    } elsif ($attr eq "check_outputs_used"
+		     || $attr eq "check_inputs_used") {
 		$modref->attributes($attr,1);
 	    } else {
 		$self->error ("Unknown attribute $attr\n");
@@ -251,31 +277,43 @@ sub auto {
     elsif ($line =~ /^(\s*)\/\*AUTOIMPLEMENTATION\*\//) {
 	my $prefix = $1;
 	$self->{fileref}->_impl_done(1);
-	push @Text, [ 1, $self->filename, $self->lineno,
-		      \&SystemC::Netlist::File::_write_autoimpl,
-		      $self->{fileref}, $prefix];
+	push_text($self, [ 1, $self->filename, $self->lineno,
+			   \&SystemC::Netlist::File::_write_autoimpl,
+			   $self->{fileref}, $prefix]);
     }
     elsif ($line =~ /^(\s*)\/\*AUTOINTERFACE\*\//) {
 	my $prefix = $1;
 	$self->{fileref}->_intf_done(1);
-	push @Text, [ 1, $self->filename, $self->lineno,
-		      \&SystemC::Netlist::File::_write_autointf,
-		      $self->{fileref}, $prefix];
+	push_text($self, [ 1, $self->filename, $self->lineno,
+			   \&SystemC::Netlist::File::_write_autointf,
+			   $self->{fileref}, $prefix]);
     }
-    elsif ($line =~ /^(\s*)SP_AUTO_CTOR/) {
+    elsif ($line =~ /^(\s*)SP_AUTO_CTOR\s*;/) {
 	my $prefix = $1;
-	push @Text, [ 1, $self->filename, $self->lineno,
-		      \&SystemC::Netlist::File::_write_autoctor,
-		      $self->{fileref}, $prefix, $modref];
+	push_text($self, [ 1, $self->filename, $self->lineno,
+			   \&SystemC::Netlist::File::_write_autoctor,
+			   $self->{fileref}, $prefix, $modref]);
+    }
+    elsif ($line =~ /^(\s*)SP_AUTO_METHOD\(([a-zA-Z0-9_]+)\s*,\s*([a-zA-Z0-9_().]+)\)\s*;/) {
+	my $prefix = $1; my $name=$2; my $sense=$3;
+	if (!$modref) {
+	    return $self->error ("SP_AUTO_METHOD outside of module definition", $line);
+	}
+	$modref->new_method(name=>$name,
+			    filename=>$self->filename, lineno=>$self->lineno,
+			    sensitive=>$sense);
+	foreach my $symb (split /[^a-zA-Z0-9_]+/, $sense) {
+	    $self->_add_code_symbols({$symb=>1});  # Track that we consume the clock, etc
+	}
     }
     elsif ($line =~ /^(\s*)\/\*AUTOINOUT_MODULE\(([a-zA-Z0-9_,]+)\)\*\//) {
 	if (!$modref) {
 	    return $self->error ("AUTOINOUT_MODULE outside of module definition", $line);
 	}
 	$modref->_autoinoutmod($2);
-	push @Text, [ 1, $self->filename, $self->lineno,
-		      \&SystemC::Netlist::Module::_write_autoinout,
-		      $modref, $self->{fileref}, $1];
+	push_text($self, [ 1, $self->filename, $self->lineno,
+			   \&SystemC::Netlist::Module::_write_autoinout,
+			   $modref, $self->{fileref}, $1]);
     }
     elsif ($line    =~ /^(\s*)SP_AUTO_COVER	  # $1 prefix
 	   		 (?:  inc \s* \( \s* \d+, # SP_AUTO_COVERinc(id, 
@@ -284,7 +322,12 @@ sub auto {
 	                 (?: \s*,\s* \"([^\"]+)\" |) # File
 			 (?: \s*,\s*   (\d+)      |) # Line
 	                 (?: \s*,\s* \"([^\"]+)\" |) # Comment
-	   		 \s* \)/x) {		# )	
+	   		 \s* \)/x
+	   || $line    =~ /^(\s*)SP_AUTO_COVER_CMT # $1 prefix
+	   		 (?:  \d* \s* \( )	  # #(
+	                 ()()()			  # What, File, Line
+	                 (?: \s* \"([^\"]+)\"  )  # Comment
+	   		 \s* \)/x) {
 	my ($prefix,$what,$file,$line,$cmt) = ($1,$2,$3,$4,$5);
 	$what = 'line' if !defined $what;
 	if (!$file) {
@@ -294,9 +337,11 @@ sub auto {
 	$modref or return $self->error ("SP_AUTO_COVER outside of module definition", $line);
 	my $coverref = $modref->new_cover (filename=>$file, lineno=>$line, what=>$what, comment=>$cmt,);
 	# We simply replace the existing SP_AUTO instead of adding the comments.
-	my $last = pop @Text;
-	($last->[3] =~ /SP_AUTO/) or die "Internal %Error,"; # should have poped SP_AUTO we're replacing
-	push @Text, [ 0, $self->filename, $self->lineno, $coverref->call_text($prefix) ];
+	if ($self->{need_text}) {
+	    my $last = pop @Text;
+	    ($last->[3] =~ /SP_AUTO/) or die "Internal %Error,"; # should have poped SP_AUTO we're replacing
+	    push_text($self, [ 0, $self->filename, $self->lineno, $coverref->call_text($prefix) ]);
+	}
     }
     else {
 	return $self->error ("Unknown AUTO command", $line);
@@ -306,6 +351,7 @@ sub auto {
 sub ctor {
     my $self = shift;
     my $modref = $self->{modref};
+    return if $self->{_ifdef_off};
     $modref or return $self->error ("SC_CTOR outside of module definition\n");
     $modref->_ctor(1);
 }
@@ -314,6 +360,7 @@ sub cell_decl {
     my $self = shift;
     my $submodname=shift;
     my $instname=shift;
+    return if $self->{_ifdef_off};
 
     print "Cell_decl $instname\n" if $SystemC::Netlist::Debug;
     my $modref = $self->{modref};
@@ -331,6 +378,7 @@ sub cell {
     my $self = shift;
     my $instname=shift;
     my $submodname=shift;
+    return if $self->{_ifdef_off};
 
     print "Cell $instname\n" if $SystemC::Netlist::Debug;
     my $modref = $self->{modref};
@@ -350,6 +398,9 @@ sub pin {
     my $pinvec = shift;
     my $net = shift;
     my $netvec = shift;
+
+    return if !$self->{need_signals};
+    return if $self->{_ifdef_off};
 
     my $modref = $self->{modref};
     if (!$modref) {
@@ -378,17 +429,25 @@ sub pin {
 		       netname=>$net, );
 }
 
-sub _pin_template_check_regexp {
+sub _pin_template_clean_regexp {
     my $self = shift;
     my $regexp = shift;
-    # Take regexp and test for correctness
-    # Return new regexp string, and compiled regexp
+    # Take regexp and clean it
 
     $regexp =~ s/^\"//;
     $regexp =~ s/\"$//;
     if ($regexp =~ /^\^/ || $regexp =~ /\$$/) {
 	$self->error ("SP_TEMPLATE does not need ^/\$ anchoring",$regexp);
     }
+    return $regexp;
+}
+
+sub _pin_template_check_regexp {
+    my $self = shift;
+    my $regexp = shift;
+    # Take regexp and test for correctness
+    # Return new regexp string, and compiled regexp
+    $regexp = $self->_pin_template_clean_regexp($regexp);
 
     my $compiled;
     eval {
@@ -408,6 +467,7 @@ sub pin_template {
     my $pinregexp = shift;
     my $netregexp = shift;
     my $typeregexp = shift || ".*";
+    return if $self->{_ifdef_off};
 
     my $modref = $self->{modref};
     if (!$modref) {
@@ -418,8 +478,9 @@ sub pin_template {
 
     ($cellregexp,$cellre) = $self->_pin_template_check_regexp($cellregexp);
     ($pinregexp,$pinre) = $self->_pin_template_check_regexp($pinregexp);
-    ($netregexp,$netre) = $self->_pin_template_check_regexp($netregexp);
     ($typeregexp,$typere) = $self->_pin_template_check_regexp($typeregexp);
+    # Special rules for replacement
+    $netregexp = $self->_pin_template_clean_regexp($netregexp);
 
     $modref->new_pin_template (filename=>$self->filename, lineno=>$self->lineno,
 			       cellregexp => $cellregexp, cellre => $cellre,
@@ -453,10 +514,18 @@ sub signal {
     my $msb = shift;
     my $lsb = shift;
 
+    return if !$self->{need_signals};
+    return if $self->{_ifdef_off};
+
     if ($type eq "sc_clock" && (($self->{netlist}->sc_version||0) > 20020000
 				|| $self->{netlist}{ncsc})) {
 	# 2.0.1 changed the basic type of sc_in_clk to a bool
 	$type = "bool";
+    }
+
+    if ($array) {
+	$array =~ s/^\[//;
+	$array =~ s/\]$//;
     }
 
     my $modref = $self->{modref};
@@ -514,6 +583,18 @@ sub signal {
     else {
 	return $self->error ("Strange signal type: $inout", $inout);
     }
+
+    # Replace our special types
+    if ($type =~ /^sp_ui\b/) {
+	my $typeref = $self->netlist->find_class($type);
+	if ($typeref && $typeref->convert_type) {
+	    my $last = pop @Text;
+	    my $out = $typeref->sc_type;
+	    ($last->[3] =~ s!(sp_ui\s*<[^>]+>)!$out/*$1*/!g)
+		or $self->error("%Error, can't find type $type on text line\n");
+	    push_text($self, $last);
+	}
+    }
 }
 
 sub preproc_sp {
@@ -522,17 +603,46 @@ sub preproc_sp {
     if ($line=~ /^\s*\#\s*sp\s+(.*)$/) {
 	my $cmd = $1; $cmd =~ s/\s+$//;
 	$cmd =~ s!\s+//.*$!!;
-	if ($cmd =~ /^implementation$/) {
-	    push @Text, [ 0, $self->filename, $self->lineno,
-			  \&SystemC::Netlist::File::_write_implementation,
-			  $self->{fileref}, $line];
+	# Ifdef/else/etc
+	if ($cmd =~ /^ifdef\s+(\S+)$/) {
+	    my $def = $self->{netlist}->defvalue_nowarn($1);
+	    push @{$self->{_ifdef_stack}}, $self->{_ifdef_off};
+	    $self->{_ifdef_off} = $self->{_ifdef_off} || !defined $def;
+	}
+	elsif ($cmd =~ /^ifndef\s+(\S+)$/) {
+	    my $def = $self->{netlist}->defvalue_nowarn($1);
+	    push @{$self->{_ifdef_stack}}, $self->{_ifdef_off};
+	    $self->{_ifdef_off} = $self->{_ifdef_off} || defined $def;
+	}
+	elsif ($cmd =~ /^else$/) {
+	    if ($#{$self->{_ifdef_stack}}<0) {
+		$self->error("'#sp else' outside of any '#sp ifdef");
+	    } else {
+		$self->{_ifdef_off} = !$self->{_ifdef_off};
+	    }
+	}
+	elsif ($cmd =~ /^endif$/) {
+	    if ($#{$self->{_ifdef_stack}}<0) {
+		$self->error("'#sp endif' outside of any '#sp ifdef");
+	    } else {
+		$self->{_ifdef_off} = pop @{$self->{_ifdef_stack}};
+	    }
+	}
+	# Those that only apply when processing
+	elsif ($cmd =~ /^implementation$/) {
+	    return if $self->{_ifdef_off};
+	    push_text($self, [ 0, $self->filename, $self->lineno,
+			       \&SystemC::Netlist::File::_write_implementation,
+			       $self->{fileref}, $line]);
 	}
 	elsif ($cmd =~ /^interface$/) {
-	    push @Text, [ 0, $self->filename, $self->lineno,
-			  \&SystemC::Netlist::File::_write_interface,
-			  $self->{fileref}, $line];
+	    return if $self->{_ifdef_off};
+	    push_text($self, [ 0, $self->filename, $self->lineno,
+			       \&SystemC::Netlist::File::_write_interface,
+			       $self->{fileref}, $line]);
 	}
 	elsif ($cmd =~ /^use/) {
+	    return if $self->{_ifdef_off};
 	    my $origtext = "";
 	    my $incname;
 	    my $dotted;
@@ -552,17 +662,17 @@ sub preproc_sp {
 		($incname !~ s/(\.[a-z]+)$//)
 		    or $self->error("No $1 extensions on sp use filenames", $line);
 	    }
-	    push @Text, [ 0, $self->filename, $self->lineno,
-			  \&SystemC::Netlist::File::_write_use,
-			  $self->{fileref}, $line, $incname, $origtext,
-			  $self->filename, $self->lineno,
-			  ];
+	    push_text($self, [ 0, $self->filename, $self->lineno,
+			       \&SystemC::Netlist::File::_write_use,
+			       $self->{fileref}, $line, $incname, $origtext,
+			       $self->filename, $self->lineno, ]);
 	    $self->{fileref}->_uses($incname,{name=>$incname, found=>0})
 		if !$dotted;
 	}
 	elsif ($cmd =~ /^include/) {
 	    ($cmd =~ m/^include\s+\"([^\" \n]+)\"$/)
 		or return $self->error("Badly formed sp include line", $line);
+	    return if $self->{_ifdef_off};
 	    my $filename = $1;
 	    print "#include $filename\n" if $SystemC::Netlist::Debug;
 	    $filename = $self->{netlist}->resolve_filename($filename)
@@ -616,6 +726,7 @@ sub enum_value {
     my $enum = shift;
     my $def = shift;
     # We haven't defined a class for enums... Presume others won't use them(?)
+    return if $self->{_ifdef_off};
     my $fileref = $self->{fileref};
 
     my $class = $self->{class} || "TOP";
@@ -673,10 +784,16 @@ sub read {
     # For speed, we use @Text instead of the accessor function
     local @SystemC::Netlist::File::Parser::Text = ();
 
+    $params{need_text} = $netlist->{need_text} if !defined $params{need_text};
+    $params{need_signals} = $netlist->{need_signals} if !defined $params{need_signals};
+    $params{strip_autos} = $netlist->{strip_autos} if !defined $params{strip_autos};
+
     my $parser = SystemC::Netlist::File::Parser->new
 	( fileref=>$fileref,
 	  filename=>$filepath,	# for ->read
 	  strip_autos=>$params{strip_autos}||0,		# for ->read
+	  need_text=>$params{need_text},		# for ->read
+	  need_signals=>$params{need_signals},		# for ->read
 	  );
     $fileref->text(\@SystemC::Netlist::File::Parser::Text);
     $parser->endmodule();
@@ -929,6 +1046,18 @@ sub _write_autoctor {
     return if !$SystemC::Netlist::File::outputting;
     $self->print ("${prefix}// Beginning of SystemPerl automatic constructors\n");
     SystemC::Netlist::AutoCover::_write_autocover_ctor($self,$prefix,$modref);
+
+    my $last_meth = "";
+    foreach my $meth ($modref->methods_sorted) {
+	if ($last_meth ne $meth) {
+	    $last_meth = $meth;
+	    $self->print($prefix."SC_METHOD(".$meth->name.");  // SP_AUTO_METHOD at ".$meth->fileline."\n");
+	}
+	if ($meth->sensitive) {
+	    $self->print($prefix."sensitive << ".$meth->sensitive.";  // SP_AUTO_METHOD at ".$meth->fileline."\n");
+	}
+    }
+
     $self->print ("${prefix}// End of SystemPerl automatic constructors\n");
 }
 
