@@ -1,7 +1,7 @@
-// $Id: ExModSub.sp 7641 2005-10-19 17:33:49Z wsnyder $
+// $Id: ExModSub.sp 11992 2006-01-16 18:59:58Z wsnyder $
 // DESCRIPTION: SystemPerl: Example source module
 //
-// Copyright 2001-2005 by Wilson Snyder.  This program is free software;
+// Copyright 2001-2006 by Wilson Snyder.  This program is free software;
 // you can redistribute it and/or modify it under the terms of either the GNU
 // General Public License or the Perl Artistic License.
 
@@ -58,8 +58,19 @@ SP_CTOR_IMP(__MODULE__) /*AUTOINIT*/ {
     SP_CELL(ignored,IGNORED_CELL);
     SP_PIN (ignored,ignore_pin,ignore_pin);
     /*AUTO_IGNORED_IF_OFF*/
+# sp ifdef NEVER_ALSO
+       SP_CELL(ignored2,IGNORED2_CELL);
+# sp else
+       SP_CELL(ignored3,IGNORED2_CELL);
+# sp endif
+
 #sp else
+
+# sp ifdef NEVER_ALSO
+    SP_CELL(ignored3,IGNORED3_CELL);
+# sp else
     SP_AUTO_COVER();
+# sp endif
 #sp endif
 
 #sp ifndef NEVER

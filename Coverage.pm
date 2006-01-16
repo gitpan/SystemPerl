@@ -1,7 +1,7 @@
-# $Id: Coverage.pm 8326 2005-11-02 19:13:56Z wsnyder $
+# $Id: Coverage.pm 11992 2006-01-16 18:59:58Z wsnyder $
 ######################################################################
 #
-# Copyright 2001-2005 by Wilson Snyder.  This program is free software;
+# Copyright 2001-2006 by Wilson Snyder.  This program is free software;
 # you can redistribute it and/or modify it under the terms of either the GNU
 # General Public License or the Perl Artistic License.
 # 
@@ -29,9 +29,10 @@ use vars qw($_Default_Self);
 ######################################################################
 #### Configuration Section
 
-$VERSION = '1.240';
+$VERSION = '1.250';
 
 use constant DEFAULT_FILENAME => 'logs/coverage.pl';
+use constant COV_RESULTS_DIR => '/sicortex/httpd/root/coverage_results';
 
 ######################################################################
 ######################################################################
@@ -101,6 +102,36 @@ sub write {
     rename $tempfilename, $params{filename};
 }
 
+sub copy_to_archive {
+    my $self = shift;
+
+    # if the --coveragearchive argument was passed to vtest, generate a 
+    # coverage report and copy it to a location accessible by the wiki
+
+    $self->{filename} or croak "%Error: Undefined filename,";
+
+    my $cov_report_cmd = "cov_report";
+    system $cov_report_cmd;
+
+    my ($sec, $min, $hour, $day, $month, $year) = (localtime)[0,1,2,3,4,5];
+    $year += 1900;
+    $month += 1;
+    my $timestamp = sprintf("%.4d_%.2d_%.2d_%.2d_%.2d_%.2d", 
+			    $year,$month,$day,$hour,$min,$sec);
+
+    my $logs_dir = 'logs';
+    my $cov_dir = 'logs/coverage';
+    my $new_cov_dir = COV_RESULTS_DIR . "/$timestamp";
+    my $cov_file = $self->{filename};
+
+    if (-e $cov_file) {
+	rename $cov_file, $cov_dir . '/' . "coverage.pl";
+    }
+    if (-e $cov_dir) {
+	system "cp -r $cov_dir $new_cov_dir";
+    }
+}
+
 ######################################################################
 #### Incrementing utilities
 
@@ -139,6 +170,12 @@ sub items_sorted {
     return sort {$a->[0] cmp $b->[0]} $self->items;
 }
 
+sub delete_item {
+   my $self = shift;
+   my $itemref = shift;
+   delete $self->{coverage}{$itemref->key()};
+}
+
 ######################################################################
 #### Package return
 1;
@@ -175,6 +212,11 @@ subsequent reads will increment the same global structure.
 =item clear
 
 Clear the coverage variables
+
+
+=item delete_item
+
+Delete specified coverage item.
 
 =item inc (args..., count=>value)
 

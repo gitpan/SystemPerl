@@ -1,9 +1,9 @@
-// $Id: SpTraceVcdC.cpp 8045 2005-10-27 17:13:58Z wsnyder $ -*- SystemC -*-
+// $Id: SpTraceVcdC.cpp 11992 2006-01-16 18:59:58Z wsnyder $ -*- SystemC -*-
 //=============================================================================
 //
 // THIS MODULE IS PUBLICLY LICENSED
 //
-// Copyright 2001-2005 by Wilson Snyder.  This program is free software;
+// Copyright 2001-2006 by Wilson Snyder.  This program is free software;
 // you can redistribute it and/or modify it under the terms of either the GNU
 // General Public License or the Perl Artistic License.
 //
@@ -85,6 +85,11 @@ void SpTraceVcd::open (const char* filename) {
 
     dumpHeader();
 
+    // Allocate space now we know the number of codes
+    if (!m_sigs_oldvalp) {
+	m_sigs_oldvalp = new uint32_t [m_nextCode+10];
+    }
+
     if (m_rolloverMB) {
 	this->openNext(true);
     }
@@ -130,7 +135,8 @@ void SpTraceVcd::openNext (bool incFilename) {
 
 SpTraceVcd::~SpTraceVcd() {
     close();
-    if (m_wrBufp) { delete m_wrBufp; m_wrBufp=NULL; }
+    if (m_wrBufp) { delete[] m_wrBufp; m_wrBufp=NULL; }
+    if (m_sigs_oldvalp) { delete[] m_sigs_oldvalp; m_sigs_oldvalp=NULL; }
     // Remove from list of traces
     vector<SpTraceVcd*>::iterator pos = find(s_vcdVecp.begin(), s_vcdVecp.end(), this);
     if (pos != s_vcdVecp.end()) { s_vcdVecp.erase(pos); }
@@ -152,9 +158,9 @@ void SpTraceVcd::printStr (const char* str) {
     }
 }
 
-void SpTraceVcd::printInt (int n) {
+void SpTraceVcd::printQuad (uint64_t n) {
     char buf [100];
-    sprintf(buf,"%d",n);
+    sprintf(buf,"%llu",(long long unsigned)n);
     printStr(buf);
 }
 
@@ -302,10 +308,8 @@ void SpTraceVcd::declare (uint32_t code, const char* name, int arraynum,
 
     // Make sure array is large enough
     m_nextCode = max(nextCode(), code+1+int((msb-lsb+1)/32));
-    if (m_sigs.capacity() <= m_nextCode
-	|| m_sigs_oldval.capacity() <= m_nextCode) {
+    if (m_sigs.capacity() <= m_nextCode) {
 	m_sigs.reserve(m_nextCode*2);	// Power-of-2 allocation speeds things up
-	m_sigs_oldval.reserve(m_nextCode*2);
     }
 
     // Save declaration info
@@ -398,7 +402,7 @@ void SpTraceVcd::dumpPrep (double timestamp) {
     printStr("#");
     // VCD file format specification does not allow non-integers for timestamps
     // Dinotrace doesn't mind, but Cadence vvision seems to choke
-    printInt((uint64_t)timestamp);
+    printQuad((uint64_t)timestamp);
     printStr("\n");
 }
 

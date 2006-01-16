@@ -1,9 +1,9 @@
 # SystemC - SystemC Perl Interface
-# $Id: File.pm 8326 2005-11-02 19:13:56Z wsnyder $
+# $Id: File.pm 11992 2006-01-16 18:59:58Z wsnyder $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
-# Copyright 2001-2005 by Wilson Snyder.  This program is free software;
+# Copyright 2001-2006 by Wilson Snyder.  This program is free software;
 # you can redistribute it and/or modify it under the terms of either the GNU
 # General Public License or the Perl Artistic License.
 # 
@@ -23,7 +23,7 @@ use SystemC::Template;
 use Verilog::Netlist::Subclass;
 @ISA = qw(SystemC::Netlist::File::Struct
 	Verilog::Netlist::Subclass);
-$VERSION = '1.240';
+$VERSION = '1.250';
 use strict;
 
 structs('new',
@@ -69,7 +69,7 @@ sub new {
 				     modref=>undef,	# Module being parsed now
 				     cellref=>undef,	# Cell being parsed now
 				     _ifdef_stack => [], # For parsing, List of outstanding ifdefs
-				     _ifdef_off => 0,	# For parsing, True if not-processing
+				     _ifdef_off => 0,	# For parsing, non-zero if not-processing
 				     );
     $parser->{filename} = $parser->{netlist}->resolve_filename($params{filename});
     if (!$parser->{filename}) {
@@ -294,7 +294,7 @@ sub auto {
 			   \&SystemC::Netlist::File::_write_autoctor,
 			   $self->{fileref}, $prefix, $modref]);
     }
-    elsif ($line =~ /^(\s*)SP_AUTO_METHOD\(([a-zA-Z0-9_]+)\s*,\s*([a-zA-Z0-9_().]+)\)\s*;/) {
+    elsif ($line =~ /^(\s*)SP_AUTO_METHOD\(([a-zA-Z0-9_]+)\s*,\s*([a-zA-Z0-9_().]*)\)\s*;/) {
 	my $prefix = $1; my $name=$2; my $sense=$3;
 	if (!$modref) {
 	    return $self->error ("SP_AUTO_METHOD outside of module definition", $line);
@@ -606,26 +606,34 @@ sub preproc_sp {
 	# Ifdef/else/etc
 	if ($cmd =~ /^ifdef\s+(\S+)$/) {
 	    my $def = $self->{netlist}->defvalue_nowarn($1);
-	    push @{$self->{_ifdef_stack}}, $self->{_ifdef_off};
-	    $self->{_ifdef_off} = $self->{_ifdef_off} || !defined $def;
+	    my $enable = defined $def;
+	    push @{$self->{_ifdef_stack}}, $enable;
+	    $self->{_ifdef_off}++ if !$enable;
 	}
 	elsif ($cmd =~ /^ifndef\s+(\S+)$/) {
 	    my $def = $self->{netlist}->defvalue_nowarn($1);
-	    push @{$self->{_ifdef_stack}}, $self->{_ifdef_off};
-	    $self->{_ifdef_off} = $self->{_ifdef_off} || defined $def;
+	    my $enable = ! defined $def;
+	    push @{$self->{_ifdef_stack}}, $enable;
+	    $self->{_ifdef_off}++ if !$enable;
 	}
 	elsif ($cmd =~ /^else$/) {
 	    if ($#{$self->{_ifdef_stack}}<0) {
 		$self->error("'#sp else' outside of any '#sp ifdef");
 	    } else {
-		$self->{_ifdef_off} = !$self->{_ifdef_off};
+		my $lastEnable = pop @{$self->{_ifdef_stack}};
+		$self->{_ifdef_off}-- if !$lastEnable;
+		#
+		my $enable = !$lastEnable;
+		push @{$self->{_ifdef_stack}}, $enable;
+		$self->{_ifdef_off}++ if !$enable;
 	    }
 	}
 	elsif ($cmd =~ /^endif$/) {
 	    if ($#{$self->{_ifdef_stack}}<0) {
 		$self->error("'#sp endif' outside of any '#sp ifdef");
 	    } else {
-		$self->{_ifdef_off} = pop @{$self->{_ifdef_stack}};
+		my $enable = pop @{$self->{_ifdef_stack}};
+		$self->{_ifdef_off}-- if !$enable;
 	    }
 	}
 	# Those that only apply when processing
@@ -745,7 +753,7 @@ sub error {
     my $fileline = $self->filename.":".$self->lineno;
     $fileref->error ($self, "$text\n"
 		     ."%Error: ".(" "x length($fileline))
-		     .": At token '$token'\n");
+		     .": At token '".($token||"")."'\n");
 }
 
 package SystemC::Netlist::File;
@@ -1269,7 +1277,7 @@ Prints debugging information for this file.
 
 The latest version is available from CPAN and from L<http://www.veripool.com/>.
 
-Copyright 2001-2005 by Wilson Snyder.  This package is free software; you
+Copyright 2001-2006 by Wilson Snyder.  This package is free software; you
 can redistribute it and/or modify it under the terms of either the GNU
 Lesser General Public License or the Perl Artistic License.
 

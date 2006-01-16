@@ -1,9 +1,9 @@
-// $Id: SpTraceVcdC.h 4305 2005-08-02 13:21:57Z wsnyder $ -*- SystemC -*-
+// $Id: SpTraceVcdC.h 11992 2006-01-16 18:59:58Z wsnyder $ -*- SystemC -*-
 //=============================================================================
 //
 // THIS MODULE IS PUBLICLY LICENSED
 //
-// Copyright 2001-2005 by Wilson Snyder.  This program is free software;
+// Copyright 2001-2006 by Wilson Snyder.  This program is free software;
 // you can redistribute it and/or modify it under the terms of either the GNU
 // General Public License or the Perl Artistic License.
 //
@@ -34,6 +34,12 @@
 #include <map>
 using namespace std;
 
+// Note cannot include systemperl.h, or we won't work with non-SystemC compiles
+#include "SpCommon.h"
+
+class SpTraceVcd;
+class SpTraceCallInfo;
+
 //=============================================================================
 // SpTraceVcdSig
 /// Internal data on one signal being traced.
@@ -50,7 +56,6 @@ protected:
 //=============================================================================
 
 typedef void (*SpTraceCallback_t)(SpTraceVcd* vcdp, void* userthis, uint32_t code);
-class SpTraceCallInfo;
 
 //=============================================================================
 // SpTraceVcd
@@ -72,8 +77,8 @@ private:
     char*		m_wrBufp;	///< Output buffer
     char*		m_writep;	///< Write pointer into output buffer
 
+    uint32_t*			m_sigs_oldvalp;	///< Pointer to old signal values
     vector<SpTraceVcdSig>	m_sigs;		///< Pointer to signal information
-    vector<uint32_t>		m_sigs_oldval;	///< Pointer to old signal values
     vector<SpTraceCallInfo*>	m_callbacks;	///< Routines to perform dumping
     typedef map<string,string>	NameMap;
     NameMap*			m_namemapp;	///< List of names for the header
@@ -91,7 +96,7 @@ private:
     void openNext();
     void printIndent (int levelchange);
     void printStr (const char* str);
-    void printInt (int n);
+    void printQuad (uint64_t n);
     void declare (uint32_t code, const char* name, int arraynum, int msb, int lsb);
 
     void dumpHeader();
@@ -119,6 +124,7 @@ public:
 	m_writep = m_wrBufp;
 	m_namemapp = NULL;
 	m_timeRes = m_timeUnit = "ns";
+	m_sigs_oldvalp = NULL;
     }
     ~SpTraceVcd();
 
@@ -157,12 +163,12 @@ public:
     /// Inside dumping routines, dump one signal
     inline void fullBit (uint32_t code, const uint32_t newval) {
 	// Note the &1, so we don't require clean input -- makes more common no change case faster
-	m_sigs_oldval[code] = newval;
+	m_sigs_oldvalp[code] = newval;
 	*m_writep++=('0'+(newval&1)); printCode(code); *m_writep++='\n';
 	bufferCheck();
     }
     inline void fullBus (uint32_t code, const uint32_t newval, int bits) {
-	m_sigs_oldval[code] = newval;
+	m_sigs_oldvalp[code] = newval;
 	*m_writep++='b';
 	for (int bit=bits-1; bit>=0; --bit) {
 	    *m_writep++=((newval&(1L<<bit))?'1':'0');
@@ -171,7 +177,7 @@ public:
 	bufferCheck();
     }
     inline void fullQuad (uint32_t code, const uint64_t newval, int bits) {
-	(*((uint64_t*)&m_sigs_oldval[code])) = newval;
+	(*((uint64_t*)&m_sigs_oldvalp[code])) = newval;
 	*m_writep++='b';
 	for (int bit=bits-1; bit>=0; --bit) {
 	    *m_writep++=((newval&(1ULL<<bit))?'1':'0');
@@ -181,7 +187,7 @@ public:
     }
     inline void fullArray (uint32_t code, const uint32_t* newval, int bits) {
 	for (int word=0; word<(((bits-1)/32)+1); ++word) {
-	    m_sigs_oldval[code+word] = newval[word];
+	    m_sigs_oldvalp[code+word] = newval[word];
 	}
 	*m_writep++='b';
 	for (int bit=bits-1; bit>=0; --bit) {
@@ -193,17 +199,33 @@ public:
 
     /// Inside dumping routines, dump one signal if it has changed
     inline void chgBit (uint32_t code, const uint32_t newval) {
-	if (m_sigs_oldval[code] != newval) { fullBit (code, newval); }
+	uint32_t diff = m_sigs_oldvalp[code] ^ newval;
+	if (SP_UNLIKELY(diff)) {
+	    // Verilator 3.510 and newer provide clean input, so the below is only for back compatibility
+	    if (SP_UNLIKELY(diff & 1)) {   // Change after clean?
+		fullBit (code, newval);
+	    }
+	}
     }
     inline void chgBus (uint32_t code, const uint32_t newval, int bits) {
-	if (m_sigs_oldval[code] != newval) { fullBus (code, newval, bits); }
+	uint32_t diff = m_sigs_oldvalp[code] ^ newval;
+	if (SP_UNLIKELY(diff)) {
+	    if (SP_UNLIKELY(bits==32 || (diff & ((1U<<bits)-1) ))) {
+		fullBus (code, newval, bits);
+	    }
+	}
     }
     inline void chgQuad (uint32_t code, const uint64_t newval, int bits) {
-	if ((*((uint64_t*)&m_sigs_oldval[code])) != newval) { fullQuad(code, newval, bits); }
+	uint64_t diff = (*((uint64_t*)&m_sigs_oldvalp[code])) ^ newval;
+	if (SP_UNLIKELY(diff)) {
+	    if (SP_UNLIKELY(bits==64 || (diff & ((1ULL<<bits)-1) ))) {
+		fullQuad(code, newval, bits);
+	    }
+	}
     }
     inline void chgArray (uint32_t code, const uint32_t* newval, int bits) {
 	for (int word=0; word<(((bits-1)/32)+1); ++word) {
-	    if (m_sigs_oldval[code+word] != newval[word]) {
+	    if (SP_UNLIKELY(m_sigs_oldvalp[code+word] ^ newval[word])) {
 		fullArray (code,newval,bits);
 		return;
 	    }

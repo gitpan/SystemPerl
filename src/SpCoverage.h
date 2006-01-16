@@ -1,9 +1,9 @@
-// $Id: SpCoverage.h 6445 2005-09-20 15:19:22Z wsnyder $ -*- SystemC -*-
+// $Id: SpCoverage.h 11992 2006-01-16 18:59:58Z wsnyder $ -*- SystemC -*-
 //=============================================================================
 //
 // THIS MODULE IS PUBLICLY LICENSED
 //
-// Copyright 2001-2005 by Wilson Snyder.  This program is free software;
+// Copyright 2001-2006 by Wilson Snyder.  This program is free software;
 // you can redistribute it and/or modify it under the terms of either the GNU
 // General Public License or the Perl Artistic License.
 //

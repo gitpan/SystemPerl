@@ -1,7 +1,7 @@
-// $Id: ExModNull.sp 6572 2005-09-22 20:47:58Z wsnyder $
+// $Id: ExModNull.sp 11992 2006-01-16 18:59:58Z wsnyder $
 // DESCRIPTION: SystemPerl: Example "null" module
 //
-// Copyright 2001-2005 by Wilson Snyder.  This program is free software;
+// Copyright 2001-2006 by Wilson Snyder.  This program is free software;
 // you can redistribute it and/or modify it under the terms of either the GNU
 // General Public License or the Perl Artistic License.
 

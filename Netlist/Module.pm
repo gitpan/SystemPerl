@@ -1,9 +1,9 @@
 # SystemC - SystemC Perl Interface
-# $Id: Module.pm 8326 2005-11-02 19:13:56Z wsnyder $
+# $Id: Module.pm 11992 2006-01-16 18:59:58Z wsnyder $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
-# Copyright 2001-2005 by Wilson Snyder.  This program is free software;
+# Copyright 2001-2006 by Wilson Snyder.  This program is free software;
 # you can redistribute it and/or modify it under the terms of either the GNU
 # General Public License or the Perl Artistic License.
 # 
@@ -28,7 +28,7 @@ use SystemC::Netlist::AutoCover;
 use SystemC::Netlist::AutoTrace;
 
 @ISA = qw(Verilog::Netlist::Module);
-$VERSION = '1.240';
+$VERSION = '1.250';
 use strict;
 
 # Some attributes we use:
@@ -326,7 +326,7 @@ pin.
 
 The latest version is available from CPAN and from L<http://www.veripool.com/>.
 
-Copyright 2001-2005 by Wilson Snyder.  This package is free software; you
+Copyright 2001-2006 by Wilson Snyder.  This package is free software; you
 can redistribute it and/or modify it under the terms of either the GNU
 Lesser General Public License or the Perl Artistic License.
 

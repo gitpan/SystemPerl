@@ -1,9 +1,9 @@
-// $Id: systemperl.h 7641 2005-10-19 17:33:49Z wsnyder $ -*- SystemC -*-
+// $Id: systemperl.h 11992 2006-01-16 18:59:58Z wsnyder $ -*- SystemC -*-
 //********************************************************************
 //
 // THIS MODULE IS PUBLICLY LICENSED
 //
-// Copyright 2001-2005 by Wilson Snyder.  This program is free software;
+// Copyright 2001-2006 by Wilson Snyder.  This program is free software;
 // you can redistribute it and/or modify it under the terms of either the GNU
 // General Public License or the Perl Artistic License.
 //
@@ -102,7 +102,7 @@ using namespace std;
 # define VL_PORTW(name, msb,lsb, words)	uint32_t name[words]	// Depreciated
 # define VL_PIN_NOP(instname,pin,port)
 # define VL_CELL(instname,type)
-# define VL_MODULE(modname)		class modname : public VerilatedModule
+# define VL_MODULE(modname)		struct modname : public VerilatedModule
 # define VL_CTOR(modname)		modname(const char* __VCname="")
 # define VL_CTOR_IMP(modname)		modname::modname(const char* __VCname) : VerilatedModule(__VCname)
 #endif
