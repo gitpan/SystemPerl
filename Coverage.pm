@@ -1,4 +1,4 @@
-# $Id: Coverage.pm 11992 2006-01-16 18:59:58Z wsnyder $
+# $Id: Coverage.pm 15713 2006-03-13 17:42:48Z wsnyder $
 ######################################################################
 #
 # Copyright 2001-2006 by Wilson Snyder.  This program is free software;
@@ -29,10 +29,9 @@ use vars qw($_Default_Self);
 ######################################################################
 #### Configuration Section
 
-$VERSION = '1.250';
+$VERSION = '1.260';
 
 use constant DEFAULT_FILENAME => 'logs/coverage.pl';
-use constant COV_RESULTS_DIR => '/sicortex/httpd/root/coverage_results';
 
 ######################################################################
 ######################################################################
@@ -67,10 +66,24 @@ sub read {
     print "SystemC::Coverage::read $params{filename}\n" if $Debug;
     $params{filename} or croak "%Error: Undefined filename,";
 
-    $! = $@ = undef;
-    my $rtn = do $params{filename};
-    (!$@) or die "%Error: $params{filename}: $@,";
-    (!$!) or die "%Error: $params{filename}: $!,";
+    my $fh = IO::File->new($params{filename}) or croak "%Error: $! $params{filename},";
+    my $fmt = $fh->getline;
+    if ($fmt =~ /Mode:perl/) {
+	$! = $@ = undef;
+	my $rtn = do $params{filename};
+	(!$@) or die "%Error: $params{filename}: $@,";
+	(!$!) or die "%Error: $params{filename}: $!,";
+    } elsif ($fmt =~ /SystemC::Coverage-3\b/) {
+	my $cref = $self->{coverage};
+	while (defined(my $line = $fh->getline)) {
+	    if ($line =~ /^C\s+'([^']*)'\s+(\d+)$/) { #')
+		$cref->{$1} += $2;
+	    }
+	}
+    } else {
+	croak "%Error: $params{filename}: Unknown Coverage format,";
+    }
+    $fh->close;
 }
 
 ######################################################################
@@ -79,6 +92,7 @@ sub read {
 sub write {
     my $self = shift;
     my %params = ( filename => $self->{filename},
+		   binary => 1,	# Which format type
 		   @_
 		   );
     # Write out the coverage array
@@ -89,47 +103,30 @@ sub write {
     unlink $tempfilename;
     my $fh = IO::File->new($tempfilename,"w") or croak "%Error: $! $tempfilename,";
 
-    print $fh "# -*- Mode:perl -*-\n";
-    print $fh "package SystemC::Coverage;\n";
-    foreach my $key (sort keys %{$self->{coverage}}) {
-	my $item = SystemC::Coverage::Item->new($key, $self->{coverage}{$key});
-	printf $fh $item->write_string."\n";
+    if ($params{binary}) {
+	print $fh "# SystemC::Coverage-3\n";
+	# Format choices and % speedup
+	#	100%	Below perl code, ~0.368851
+	#	551%	Require raw $c->{#}, then rehash into {coverage}
+	#	629%	Require Dumper hash, then rehash into {coverage}
+	#	660%	Storable, then rehash into {coverage}
+	#	696%	Read file
+	foreach my $key (sort keys %{$self->{coverage}}) {
+	    my $value = $self->{coverage}{$key};
+	    printf $fh "C '%s' %d\n", $key, $value;
+	}
+    } else {
+	print $fh "# SystemC::Coverage-2 -*- Mode:perl -*-\n";
+	print $fh "package SystemC::Coverage;\n";
+	foreach my $key (sort keys %{$self->{coverage}}) {
+	    my $item = SystemC::Coverage::Item->new($key, $self->{coverage}{$key});
+	    printf $fh $item->write_string."\n";
+	}
+	printf $fh "\n1;\n";	# So eval will succeed
     }
-
-    printf $fh "\n1;\n";	# So eval will succeed
     $fh->close();
 
     rename $tempfilename, $params{filename};
-}
-
-sub copy_to_archive {
-    my $self = shift;
-
-    # if the --coveragearchive argument was passed to vtest, generate a 
-    # coverage report and copy it to a location accessible by the wiki
-
-    $self->{filename} or croak "%Error: Undefined filename,";
-
-    my $cov_report_cmd = "cov_report";
-    system $cov_report_cmd;
-
-    my ($sec, $min, $hour, $day, $month, $year) = (localtime)[0,1,2,3,4,5];
-    $year += 1900;
-    $month += 1;
-    my $timestamp = sprintf("%.4d_%.2d_%.2d_%.2d_%.2d_%.2d", 
-			    $year,$month,$day,$hour,$min,$sec);
-
-    my $logs_dir = 'logs';
-    my $cov_dir = 'logs/coverage';
-    my $new_cov_dir = COV_RESULTS_DIR . "/$timestamp";
-    my $cov_file = $self->{filename};
-
-    if (-e $cov_file) {
-	rename $cov_file, $cov_dir . '/' . "coverage.pl";
-    }
-    if (-e $cov_dir) {
-	system "cp -r $cov_dir $new_cov_dir";
-    }
 }
 
 ######################################################################

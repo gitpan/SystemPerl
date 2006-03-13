@@ -1,5 +1,5 @@
 %{
-/* $Id: scgrammer.y 11992 2006-01-16 18:59:58Z wsnyder $
+/* $Id: scgrammer.y 15117 2006-03-02 14:31:01Z wsnyder $
  ******************************************************************************
  * DESCRIPTION: SystemC bison parser
  *
@@ -49,19 +49,32 @@ char *scstrjoin2si (char *a, const char *b) {
 }
 
 /* Join three strings, middle one constant, return result */
-char *scstrjoin3sis (char *a, const char *b, char *c) {
+char *scstrjoin3iii (const char *a, const char *b, const char *c) {
     int len = strlen(a)+strlen(b)+strlen(c);
     char *cp=malloc(len+5);
     strcpy (cp,a); strcat(cp,b); strcat(cp,c);
+    /*SCFree (a);*/ /*SCFree (b);*/ /*SCFree (c);*/
+    return (cp);
+}
+
+/* Join three strings, middle one constant, return result */
+char *scstrjoin3sis (char *a, const char *b, char *c) {
+    char *cp=scstrjoin3iii(a,b,c);
     SCFree (a); /*SCFree (b);*/ SCFree (c);
     return (cp);
 }
 
-char *scstrjoin4sisi (char *a, const char *b, char *c, const char* d) {
+char *scstrjoin4iiii (const char *a, const char *b, const char *c, const char *d) {
     int len = strlen(a)+strlen(b)+strlen(c)+strlen(d);
     char *cp=malloc(len+5);
     strcpy (cp,a); strcat(cp,b); strcat(cp,c); strcat(cp,d);
-    SCFree (a); /*SCFree (b);*/ SCFree (c); /*ScFree(d)*/
+    /*SCFree (a);*/ /*SCFree (b);*/ /*SCFree (c);*/ /*SCFree (d);*/
+    return (cp);
+}
+
+char *scstrjoin4sisi (char *a, const char *b, char *c, const char* d) {
+    char *cp=scstrjoin4iiii(a,b,c,d);
+    SCFree (a); /*SCFree (b);*/ SCFree (c); /*ScFree(d);*/
     return (cp);
 }
 
@@ -147,6 +160,10 @@ int scgrammerlex() {
 %type<string>	declType
 %type<string>	declType1
 %type<string>	declTypeBase
+%type<string>	enumVal
+%type<string>	enumAssign
+%type<string>	enumExpr
+%type<string>	enumFunParmList
 
 %%
 //************************************
@@ -387,19 +404,19 @@ enumValList:	enumVal
  		| enumValList ',' enumVal
 		;
 enumVal:	SYMBOL	enumAssign  {
-			if (scParserLex.enumname) scparser_call(2,"enum_value",scParserLex.enumname,$1);
-			SCFree ($1); }
+			if (scParserLex.enumname) scparser_call(3,"enum_value",scParserLex.enumname,$1,$2);
+			SCFree($1); SCFree($2); }
 		;
-enumAssign:	'=' enumExpr	{}
- 		|
+enumAssign:	'=' enumExpr	{ $$ = $2; }
+		|		{ $$ = strdup(""); }
 		;
-enumExpr:	NUMBER		{ SCFree ($1); }
-		| SYMBOL	{ SCFree ($1); }
-		| SYMBOL '(' ')'			{ SCFree ($1); }
-		| SYMBOL '(' enumFunParmList ')'	{ SCFree ($1); }
+enumExpr:	NUMBER		{ $$ = $1; }
+		| SYMBOL	{ $$ = $1; }
+		| SYMBOL '(' ')'			{ $$ = scstrjoin2si($1,"()"); }
+		| SYMBOL '(' enumFunParmList ')'	{ $$ = scstrjoin4sisi($1,"(",$3,")"); }
 		;
 enumFunParmList: enumExpr
-		| enumFunParmList ',' enumExpr
+		| enumFunParmList ',' enumExpr		{ $$ = scstrjoin3sis($1,",",$3); }
 		;
 
 //************************************

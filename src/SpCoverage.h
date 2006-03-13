@@ -1,4 +1,4 @@
-// $Id: SpCoverage.h 11992 2006-01-16 18:59:58Z wsnyder $ -*- SystemC -*-
+// $Id: SpCoverage.h 12136 2006-01-18 14:22:38Z wsnyder $ -*- SystemC -*-
 //=============================================================================
 //
 // THIS MODULE IS PUBLICLY LICENSED
@@ -39,13 +39,13 @@
 /// Some typical keys:
 ///	filename	File the recording occurs in.  Defaults to __FILE__
 ///	lineno		Line number the recording occurs in.  Defaults to __LINE__
-///	column		Column number (or occurance# for dup file/lines).  Defaults to undef.
+///	column		Column number (or occurrence# for dup file/lines).  Defaults to undef.
 ///	hier		Hierarchical name.  Defaults to name()
 ///	type		Type of coverage.  Defaults to "user"
 ///			Other types are 'block', 'fsm', 'toggle'.
 ///	comment		Description of the coverage event.  Should be set by the user.
 ///			Comments for type==block: 'if', 'else', 'elsif', 'case'
-///	threash		Threashold to consider fully covered.
+///	thresh		Threshold to consider fully covered.
 ///			If unspecified, downstream tools will determine it.
 ///
 /// Examples:
@@ -63,7 +63,7 @@
 ///  SystemPerl coverage item base class
 ////
 /// A single coverage statistic; template base class.
-/// Users may derrived from this, but it is generally used only by the SpCoverItem class.
+/// Users may derived from this, but it is generally used only by the SpCoverItem class.
 
 class SpCoverItem {
 public:

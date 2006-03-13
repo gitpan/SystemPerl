@@ -1,4 +1,4 @@
-#$Id: SystemPerl.pod 11992 2006-01-16 18:59:58Z wsnyder $
+#$Id: SystemPerl.pod 15117 2006-03-02 14:31:01Z wsnyder $
 ######################################################################
 #
 # Copyright 2001-2006 by Wilson Snyder.  This program is free software;
@@ -214,8 +214,9 @@ Becomes:
 =item /*AUTOENUM_I<CLASS|GLOBAL>(I<enum>)*/
 
 AUTOENUM is used to take an existing enumeration and make it into a class
-with functions to return the ASCII name of the enumeration.  This makes
-it easy to print the value of the enumeration in text form.
+with functions to return the ASCII name of the enumeration, and to create
+an iterator to loop over all enum values.  This makes it easy to print the
+value of the enumeration in text form.
 
 For example:
 
@@ -253,6 +254,7 @@ Becomes:
 	   default: return "%E:BadVal:MyENumClass";
 	   };
 	};
+	class iterator; ...
 	// End of SystemPerl automatic enumeration
     };
     /*AUTOENUM_GLOBAL(MyENumClass.en)*/

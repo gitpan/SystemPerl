@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Id: AutoCover.pm 11992 2006-01-16 18:59:58Z wsnyder $
+# $Id: AutoCover.pm 15713 2006-03-13 17:42:48Z wsnyder $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -21,7 +21,7 @@ use Verilog::Netlist;
 use Verilog::Netlist::Subclass;
 @ISA = qw(SystemC::Netlist::AutoCover::Struct
 	Verilog::Netlist::Subclass);
-$VERSION = '1.250';
+$VERSION = '1.260';
 use strict;
 
 structs('new',
@@ -31,6 +31,7 @@ structs('new',
 	   filename 	=> '$', #'	# Filename this came from
 	   lineno	=> '$', #'	# Linenumber this came from
 	   comment	=> '$', #'	# Info on the coverage item
+	   enable	=> '$', #'	# Enabling expression
 	   #
 	   module	=> '$', #'	# Module containing statement
 	   ]);
@@ -68,11 +69,20 @@ sub call_text {
     my $coverref = shift;
     my $prefix = shift;
     # We simply replace the existing SP_AUTO instead of adding the comments.
-    return sprintf ("%sSP_AUTO_COVERinc(%d,\"%s\",\"%s\",%d,\"%s\");"
-		    ,$prefix
+    my $out = $prefix;
+    $out .= 'if ('.$coverref->enable.') { ' if ($coverref->enable ne "1");
+    $out .= sprintf("SP_AUTO_COVERinc(%d,\"%s\",\"%s\",%d,\"%s\");"
 		    ,$coverref->name, $coverref->what
 		    ,$coverref->filename, $coverref->lineno,
 		    ,$coverref->comment);
+    if ($coverref->enable ne "1") {
+	$out .= '} else { ';
+	$out .= sprintf("SP_ERROR_LN(\"%s\",%d,\"Impossible SP_AUTO_COVER_IF case did occur: %s\");"
+			,$coverref->filename, $coverref->lineno,
+			,$coverref->comment);
+	$out .= '}';
+    }
+    return $out;
 }
 
 sub _write_autocover_decl {
@@ -106,15 +116,19 @@ sub _write_autocover_ctor {
 
     my $mod = $modref->name;
     $fileref->print("    // Auto Coverage\n");
-    foreach my $cref (sort {$a->name cmp $b->name
+    foreach my $coverref (sort {$a->name cmp $b->name
 			    || $a->lineno <=> $b->lineno}
 		      (values %{$modref->_autocovers})) {
-	$fileref->printf('    SP_COVER_INSERT(&_sp_coverage[%d]', $cref->name);
-	$fileref->printf(',"filename","%s"', $cref->filename);
-	$fileref->printf(',"lineno","%s"', $cref->lineno);
+	$fileref->printf('    ');
+	$fileref->printf('if ('.$coverref->enable.') { ') if ($coverref->enable ne "1");
+	$fileref->printf('SP_COVER_INSERT(&_sp_coverage[%d]', $coverref->name);
+	$fileref->printf(',"filename","%s"', $coverref->filename);
+	$fileref->printf(',"lineno","%s"', $coverref->lineno);
 	$fileref->printf(',"hier",name()');
-	$fileref->printf(',"comment","%s"', $cref->comment);
-	$fileref->printf(");\n");
+	$fileref->printf(',"comment","%s"', $coverref->comment);
+	$fileref->printf(");");
+	$fileref->printf(' }') if ($coverref->enable ne "1");
+	$fileref->printf("\n");
     }
     $fileref->print("\n");
 }

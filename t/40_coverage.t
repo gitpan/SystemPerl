@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# $Id: 40_coverage.t 11992 2006-01-16 18:59:58Z wsnyder $
+# $Id: 40_coverage.t 15337 2006-03-06 22:38:22Z wsnyder $
 # DESCRIPTION: Perl ExtUtils: Type 'make test' to test this package
 #
 # Copyright 2001-2006 by Wilson Snyder.  This program is free software;
@@ -9,7 +9,7 @@
 use strict;
 use Test;
 
-BEGIN { plan tests => 9 }
+BEGIN { plan tests => 12 }
 BEGIN { require "t/test_utils.pl"; }
 
 use SystemC::Coverage;
@@ -33,16 +33,33 @@ foreach my $item ($cov->items_sorted) {
 }
 ok($icount==4);
 
+print "Non-binary:\n";
+
 mkdir 'test_dir/logs', 0777;
-$cov->write(filename=>'test_dir/logs/coverage.pl');
+$cov->write(filename=>'test_dir/logs/coverage.pl', binary=>0);
 ok(1);
 
 my $cov2 = new SystemC::Coverage;
 $cov2->read(filename=>'test_dir/logs/coverage.pl');
 ok ($cov2);
 
-$cov2->write(filename=>'test_dir/logs/coverage2.pl');
+$cov2->write(filename=>'test_dir/logs/coverage2.pl', binary=>0);
 ok (files_identical('test_dir/logs/coverage.pl', 'test_dir/logs/coverage2.pl'));
+
+print "Binary:\n";
+
+$cov->write(filename=>'test_dir/logs/coveragebin.dat', binary=>1);
+ok(1);
+
+my $cov3 = new SystemC::Coverage;
+$cov3->read(filename=>'test_dir/logs/coveragebin.dat');
+ok ($cov3);
+
+$cov3->write(filename=>'test_dir/logs/coveragebin2.dat', binary=>1);
+ok (files_identical('test_dir/logs/coveragebin.dat', 'test_dir/logs/coveragebin2.dat'));
+
+##############################
+print "Coverage program:\n";
 
 run_system("cd test_dir ; ${PERL} ../vcoverage -y ../");
 ok (-r "test_dir/logs/coverage_source/40_coverage.t");

@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Id: Module.pm 11992 2006-01-16 18:59:58Z wsnyder $
+# $Id: Module.pm 15713 2006-03-13 17:42:48Z wsnyder $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -28,7 +28,7 @@ use SystemC::Netlist::AutoCover;
 use SystemC::Netlist::AutoTrace;
 
 @ISA = qw(Verilog::Netlist::Module);
-$VERSION = '1.250';
+$VERSION = '1.260';
 use strict;
 
 # Some attributes we use:
@@ -117,6 +117,8 @@ sub autos1 {
 	if (!$fromref) {
 	    $self->warn ("AUTOINOUT_MODULE not found: $frommodname\n");
 	} else {
+	    # Make sure we did autos on the referenced module
+	    $fromref->autos1();
 	    # Copy ports
 	    foreach my $portref ($fromref->ports_sorted) {
 		my $newport = $self->new_port
@@ -132,6 +134,8 @@ sub autos1 {
 		     sp_autocreated=>1,
 		     );
 	    }
+	    # Mark it as finished
+	    $self->_autoinoutmod(undef);
 	}
     }
 }

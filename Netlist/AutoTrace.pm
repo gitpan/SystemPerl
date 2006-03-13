@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Id: AutoTrace.pm 11992 2006-01-16 18:59:58Z wsnyder $
+# $Id: AutoTrace.pm 15713 2006-03-13 17:42:48Z wsnyder $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -18,7 +18,7 @@ package SystemC::Netlist::AutoTrace;
 use File::Basename;
 
 use SystemC::Netlist::Module;
-$VERSION = '1.250';
+$VERSION = '1.260';
 use strict;
 
 use vars qw ($Debug_Check_Code);
@@ -44,7 +44,7 @@ sub _write_autotrace {
     # State common to all routines
     my $trinfo = {
 	ident_code => 0,	# Next code to assign
-	tracesref => {},	# Top of hiearchy of traces for each cell
+	tracesref => {},	# Top of hierarchy of traces for each cell
 	dupsref => {},		# Hash of {signal} = orig signal
 	dupscoderef => {},	# Hash of {signal} = code#
 	recurse => ($self->_autotrace('recurse')),
@@ -56,7 +56,7 @@ sub _write_autotrace {
 	_tracer_dups_show($self,$trinfo) if $Debug_Check_Code;
     }
 
-    # Flatten out all hiearchy under this into a array of signal information
+    # Flatten out all hierarchy under this into a array of signal information
     _tracer_setup($self,
 		  $trinfo,
 		  $trinfo->{tracesref},
@@ -84,7 +84,7 @@ sub _tracer_dups_recurse {
     my $modref = shift or return;   # Submodule may not exist if library cell
     my $trinfo = shift;
     my $modhier = shift || "";	# ".cellname" appended each recursion
-    # Goal: For each signal, try to find the lowest level in the hiearchy that
+    # Goal: For each signal, try to find the lowest level in the hierarchy that
     # sources that signal.  (There are the fewest changedetects at lower levels.)
 
     my $dupsref = $trinfo->{dupsref};	# global entry to write to
@@ -102,7 +102,7 @@ sub _tracer_dups_recurse {
 		&& !_net_ignore($pinref->port->net)
 		&& !_net_ignore($pinref->net)
 		) {
-		# Thus, it's the same signal passed across the hiearchy.
+		# Thus, it's the same signal passed across the hierarchy.
 		#print "PIN ",$cellref->name," XX ", $pinref->name,"\n";
 		my $nethiername = $modhier."->".$pinref->net->name;
 		my $subnethiername = $submodhier."->".$pinref->port->net->name;
@@ -286,10 +286,10 @@ sub _tracer_setup_net {
     my $identical = $dupsref->{$nethiername} && ${$dupsref->{$nethiername}};
     my $identical_decl; my $identical_use;
     if ($identical && !$ignore) {
-	# Thus, it's the same signal passed across the hiearchy.
+	# Thus, it's the same signal passed across the hierarchy.
 	if (!defined $dupscoderef->{$identical}) {
 	    # First module that references it gets to choose the code for it
-	    # This isn't necessarially the same cell that generates the *value*
+	    # This isn't necessarily the same cell that generates the *value*
 	    $dupscoderef->{$identical}{code} = ++$trinfo->{ident_code};
 	}
 	if ($identical ne $nethiername) { 	# Driven from somewhere else

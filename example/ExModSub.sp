@@ -1,4 +1,4 @@
-// $Id: ExModSub.sp 11992 2006-01-16 18:59:58Z wsnyder $
+// $Id: ExModSub.sp 13576 2006-02-08 17:52:22Z wsnyder $
 // DESCRIPTION: SystemPerl: Example source module
 //
 // Copyright 2001-2006 by Wilson Snyder.  This program is free software;
@@ -81,6 +81,9 @@ SP_CTOR_IMP(__MODULE__) /*AUTOINIT*/ {
 
     // Other coverage scheme
     SP_AUTO_COVER_CMT("Commentary");
+    if (0) SP_AUTO_COVER_CMT("Never_Occurs");
+    if (0) SP_AUTO_COVER_CMT_IF("Not_Possible",0);
+    SP_AUTO_COVER_CMT_IF("Always_Occurs",1||1);  // If was just '1' SP would short-circuit the eval
     for (int i=0; i<3; i++) {
 	static uint32_t coverValue = 100;
 	SP_COVER_INSERT(&coverValue, "comment","Hello World",  "instance",i);

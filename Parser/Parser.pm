@@ -1,4 +1,4 @@
-#$Id: Parser.pm 11992 2006-01-16 18:59:58Z wsnyder $
+#$Id: Parser.pm 15713 2006-03-13 17:42:48Z wsnyder $
 ######################################################################
 #
 # Copyright 2001-2006 by Wilson Snyder.  This program is free software;
@@ -21,7 +21,7 @@ require DynaLoader;
 use strict;
 use vars qw($VERSION);
 
-$VERSION = '1.250';
+$VERSION = '1.260';
 
 ######################################################################
 #### Configuration Section
@@ -188,10 +188,10 @@ of cell().)
 
 Ctor is called when CP_CTOR is recognized.  Parameter is the modulename.
 
-=item $self->enum_value  (I<enum_type>, I<enum_name>)
+=item $self->enum_value  (I<enum_type>, I<enum_name>, I<enum_value>)
 
 Enum value is called with the enum type and name for a enumeration
-value.
+value.  If in the file, the enumeration value (=n) is given.
 
 =item $self->error (I<error_text>, I<token>)
 

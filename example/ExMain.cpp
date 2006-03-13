@@ -1,4 +1,4 @@
-// $Id: ExMain.cpp 11992 2006-01-16 18:59:58Z wsnyder $
+// $Id: ExMain.cpp 15117 2006-03-02 14:31:01Z wsnyder $
 // DESCRIPTION: SystemPerl: Example main()
 //
 // Copyright 2001-2006 by Wilson Snyder.  This program is free software;
@@ -40,7 +40,13 @@ int sc_main (int argc, char *argv[]) {
 
     // Example enumeration usage
     MyENumClass enval = MyENumClass::ONE;
-    cout << "enval = "<<enval<<endl;	// Prints "ONE"
+    cout << "Assigned to enumeration = "<<enval<<endl;	// Prints "ONE"
+    cout << "Iterating an enumeration =";
+    for (MyENumSimple::iterator it=MyENumSimple::begin();
+	 it!=MyENumSimple::end(); ++it) {
+	cout << " " << (*it).ascii();
+    }
+    cout << endl;
 
 #ifndef NC_SYSTEMC
     // SystemC traces are flawed, you can't even trace ports

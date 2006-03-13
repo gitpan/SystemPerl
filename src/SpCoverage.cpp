@@ -1,4 +1,4 @@
-// $Id: SpCoverage.cpp 11992 2006-01-16 18:59:58Z wsnyder $ -*- SystemC -*-
+// $Id: SpCoverage.cpp 15337 2006-03-06 22:38:22Z wsnyder $ -*- SystemC -*-
 //=============================================================================
 //
 // THIS MODULE IS PUBLICLY LICENSED
@@ -140,6 +140,7 @@ public:
 	    SP_ABORT("%Error: Can't Write "<<filename<<endl);
 	    return;
 	}
+	os << "# SystemC::Coverage-1 -*- Mode:perl -*-\n";
 	os << "use SystemC::Coverage;\n\n";
 
 	// Body
@@ -156,7 +157,7 @@ public:
 		    else if (key == "column")	key = "n";
 		    else if (key == "comment")	key = "o";
 		    else if (key == "type")	key = "t";
-		    else if (key == "threash")	key = "s";
+		    else if (key == "thresh")	key = "s";
 		    else key = "'"+key+"'";
 		    // Print it
 		    os<<key;

@@ -2,6 +2,14 @@ Revision history for Perl extension SystemC::Netlist
 
 The contributors that suggested a given feature are shown in [].
 
+* SystemC 1.260 3/13/2006
+
+**	Added iterators to AUTOENUM structures.  [Nijan Datar]
+
+**	Added SP_AUTO_COVER_CMT_IF for conditional coverage.  [Dale Bertrand]
+
+***	Added faster file format for SystemC::Coverage data.
+
 * SystemC 1.250 1/16/2006
 
 ***	Improved trace-file performance.
@@ -331,7 +339,7 @@ The contributors that suggested a given feature are shown in [].
 
 
 ----------------------------------------------------------------------
-$Id: Changes 11992 2006-01-16 18:59:58Z wsnyder $
+$Id: Changes 15713 2006-03-13 17:42:48Z wsnyder $
 ----------------------------------------------------------------------
 
 This uses outline mode in Emacs.  See C-h m [M-x describe-mode].

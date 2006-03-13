@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-#$Id: vcoverage 11992 2006-01-16 18:59:58Z wsnyder $
+#$Id: vcoverage 12136 2006-01-18 14:22:38Z wsnyder $
 ######################################################################
 #
 # Copyright 2001-2006 by Wilson Snyder.  This program is free software;
@@ -93,7 +93,7 @@ line_report($cov, $opt_out_dir);
 #----------------------------------------------------------------------
 
 sub usage {
-    print '$Id: vcoverage 11992 2006-01-16 18:59:58Z wsnyder $ ', "\n";
+    print '$Id: vcoverage 12136 2006-01-18 14:22:38Z wsnyder $ ', "\n";
     $SIG{__WARN__} = sub{};	#pod2text isn't clean.
     pod2text($0);
     exit (1);
@@ -133,7 +133,7 @@ sub line_calc {
 		filename => $filename,
 		lineno => $lineno,
 		count => $cnt,
-		threash => $item->threash || $Opt_Min_Count,
+		thresh => $item->thresh || $Opt_Min_Count,
 		comment => $item->comment||"",
 		column => $column,
 	    };
@@ -155,7 +155,7 @@ sub line_set_file_needed {
 	my $needed = 0;
 	foreach my $cntref (@{$fileref->{counts}}) {
 	    $tot_cases ++;
-	    if (!$cntref->{ok} && $cntref->{count}<$cntref->{threash}) {
+	    if (!$cntref->{ok} && $cntref->{count}<$cntref->{thresh}) {
 		$needed = 1;
 	    } else {
 		$cntref->{ok} = 1;
@@ -330,7 +330,7 @@ Displays this message and program version and exits.
 =item --min I<count>
 
 Specifies the minimum occurrence count that should be flagged if the
-coverage point does not include a specified threashold.  Defaults to 10.
+coverage point does not include a specified threshold.  Defaults to 10.
 
 =item --o I<output_directory>
 

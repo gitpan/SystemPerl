@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Id: Netlist.pm 11992 2006-01-16 18:59:58Z wsnyder $
+# $Id: Netlist.pm 15713 2006-03-13 17:42:48Z wsnyder $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -27,7 +27,7 @@ use Verilog::Netlist::Subclass;
 use strict;
 use vars qw($Debug $Verbose $VERSION);
 
-$VERSION = '1.250';
+$VERSION = '1.260';
 
 ######################################################################
 #### Error Handling
@@ -92,7 +92,7 @@ sub sc_numeric_version {
     # Return version of SystemC in use
     if (!exists $self->{sc_numeric_version}) {
 	my $scv = $self->sc_version;
-	if (!$scv) { # Undeterminate
+	if (!$scv) { # Indeterminate
 	    $self->{sc_numeric_version} = undef;
 	} elsif ($scv > 20041000) {
 	    $self->{sc_numeric_version} = 2.100;
@@ -227,11 +227,12 @@ sub read_file {
 sub write_cell_library {
     my $self = shift;
     my %params = (filename=>undef,
+		  include_libcells=>0,
 		  @_);
     $self->dependency_out($params{filename});
     my $fh = IO::File->new($params{filename},"w") or die "%Error: $! $params{filename}\n";
     foreach my $modref ($self->modules_sorted) {
-	next if $modref->is_libcell();
+	next if $modref->is_libcell() && !$params{include_libcells};
 	print $fh "MODULE ",$modref->name,"\n";
 	foreach my $cellref ($modref->cells_sorted) {
 	    print $fh "  CELL ",$cellref->name," ",$self->remove_defines($cellref->submodname),"\n";
@@ -251,7 +252,9 @@ sub read_cell_library {
 	$line =~ s/#.*$//;
 	$line =~ s/^[ \t]+//;
 	$line =~ s/[ \t\n\t]+$//;
-	if ($line =~ /^MODULE\s+(\S+)$/) {
+	if ($line =~ /^PROGRAM\s+(\S+)/) {
+	}
+	elsif ($line =~ /^MODULE\s+(\S+)/) {
 	    $modref = $self->find_module($1);
 	    if (!$modref) {
 		$modref = $self->new_module(name=>$1, is_libcell=>1,

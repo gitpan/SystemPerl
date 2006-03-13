@@ -34,7 +34,7 @@ rip this out please
 
     sc_signal<TTEMxb> 	cac_pdm;	// CAC->PDM Return
     SC_CTOR(tte) {
-	// Instantion and Inter-Connect
+	// Instantiation and Inter-Connect
 	int i;
 	SP_CELL (pec, tte_pktcmd_in);
 	SP_PIN (pec, foo, bar);

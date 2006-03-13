@@ -63,7 +63,7 @@ sub patch {
     run_system("cd $root && pwd");
     run_system("cd $root && patch -b -p0 <$pfile");
 
-    IO::File->new($patchedfile,"w")->close();    # Touch, as SystemPerl looks for patch existance
+    IO::File->new($patchedfile,"w")->close();    # Touch, as SystemPerl looks for patch existence
 }
 
 sub wholefile {

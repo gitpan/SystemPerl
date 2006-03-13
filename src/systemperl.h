@@ -1,4 +1,4 @@
-// $Id: systemperl.h 11992 2006-01-16 18:59:58Z wsnyder $ -*- SystemC -*-
+// $Id: systemperl.h 13576 2006-02-08 17:52:22Z wsnyder $ -*- SystemC -*-
 //********************************************************************
 //
 // THIS MODULE IS PUBLICLY LICENSED
@@ -169,9 +169,18 @@ extern "C" {
 #define SP_AUTO_COVER1(type)
 #define SP_AUTO_COVER3(type,file,line)
 #define SP_AUTO_COVER4(type,file,line,cmt)
+/// Coverage, with the comment specified
 #define SP_AUTO_COVER_CMT(cmt)
+/// Coverage, with the comment specified.  Only enable the point if expression
+/// is true; note this must be evaluatable in the constructor also.
+#define SP_AUTO_COVER_CMT_IF(cmt,enablestmt)
 // Below inserted by preprocessor, not for internal use
 #define SP_AUTO_COVERinc(id,type,file,line,cmt) {++(this->_sp_coverage[(id)]);}
+
+#ifndef SP_ERROR_LN
+/// Print error message and exit, redefine if you want something else...
+# define SP_ERROR_LN(file,line,stmsg) { cout<<"%Error:"<<file<<":"<<line<<": "<<stmsg<<endl; abort();}
+#endif
 
 //********************************************************************
 

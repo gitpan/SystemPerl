@@ -1,4 +1,4 @@
-// $Id: ExEnum.sp 11992 2006-01-16 18:59:58Z wsnyder $
+// $Id: ExEnum.sp 15117 2006-03-02 14:31:01Z wsnyder $
 // DESCRIPTION: SystemPerl: Example source module
 //
 // Copyright 2001-2006 by Wilson Snyder.  This program is free software;
@@ -25,6 +25,17 @@ public:
     /*AUTOENUM_CLASS(MyENumClass.en)*/
 };
 /*AUTOENUM_GLOBAL(MyENumClass.en)*/
+
+class MyENumSimple {
+public:
+    enum en {
+	ONE=1,
+	TWO,
+	THREE=3, NINE=9, TWENTYSEVEN=27
+    };
+    /*AUTOENUM_CLASS(MyENumSimple.en)*/
+};
+/*AUTOENUM_GLOBAL(MyENumSimple.en)*/
 
 #sp implementation
 

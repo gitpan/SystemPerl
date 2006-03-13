@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Id: File.pm 11992 2006-01-16 18:59:58Z wsnyder $
+# $Id: File.pm 15713 2006-03-13 17:42:48Z wsnyder $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -23,7 +23,7 @@ use SystemC::Template;
 use Verilog::Netlist::Subclass;
 @ISA = qw(SystemC::Netlist::File::Struct
 	Verilog::Netlist::Subclass);
-$VERSION = '1.250';
+$VERSION = '1.260';
 use strict;
 
 structs('new',
@@ -38,7 +38,7 @@ structs('new',
 	   is_libcell	=> '$',	#'	# True if is a library cell
 	   # For special procedures
 	   _write_var	=> '%',		# For write() function info passing
-	   _enums	=> '$', #'	# For autoenums, hash{class}{en}{def}
+	   _enums	=> '$', #'	# For autoenums, hash{class}{en}{def} = value
 	   _autoenums	=> '%', 	# For autoenums, hash{class} = en
 	   _modules	=> '%',		# For autosubcell_include
 	   _intf_done	=> '$', #'	# For autointf, already inserted it
@@ -310,6 +310,7 @@ sub auto {
 	if (!$modref) {
 	    return $self->error ("AUTOINOUT_MODULE outside of module definition", $line);
 	}
+	!$modref->_autoinoutmod() or return $self->error("Only one AUTOINOUT_MODULE allowed per module");
 	$modref->_autoinoutmod($2);
 	push_text($self, [ 1, $self->filename, $self->lineno,
 			   \&SystemC::Netlist::Module::_write_autoinout,
@@ -322,20 +323,32 @@ sub auto {
 	                 (?: \s*,\s* \"([^\"]+)\" |) # File
 			 (?: \s*,\s*   (\d+)      |) # Line
 	                 (?: \s*,\s* \"([^\"]+)\" |) # Comment
-	   		 \s* \)/x
+	   		 ()			  # Enable
+	   		 \s* \) \s* ;/x
 	   || $line    =~ /^(\s*)SP_AUTO_COVER_CMT # $1 prefix
 	   		 (?:  \d* \s* \( )	  # #(
 	                 ()()()			  # What, File, Line
 	                 (?: \s* \"([^\"]+)\"  )  # Comment
-	   		 \s* \)/x) {
-	my ($prefix,$what,$file,$line,$cmt) = ($1,$2,$3,$4,$5);
+	   		 ()			  # Enable
+	   		 \s* \) \s* ;/x
+	   || $line    =~ /^(\s*)SP_AUTO_COVER_CMT_IF # $1 prefix
+	   		 (?:  \d* \s* \( )	  # #(
+	                 ()()()			  # What, File, Line
+	                 (?: \s* \"([^\"]+)\"  )  # Comment
+	   		 \s* , \s* ([^;]+)	  # Enable (should check for matching parens...)
+	   		 \s* \) \s* ;/x
+	   ) {
+	my ($prefix,$what,$file,$line,$cmt,$enable) = ($1,$2,$3,$4,$5,$6);
 	$what = 'line' if !defined $what;
+	$enable = 1 if (!defined $enable || $enable eq "");
 	if (!$file) {
 	    $file = $self->filename; $line = $self->lineno;
 	}
 	$cmt ||= '';
 	$modref or return $self->error ("SP_AUTO_COVER outside of module definition", $line);
-	my $coverref = $modref->new_cover (filename=>$file, lineno=>$line, what=>$what, comment=>$cmt,);
+	my $coverref = $modref->new_cover (filename=>$file, lineno=>$line,
+					   what=>$what, comment=>$cmt,
+					   enable=>$enable,);
 	# We simply replace the existing SP_AUTO instead of adding the comments.
 	if ($self->{need_text}) {
 	    my $last = pop @Text;
@@ -728,18 +741,27 @@ sub _class_recurse_inherits {
     }
 }
 
-
 sub enum_value {
     my $self = shift;
     my $enum = shift;
     my $def = shift;
+    my $value = shift;
     # We haven't defined a class for enums... Presume others won't use them(?)
     return if $self->{_ifdef_off};
     my $fileref = $self->{fileref};
 
     my $class = $self->{class} || "TOP";
     my $href = $fileref->_enums() || {};
-    $href->{$class}{$enum}{$def} = 1;
+    if (!defined $href->{$class}{$enum}) {
+	$self->{_last_enum_value} = 0;
+    }
+    # If user didn't specify a value, C++ simply increments from the last value
+    if (($value||"") eq "") {
+	$value = $self->{_last_enum_value}+1;
+    }
+    $self->{_last_enum_value} = $value;
+
+    $href->{$class}{$enum}{$def} = $value;
     $fileref->_enums($href);
 }
 
@@ -769,7 +791,9 @@ sub lineno { return 0; }
 #### Functions
 
 sub read {
-    my %params = (@_);	# filename=>
+    my %params = (#filename => undef,
+		  append_filenames=>[],	# Extra files to read and add on to current parse
+		  @_);
     # If error_self==0, then it's non fatal if we can't open the file.
 
     my $filename = $params{filename} or croak "%Error: ".__PACKAGE__."::read_file (filename=>) parameter required, stopped";
@@ -803,6 +827,9 @@ sub read {
 	  need_text=>$params{need_text},		# for ->read
 	  need_signals=>$params{need_signals},		# for ->read
 	  );
+    foreach my $addfile (@{$params{append_filenames}}) {
+	$parser->read(filename=>$addfile);
+    }
     $fileref->text(\@SystemC::Netlist::File::Parser::Text);
     $parser->endmodule();
     return $fileref;
@@ -1106,6 +1133,23 @@ sub _write_autoenum_class {
 	 ."${prefix}${enumtype} next () const;\n"
 	 );
 
+    my ($min,$max) = $self->_enum_min_max_value($class,$enumtype);
+    if (defined $min && defined $max) {
+	$self->print
+	    ("${prefix}class iterator {\n"
+	     ."${prefix}    ${enumtype} m_e; public:\n"
+	     ."${prefix}    inline iterator(${enumtype} item) : m_e(item) {};\n"
+	     ."${prefix}    iterator operator++();\n"
+	     ."${prefix}    inline operator ${class}() const { return ${class}(m_e); }\n"
+	     ."${prefix}    inline ${class} operator*() const { return ${class}(m_e); }\n"
+	     ."${prefix}};\n"
+	     ."${prefix}static iterator begin() { return iterator($class($min)); }\n"
+	     ."${prefix}static iterator end()   { return iterator($class($max+1)); }\n"
+	     );
+    } else {
+	$self->print("${prefix}// No ${class}::iterator, as some enum values are assigned from non-numerics\n");
+    }
+
     #Can do this, but then also need setting functions...
     #foreach my $valsym (sort (keys %{$href->{$enumtype}})) {
     #	 $self->print ("${prefix}bool is${valsym}() const {return e_${enumtype}==${valsym};};\n");
@@ -1164,6 +1208,80 @@ sub _write_autoenum_impl {
 	 ."${prefix}   };\n"
 	 ."${prefix}}\n"
 	 );
+
+    # Now the iterator
+    my ($min,$max) = $self->_enum_min_max_value($class,$enumtype);
+    if (defined $min && defined $max) {
+	$self->print
+	    ("${prefix}${class}::iterator ${class}::iterator::operator++() {\n"
+	     ."${prefix}   switch (m_e) {\n"
+	     );
+	my @valsyms = (sort {$vals->{$enumtype}{$a} <=> $vals->{$enumtype}{$b}}
+		       (keys %{$vals->{$enumtype}}));
+	my %next_values;
+	my $last;
+	foreach my $valname (@valsyms) {
+	    my $valval = $vals->{$enumtype}{$valname};
+	    if (!defined $last || $valval ne $vals->{$enumtype}{$last}) {
+		if ($last) {
+		    if ($valval == $vals->{$enumtype}{$last}+1) {
+			$next_values{inc}{$last} = "${class}(m_e + 1)";
+		    } else {
+			$next_values{expr}{$last} = $valname;
+		    }
+		}
+		$last = $valname;
+	    }
+	}
+	# Note final value isn't in next_values; the default will catch it.
+	foreach my $inc ("inc", "expr") {
+	    my @fields = (sort keys %{$next_values{$inc}});
+	    for (my $i=0; $i<=$#fields; ++$i) {
+		my $field = $fields[$i];
+		my $next_field = $fields[$i+1];
+		$self->printf ("${prefix}   case %s:",$field);
+		if ($next_field && $next_values{$inc}{$field} eq $next_values{$inc}{$next_field}) {
+		    $self->printf (" /*FALLTHRU*/\n");
+		} else {
+		    $self->printf (" m_e=%s; return *this;\n"
+				   ,$next_values{$inc}{$field});
+		}
+	    }
+	}
+	$self->print
+	    ("${prefix}   default: m_e=$class($max+1); return *this;\n"
+	     ."${prefix}   }\n"
+	     ."${prefix}}\n"
+	     );
+    }
+}
+
+sub _enum_min_max_value {
+    my $self = shift;
+    my $class = shift;
+    my $enumtype = shift;
+    # Return (minvalue, maxvalue) for enumeration if it only is
+    # assigned to numbers, else return undef.
+    # Also, convert any hex values to decimal.
+
+    my $href = $self->_enums() || {{}};
+    my $vals = $href->{$class};
+    $vals = $href->{TOP} if !defined $vals;
+    my $min;
+    my $max;
+    foreach my $valsym (sort (keys %{$vals->{$enumtype}})) {
+	my $val = $vals->{$enumtype}{$valsym};
+	if ($val =~ /^\d+$/) {
+	} elsif ($val =~ /^0x([a-f0-9]+)$/i) {
+	    $val = hex $1;
+	} else {
+	    return undef;
+	}
+	$vals->{$enumtype}{$valsym} = $val;
+	$min = $val if !defined $min || $val<$min;
+	$max = $val if !defined $max || $val>$max;
+    }
+    return ($min,$max);
 }
 
 sub _cells_in_file {

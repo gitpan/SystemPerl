@@ -1,4 +1,4 @@
-// $Id: SpTraceVcdC.h 11992 2006-01-16 18:59:58Z wsnyder $ -*- SystemC -*-
+// $Id: SpTraceVcdC.h 12136 2006-01-18 14:22:38Z wsnyder $ -*- SystemC -*-
 //=============================================================================
 //
 // THIS MODULE IS PUBLICLY LICENSED
@@ -67,7 +67,7 @@ private:
     int			m_fd;		///< File descriptor we're writing to
     string		m_filename;	///< Filename we're writing to (if open)
     size_t		m_rolloverMB;	///< MB of file size to rollover at
-    int			m_modDepth;	///< Depth of module hiearchy
+    int			m_modDepth;	///< Depth of module hierarchy
     bool		m_fullDump;	///< True indicates dump ignoring if changed
     uint32_t		m_nextCode;	///< Next code number to assign
     string		m_modName;	///< Module name being traced now

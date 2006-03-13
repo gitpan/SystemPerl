@@ -1,4 +1,4 @@
-// $Id: SpTraceVcdC.cpp 11992 2006-01-16 18:59:58Z wsnyder $ -*- SystemC -*-
+// $Id: SpTraceVcdC.cpp 12136 2006-01-18 14:22:38Z wsnyder $ -*- SystemC -*-
 //=============================================================================
 //
 // THIS MODULE IS PUBLICLY LICENSED
@@ -52,7 +52,7 @@ vector<SpTraceVcd*>	SpTraceVcd::s_vcdVecp;	///< List of all created traces
 class SpTraceCallInfo {
 protected:
     friend class SpTraceVcd;
-    SpTraceCallback_t	m_initcb;	///< Initalization Callback function
+    SpTraceCallback_t	m_initcb;	///< Initialization Callback function
     SpTraceCallback_t	m_fullcb;	///< Full Dumping Callback function
     SpTraceCallback_t	m_changecb;	///< Incremental Dumping Callback function
     void*		m_userthis;	///< Fake "this" for caller
@@ -237,9 +237,9 @@ void SpTraceVcd::dumpHeader () {
     printIndent(1);
     printStr("\n");
 
-    // We detect the .'s in module names to determine hiearchy.  This
+    // We detect the .'s in module names to determine hierarchy.  This
     // allows signals to be declared without fixed ordering, which is
-    // required as Verilog signals might be seperately declared from
+    // required as Verilog signals might be separately declared from
     // SP_TRACE signals.
 
     // Print the signal names
@@ -317,7 +317,7 @@ void SpTraceVcd::declare (uint32_t code, const char* name, int arraynum,
     m_sigs.push_back(sig);
 
     // Split name into basename
-    string hiername;	// space seperates scope from basename of signal
+    string hiername;	// space separates scope from basename of signal
     const char* basename = name;
     if (char* dot = strrchr(basename,'.')) {
 	int predotlen = dot - basename;
