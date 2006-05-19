@@ -1,4 +1,4 @@
-// $Id: SpTraceVcdC.cpp 12136 2006-01-18 14:22:38Z wsnyder $ -*- SystemC -*-
+// $Id: SpTraceVcdC.cpp 19553 2006-05-05 14:57:29Z wsnyder $ -*- SystemC -*-
 //=============================================================================
 //
 // THIS MODULE IS PUBLICLY LICENSED
@@ -399,10 +399,20 @@ void SpTraceVcd::dump (double timestamp) {
 }
 
 void SpTraceVcd::dumpPrep (double timestamp) {
-    printStr("#");
     // VCD file format specification does not allow non-integers for timestamps
     // Dinotrace doesn't mind, but Cadence vvision seems to choke
-    printQuad((uint64_t)timestamp);
+    uint64_t timeui = (uint64_t)timestamp;
+    if (timeui < m_timeLastDump) {
+	timeui = m_timeLastDump;
+	static bool backTime = false;
+	if (!backTime) {
+	    backTime = true;
+	    SP_NOTICE_LN(__FILE__,__LINE__, "VCD time is moving backwards, wave file may be incorrect.\n");
+	}
+    }
+    m_timeLastDump = timeui;
+    printStr("#");
+    printQuad(timeui);
     printStr("\n");
 }
 

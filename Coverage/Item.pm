@@ -1,4 +1,4 @@
-# $Id: Item.pm 15713 2006-03-13 17:42:48Z wsnyder $
+# $Id: Item.pm 20433 2006-05-19 13:42:08Z wsnyder $
 ######################################################################
 #
 # Copyright 2001-2006 by Wilson Snyder.  This program is free software;
@@ -21,7 +21,7 @@ use vars qw($VERSION $Debug $AUTOLOAD);
 ######################################################################
 #### Configuration Section
 
-$VERSION = '1.260';
+$VERSION = '1.261';
 
 our %Keys =
     (#     sorted by compressed----v

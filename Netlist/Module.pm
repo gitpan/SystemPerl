@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Id: Module.pm 15713 2006-03-13 17:42:48Z wsnyder $
+# $Id: Module.pm 20433 2006-05-19 13:42:08Z wsnyder $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -28,7 +28,7 @@ use SystemC::Netlist::AutoCover;
 use SystemC::Netlist::AutoTrace;
 
 @ISA = qw(Verilog::Netlist::Module);
-$VERSION = '1.260';
+$VERSION = '1.261';
 use strict;
 
 # Some attributes we use:

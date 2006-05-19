@@ -1,4 +1,4 @@
-// $Id: SpFunctor.h 11992 2006-01-16 18:59:58Z wsnyder $ -*- SystemC -*-
+// $Id: SpFunctor.h 20428 2006-05-19 13:26:41Z wsnyder $ -*- SystemC -*-
 //=============================================================================
 //
 // THIS MODULE IS PUBLICLY LICENSED
@@ -63,6 +63,7 @@ template <class T> class SpFunctorSpec : public SpFunctor {
     typedef void (T::*Func)(void*);
     SpFunctorSpec(T* obj, void (T::*cb)(void*)) : m_cb(cb), m_obj(obj) {}
     virtual void call(void* userdata) { (*m_obj.*m_cb)(userdata); } 
+    virtual ~SpFunctorSpec() {}
 };
 
 //=============================================================================
@@ -81,6 +82,7 @@ public:
     static void add(const char* funcName, void (T::*cb)(void* userdata), T* that) {
       add(funcName, new SpFunctorSpec<T>(that,cb));
     }
+
     /// Add a SpFunctor to be callable by given name
     static void add(const char* funcName, SpFunctor* ftor);
 

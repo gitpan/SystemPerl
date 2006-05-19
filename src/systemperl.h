@@ -1,4 +1,4 @@
-// $Id: systemperl.h 13576 2006-02-08 17:52:22Z wsnyder $ -*- SystemC -*-
+// $Id: systemperl.h 19553 2006-05-05 14:57:29Z wsnyder $ -*- SystemC -*-
 //********************************************************************
 //
 // THIS MODULE IS PUBLICLY LICENSED
@@ -176,11 +176,6 @@ extern "C" {
 #define SP_AUTO_COVER_CMT_IF(cmt,enablestmt)
 // Below inserted by preprocessor, not for internal use
 #define SP_AUTO_COVERinc(id,type,file,line,cmt) {++(this->_sp_coverage[(id)]);}
-
-#ifndef SP_ERROR_LN
-/// Print error message and exit, redefine if you want something else...
-# define SP_ERROR_LN(file,line,stmsg) { cout<<"%Error:"<<file<<":"<<line<<": "<<stmsg<<endl; abort();}
-#endif
 
 //********************************************************************
 

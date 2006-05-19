@@ -1,4 +1,4 @@
-// $Id: SpCoverage.cpp 15337 2006-03-06 22:38:22Z wsnyder $ -*- SystemC -*-
+// $Id: SpCoverage.cpp 20143 2006-05-16 12:35:51Z wsnyder $ -*- SystemC -*-
 //=============================================================================
 //
 // THIS MODULE IS PUBLICLY LICENSED
@@ -57,6 +57,7 @@ public:
 	for (int i=0; i<MAX_KEYS; i++) m_keys[i]=KEY_UNDEF;
     }
     ~SpCoverageImpItem() {}
+    void deleteItem() { if (m_itemp) { delete m_itemp; m_itemp=NULL; } }
 };
 
 //=============================================================================
@@ -81,7 +82,7 @@ private:
     // CONSTRUCTORS
     SpCoverageImp() {}
 public:
-    ~SpCoverageImp() {}
+    ~SpCoverageImp() { clear(); }
     static SpCoverageImp& imp() {
 	static SpCoverageImp s_singleton;
 	return s_singleton;
@@ -98,8 +99,27 @@ private:
 	m_indexValues.insert(make_pair(nextIndex, value));
 	return nextIndex;
     }
+    string dequote(const string& text) {
+	// Remove any ' or newlines
+	string rtn = text;
+	for (string::iterator pos=rtn.begin(); pos!=rtn.end(); ++pos) {
+	    if (*pos == '\'') *pos = '_';
+	    if (*pos == '\n') *pos = '_';
+	}
+	return rtn;
+    }
 public:
     // PUBLIC METHODS
+    void clear() {
+	for (ItemList::iterator it=m_items.begin(); it!=m_items.end(); ++it) {
+	    SpCoverageImpItem& item = *(it);
+	    item.deleteItem();
+	}
+	m_items.clear();  // Also deletes m_itemp's via ~SpCoverageImpItem
+	m_indexValues.clear();
+	m_valueIndexes.clear();
+    }
+
     void insert (const SpCoverItem* itemp,
 		 const string* keyps[MAX_KEYS],
 		 const string* valps[MAX_KEYS]) {
@@ -158,10 +178,10 @@ public:
 		    else if (key == "comment")	key = "o";
 		    else if (key == "type")	key = "t";
 		    else if (key == "thresh")	key = "s";
-		    else key = "'"+key+"'";
+		    else key = "'"+dequote(key)+"'";
 		    // Print it
 		    os<<key;
-		    os<<"=>'"<<m_indexValues[item.m_vals[i]]<<"',";
+		    os<<"=>'"<<dequote(m_indexValues[item.m_vals[i]])<<"',";
 		}
 	    }
 	    os<<"c=>"; item.m_itemp->dumpCount(os);
@@ -175,6 +195,10 @@ public:
 
 //=============================================================================
 // SpCoverage
+
+void SpCoverage::clear() {
+    SpCoverageImp::imp().clear();
+}
 
 void SpCoverage::write (const char* filename) {
     SpCoverageImp::imp().write(filename);

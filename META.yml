@@ -1,6 +1,6 @@
 # http://module-build.sourceforge.net/META-spec.html
 name:         SystemPerl
-version:      1.260
+version:      1.261
 version_from: Netlist.pm
 license:      perl
 installdirs:  site

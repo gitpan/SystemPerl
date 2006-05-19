@@ -1,4 +1,4 @@
-// $Id: SpFunctor.cpp 11992 2006-01-16 18:59:58Z wsnyder $ -*- SystemC -*-
+// $Id: SpFunctor.cpp 20428 2006-05-19 13:26:41Z wsnyder $ -*- SystemC -*-
 //=============================================================================
 //
 // THIS MODULE IS PUBLICLY LICENSED

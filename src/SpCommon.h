@@ -1,4 +1,4 @@
-// $Id: SpCommon.h 11992 2006-01-16 18:59:58Z wsnyder $ -*- SystemC -*-
+// $Id: SpCommon.h 19553 2006-05-05 14:57:29Z wsnyder $ -*- SystemC -*-
 //=============================================================================
 //
 // THIS MODULE IS PUBLICLY LICENSED
@@ -51,6 +51,15 @@
 # define SP_ABORT(msg) { UERROR(msg); }
 #else
 # define SP_ABORT(msg) { cerr<<msg; abort(); }
+#endif
+
+#ifndef SP_ERROR_LN
+/// Print error message and exit, redefine if you want something else...
+# define SP_ERROR_LN(file,line,stmsg) { cout<<"%Error:"<<file<<":"<<dec<<line<<": "<<stmsg<<endl; abort();}
+#endif
+#ifndef SP_NOTICE_LN
+/// Print notice message and non-exit, redefine if you want something else...
+# define SP_NOTICE_LN(file,line,stmsg) { cout<<"%Notice:"<<file<<":"<<dec<<line<<": "<<stmsg<<endl; }
 #endif
 
 //=============================================================================

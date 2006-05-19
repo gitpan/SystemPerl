@@ -1,4 +1,4 @@
-// $Id: SpCoverage.h 12136 2006-01-18 14:22:38Z wsnyder $ -*- SystemC -*-
+// $Id: SpCoverage.h 16866 2006-03-28 21:20:06Z wsnyder $ -*- SystemC -*-
 //=============================================================================
 //
 // THIS MODULE IS PUBLICLY LICENSED
@@ -65,11 +65,14 @@
 /// A single coverage statistic; template base class.
 /// Users may derived from this, but it is generally used only by the SpCoverItem class.
 
+class SpCoverageImpItem;
+
 class SpCoverItem {
 public:
     // METHODS
     virtual void dumpCount(std::ostream& os) const = 0;
 protected:
+    friend class SpCoverageImpItem;
     // CONSTRUCTORS
     SpCoverItem() {}
     virtual ~SpCoverItem() {}
@@ -144,6 +147,8 @@ public:
 #undef A
 #undef C
 #undef N
+    /// Clear coverage points (and call delete on all items)
+    static void clear();
 };
 
 #endif // guard

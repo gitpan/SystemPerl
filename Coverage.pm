@@ -1,4 +1,4 @@
-# $Id: Coverage.pm 15713 2006-03-13 17:42:48Z wsnyder $
+# $Id: Coverage.pm 20433 2006-05-19 13:42:08Z wsnyder $
 ######################################################################
 #
 # Copyright 2001-2006 by Wilson Snyder.  This program is free software;
@@ -29,7 +29,7 @@ use vars qw($_Default_Self);
 ######################################################################
 #### Configuration Section
 
-$VERSION = '1.260';
+$VERSION = '1.261';
 
 use constant DEFAULT_FILENAME => 'logs/coverage.pl';
 
@@ -93,6 +93,7 @@ sub write {
     my $self = shift;
     my %params = ( filename => $self->{filename},
 		   binary => 1,	# Which format type
+		   edit_key_cb => undef,	# Edit callback routine
 		   @_
 		   );
     # Write out the coverage array
@@ -112,14 +113,22 @@ sub write {
 	#	660%	Storable, then rehash into {coverage}
 	#	696%	Read file
 	foreach my $key (sort keys %{$self->{coverage}}) {
+	    my $nkey = $key;
 	    my $value = $self->{coverage}{$key};
-	    printf $fh "C '%s' %d\n", $key, $value;
+	    if ($params{edit_key_cb}) {
+		$nkey = &{$params{edit_key_cb}}($nkey);
+	    }
+	    printf $fh "C '%s' %d\n", $nkey, $value;
 	}
     } else {
 	print $fh "# SystemC::Coverage-2 -*- Mode:perl -*-\n";
 	print $fh "package SystemC::Coverage;\n";
 	foreach my $key (sort keys %{$self->{coverage}}) {
-	    my $item = SystemC::Coverage::Item->new($key, $self->{coverage}{$key});
+	    my $nkey = $key;
+	    if ($params{edit_key_cb}) {
+		$nkey = &{$params{edit_key_cb}}($nkey);
+	    }
+	    my $item = SystemC::Coverage::Item->new($nkey, $self->{coverage}{$key});
 	    printf $fh $item->write_string."\n";
 	}
 	printf $fh "\n1;\n";	# So eval will succeed

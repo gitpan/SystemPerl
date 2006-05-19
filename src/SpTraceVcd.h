@@ -1,4 +1,4 @@
-// $Id: SpTraceVcd.h 11992 2006-01-16 18:59:58Z wsnyder $ -*- SystemC -*-
+// $Id: SpTraceVcd.h 20428 2006-05-19 13:26:41Z wsnyder $ -*- SystemC -*-
 //=============================================================================
 //
 // THIS MODULE IS PUBLICLY LICENSED
@@ -47,7 +47,7 @@ public:
 	spTrace()->set_time_unit(sc_get_default_time_unit().to_string());
 # endif
     }
-    ~SpTraceFile() {}
+    virtual ~SpTraceFile() {}
     /// Called by SystemC simulate()
     virtual void cycle (bool delta_cycle) {
 # if (SYSTEMC_VERSION>20011000)

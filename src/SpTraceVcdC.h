@@ -1,4 +1,4 @@
-// $Id: SpTraceVcdC.h 12136 2006-01-18 14:22:38Z wsnyder $ -*- SystemC -*-
+// $Id: SpTraceVcdC.h 20428 2006-05-19 13:26:41Z wsnyder $ -*- SystemC -*-
 //=============================================================================
 //
 // THIS MODULE IS PUBLICLY LICENSED
@@ -51,6 +51,8 @@ protected:
     int			m_bits;		///< Size of value in bits
     SpTraceVcdSig (uint32_t code, int bits)
 	: m_code(code), m_bits(bits) {}
+public:
+    ~SpTraceVcdSig() {}
 };
 
 //=============================================================================
@@ -73,6 +75,7 @@ private:
     string		m_modName;	///< Module name being traced now
     string		m_timeRes;	///< Time resolution (ns/ms etc)
     string		m_timeUnit;	///< Time units (ns/ms etc)
+    uint64_t		m_timeLastDump;	///< Last time we did a dump
 
     char*		m_wrBufp;	///< Output buffer
     char*		m_writep;	///< Write pointer into output buffer
@@ -124,6 +127,7 @@ public:
 	m_writep = m_wrBufp;
 	m_namemapp = NULL;
 	m_timeRes = m_timeUnit = "ns";
+	m_timeLastDump = 0;
 	m_sigs_oldvalp = NULL;
     }
     ~SpTraceVcd();
