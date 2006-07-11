@@ -1,4 +1,4 @@
-// $Id: SpTraceVcdC.h 20428 2006-05-19 13:26:41Z wsnyder $ -*- SystemC -*-
+// $Id: SpTraceVcdC.h 22697 2006-07-10 14:56:22Z wsnyder $ -*- SystemC -*-
 //=============================================================================
 //
 // THIS MODULE IS PUBLICLY LICENSED
@@ -66,6 +66,7 @@ typedef void (*SpTraceCallback_t)(SpTraceVcd* vcdp, void* userthis, uint32_t cod
 class SpTraceVcd {
 private:
     bool 		m_isOpen;	///< True indicates open file
+    bool		m_evcd;		///< True for evcd format
     int			m_fd;		///< File descriptor we're writing to
     string		m_filename;	///< Filename we're writing to (if open)
     size_t		m_rolloverMB;	///< MB of file size to rollover at
@@ -96,10 +97,12 @@ private:
 	    bufferFlush();
 	}
     }
+    void closePrev();
     void openNext();
     void printIndent (int levelchange);
     void printStr (const char* str);
     void printQuad (uint64_t n);
+    void printTime (double timestamp);
     void declare (uint32_t code, const char* name, int arraynum, int msb, int lsb);
 
     void dumpHeader();
@@ -120,6 +123,10 @@ private:
 	return out + ((char)((code)%94+33));
     }
 
+protected:
+    // METHODS
+    void evcd(bool flag) { m_evcd = flag; }
+
 public:
     // CREATORS
     SpTraceVcd () : m_isOpen(false), m_rolloverMB(0), m_modDepth(0), m_nextCode(1) {
@@ -129,6 +136,7 @@ public:
 	m_timeRes = m_timeUnit = "ns";
 	m_timeLastDump = 0;
 	m_sigs_oldvalp = NULL;
+	m_evcd = false;
     }
     ~SpTraceVcd();
 
@@ -146,7 +154,10 @@ public:
     void close ();			///< Close the file
 
     void set_time_unit (const char* unit); ///< Set time units (s/ms, defaults to ns)
+    void set_time_unit (const string& unit) { set_time_unit(unit.c_str()); }
+
     void set_time_resolution (const char* unit); ///< Set time resolution (s/ms, defaults to ns)
+    void set_time_resolution (const string& unit) { set_time_unit(unit.c_str()); }
 
     /// Inside dumping routines, called each cycle to make the dump
     void dump     (double timestamp);
@@ -200,6 +211,25 @@ public:
 	*m_writep++=' '; printCode(code); *m_writep++='\n';
 	bufferCheck();
     }
+
+    /// Inside dumping routines, dump one signal as unknowns
+    /// Presently this code doesn't change the oldval vector.
+    /// Thus this is for special standalone applications that after calling
+    /// fullBitX, must when then value goes non-X call fullBit.
+    inline void fullBitX (uint32_t code) {
+	*m_writep++='x'; printCode(code); *m_writep++='\n';
+	bufferCheck();
+    }
+    inline void fullBusX (uint32_t code, int bits) {
+	*m_writep++='b';
+	for (int bit=bits-1; bit>=0; --bit) {
+	    *m_writep++='x';
+	}
+	*m_writep++=' '; printCode(code); *m_writep++='\n';
+	bufferCheck();
+    }
+    inline void fullQuadX (uint32_t code, int bits) { fullBusX (code, bits); }
+    inline void fullArrayX (uint32_t code, int bits) { fullBusX (code, bits); }
 
     /// Inside dumping routines, dump one signal if it has changed
     inline void chgBit (uint32_t code, const uint32_t newval) {

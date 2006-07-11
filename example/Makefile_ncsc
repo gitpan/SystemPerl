@@ -1,4 +1,4 @@
-# $Id: Makefile_ncsc 11992 2006-01-16 18:59:58Z wsnyder $ -*- Makefile -*-
+# $Id: Makefile_ncsc 22733 2006-07-11 13:37:09Z wsnyder $ -*- Makefile -*-
 # DESCRIPTION: SystemPerl: Example makefile for Cadence NC-SystemC
 #
 # This is executed in the "test_dir", not in this directory
@@ -43,7 +43,7 @@ OUR_NCSC_CPP = $(SP_CPP) ExMain.cpp $(SYSTEMPERL)/src/Sp.cpp
 ifeq ($(NCSC_USE_MAKEFILE),)
  # Direct ncsc_run method
 
- OUR_NCSC_FLAGS += -static -sc_main
+ OUR_NCSC_FLAGS += -gnu -static -sc_main -O1
 
  # The below is required to work around a bug in ncsc 05.40-p004
  # This is fixed in ncsc 5.4 s8

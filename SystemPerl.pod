@@ -1,4 +1,4 @@
-#$Id: SystemPerl.pod 15117 2006-03-02 14:31:01Z wsnyder $
+#$Id: SystemPerl.pod 21533 2006-06-08 14:57:34Z wsnyder $
 ######################################################################
 #
 # Copyright 2001-2006 by Wilson Snyder.  This program is free software;
@@ -549,7 +549,9 @@ will be substituted to find the file to be included.  If a name of the form
 
 =head1 DISTRIBUTION
 
-The latest version is available from CPAN and from L<http://www.veripool.com/>.
+SystemPerl is part of the L<http://www.veripool.com/> free SystemC software
+tool suite.  The latest version is available from CPAN and from
+L<http://www.veripool.com/systemperl.html>.
 
 Copyright 2001-2006 by Wilson Snyder.  This package is free software; you
 can redistribute it and/or modify it under the terms of either the GNU

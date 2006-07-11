@@ -2,6 +2,12 @@ Revision history for Perl extension SystemC::Netlist
 
 The contributors that suggested a given feature are shown in [].
 
+* SystemC 1.270 7/11/2006
+
+**	Support SystemC 2.1.v1.  [Oleg Petlin]
+
+****	Fix SpTraceVcdC to allow multiple top modules. [Robert Woods-Corwin]
+
 * SystemC 1.261 5/19/2006
 
 ***	Cleanup SpCoverage memory at exit for leak checkers.  [Prabhat Gupta]
@@ -345,7 +351,7 @@ The contributors that suggested a given feature are shown in [].
 
 
 ----------------------------------------------------------------------
-$Id: Changes 20433 2006-05-19 13:42:08Z wsnyder $
+$Id: Changes 22733 2006-07-11 13:37:09Z wsnyder $
 DESCRIPTION: Documentation on change history for this package
 ----------------------------------------------------------------------
 

@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-#$Id: sp_makecheck 11992 2006-01-16 18:59:58Z wsnyder $
+#$Id: sp_makecheck 21533 2006-06-08 14:57:34Z wsnyder $
 ######################################################################
 #
 # Copyright 2001-2006 by Wilson Snyder.  This program is free software;
@@ -61,7 +61,7 @@ Dependency::unlink_out_of_date();
 #----------------------------------------------------------------------
 
 sub usage {
-    print '$Id: sp_makecheck 11992 2006-01-16 18:59:58Z wsnyder $ ', "\n";
+    print '$Id: sp_makecheck 21533 2006-06-08 14:57:34Z wsnyder $ ', "\n";
     $SIG{__WARN__} = sub{};	#pod2text isn't clean.
     pod2text($0);
     exit (1);
@@ -248,7 +248,9 @@ Consider the modification time, removing any out of date files.
 
 =head1 DISTRIBUTION
 
-The latest version is available from CPAN and from L<http://www.veripool.com/>.
+SystemPerl is part of the L<http://www.veripool.com/> free SystemC software
+tool suite.  The latest version is available from CPAN and from
+L<http://www.veripool.com/systemperl.html>.
 
 Copyright 2001-2006 by Wilson Snyder.  This package is free software; you
 can redistribute it and/or modify it under the terms of either the GNU

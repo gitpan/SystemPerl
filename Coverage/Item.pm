@@ -1,4 +1,4 @@
-# $Id: Item.pm 20433 2006-05-19 13:42:08Z wsnyder $
+# $Id: Item.pm 22733 2006-07-11 13:37:09Z wsnyder $
 ######################################################################
 #
 # Copyright 2001-2006 by Wilson Snyder.  This program is free software;
@@ -21,7 +21,7 @@ use vars qw($VERSION $Debug $AUTOLOAD);
 ######################################################################
 #### Configuration Section
 
-$VERSION = '1.261';
+$VERSION = '1.270';
 
 our %Keys =
     (#     sorted by compressed----v
@@ -227,13 +227,23 @@ Type of coverage (block, line, fsm, etc.)
 
 =back
 
-=head1 SEE ALSO
+=head1 DISTRIBUTION
 
-C<SystemC::Coverage>
+SystemPerl is part of the L<http://www.veripool.com/> free SystemC software
+tool suite.  The latest version is available from CPAN and from
+L<http://www.veripool.com/systemperl.html>.
+
+Copyright 2001-2006 by Wilson Snyder.  This package is free software; you
+can redistribute it and/or modify it under the terms of either the GNU
+Lesser General Public License or the Perl Artistic License.
 
 =head1 AUTHORS
 
 Wilson Snyder <wsnyder@wsnyder.org>
+
+=head1 SEE ALSO
+
+C<SystemC::Coverage>
 
 =cut
 

@@ -1,4 +1,4 @@
-// $Id: SpTraceVcd.h 20428 2006-05-19 13:26:41Z wsnyder $ -*- SystemC -*-
+// $Id: SpTraceVcd.h 22697 2006-07-10 14:56:22Z wsnyder $ -*- SystemC -*-
 //=============================================================================
 //
 // THIS MODULE IS PUBLICLY LICENSED
@@ -43,33 +43,82 @@ public:
     SpTraceFile() {
 	sc_get_curr_simcontext()->add_trace_file(this);
 # if (SYSTEMC_VERSION>20011000)
+	// To confuse matters 2.1.beta returns a char* here, while 2.1.v1 returns a std::string
+	// we allow both flavors with overloaded set_time_* functions.
 	spTrace()->set_time_resolution(sc_get_time_resolution().to_string());
 	spTrace()->set_time_unit(sc_get_default_time_unit().to_string());
 # endif
     }
+
+# if (SYSTEMC_VERSION>20011000)
+    // VCD files must have integer timestamps, so we write all times in increments of time_resolution
+    inline static double scTimeStampDouble() { return (sc_time_stamp().to_double() / sc_get_time_resolution().to_double()); }
+# else
+    inline static double scTimeStampDouble() { return (sc_time_stamp().to_double()); }
+# endif
+
     virtual ~SpTraceFile() {}
     /// Called by SystemC simulate()
     virtual void cycle (bool delta_cycle) {
-# if (SYSTEMC_VERSION>20011000)
-	// VCD files must have integer timestamps, so we write all times in increments of time_resolution
-	if (!delta_cycle) { spTrace()->dump(sc_time_stamp().to_double() / sc_get_time_resolution().to_double()); }
-# else
-	if (!delta_cycle) { spTrace()->dump(sc_time_stamp()); }
-# endif
+	if (!delta_cycle) { spTrace()->dump(scTimeStampDouble()); }
     }
 
 private:
     /// Fake outs for linker
-    virtual void write_comment (const sc_string &);
-    virtual void trace (const unsigned int &, const sc_string &, const char **);
+//--------------------------------------------------
+# if (SYSTEMC_VERSION>=20050714)
+    // SystemC 2.1.v1
+# define DECL_TRACE_METHOD_A(tp) \
+    virtual void trace( const tp& object, const std::string& name );
+# define DECL_TRACE_METHOD_B(tp) \
+    virtual void trace( const tp& object, const std::string& name, int width );
 
+    virtual void write_comment (const std::string &);
+    virtual void trace (const unsigned int &, const std::string &, const char **);
+
+    DECL_TRACE_METHOD_A( bool )
+    DECL_TRACE_METHOD_A( sc_dt::sc_bit )
+    DECL_TRACE_METHOD_A( sc_dt::sc_logic )
+
+    DECL_TRACE_METHOD_B( unsigned char )
+    DECL_TRACE_METHOD_B( unsigned short )
+    DECL_TRACE_METHOD_B( unsigned int )
+    DECL_TRACE_METHOD_B( unsigned long )
+#ifdef SYSTEMC_64BIT_PATCHES
+    DECL_TRACE_METHOD_B( unsigned long long)
+#endif
+    DECL_TRACE_METHOD_B( char )
+    DECL_TRACE_METHOD_B( short )
+    DECL_TRACE_METHOD_B( int )
+    DECL_TRACE_METHOD_B( long )
+    DECL_TRACE_METHOD_B( sc_dt::int64 )
+    DECL_TRACE_METHOD_B( sc_dt::uint64 )
+
+    DECL_TRACE_METHOD_A( float )
+    DECL_TRACE_METHOD_A( double )
+    DECL_TRACE_METHOD_A( sc_dt::sc_int_base )
+    DECL_TRACE_METHOD_A( sc_dt::sc_uint_base )
+    DECL_TRACE_METHOD_A( sc_dt::sc_signed )
+    DECL_TRACE_METHOD_A( sc_dt::sc_unsigned )
+
+    DECL_TRACE_METHOD_A( sc_dt::sc_fxval )
+    DECL_TRACE_METHOD_A( sc_dt::sc_fxval_fast )
+    DECL_TRACE_METHOD_A( sc_dt::sc_fxnum )
+    DECL_TRACE_METHOD_A( sc_dt::sc_fxnum_fast )
+
+    DECL_TRACE_METHOD_A( sc_dt::sc_bv_base )
+    DECL_TRACE_METHOD_A( sc_dt::sc_lv_base )
+
+//--------------------------------------------------
+# elif (SYSTEMC_VERSION>20011000)
+    // SystemC 2.0.1
 # define DECL_TRACE_METHOD_A(tp) \
     virtual void trace( const tp& object, const sc_string& name );
 # define DECL_TRACE_METHOD_B(tp) \
     virtual void trace( const tp& object, const sc_string& name, int width );
 
-# if (SYSTEMC_VERSION>20011000)
-    // SystemC 2.0.1
+    virtual void write_comment (const sc_string &);
+    virtual void trace (const unsigned int &, const sc_string &, const char **);
     virtual void delta_cycles (bool) {}
     virtual void space( int n ) {}
 
@@ -104,9 +153,17 @@ private:
     DECL_TRACE_METHOD_A( sc_bv_base )
     DECL_TRACE_METHOD_A( sc_lv_base )
 
+//--------------------------------------------------
 # else
-
     // SystemC 1.2.1beta
+# define DECL_TRACE_METHOD_A(tp) \
+    virtual void trace( const tp& object, const sc_string& name );
+# define DECL_TRACE_METHOD_B(tp) \
+    virtual void trace( const tp& object, const sc_string& name, int width );
+
+    virtual void write_comment (const sc_string &);
+    virtual void trace (const unsigned int &, const sc_string &, const char **);
+
     DECL_TRACE_METHOD_A( bool )
     DECL_TRACE_METHOD_B( unsigned char )
     DECL_TRACE_METHOD_B( short unsigned int )

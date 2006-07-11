@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Id: Template.pm 20433 2006-05-19 13:42:08Z wsnyder $
+# $Id: Template.pm 22733 2006-07-11 13:37:09Z wsnyder $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -27,7 +27,7 @@ use Verilog::Netlist::Subclass;
 use strict;
 use vars qw ($Debug $Default_Self $VERSION);
 
-$VERSION = '1.261';
+$VERSION = '1.270';
 
 structs('_new_base',
 	'SystemC::Template::Struct'
@@ -305,7 +305,9 @@ Adds to the out_text the given formatted text.
 
 =head1 DISTRIBUTION
 
-The latest version is available from CPAN and from L<http://www.veripool.com/>.
+SystemPerl is part of the L<http://www.veripool.com/> free SystemC software
+tool suite.  The latest version is available from CPAN and from
+L<http://www.veripool.com/systemperl.html>.
 
 Copyright 2001-2006 by Wilson Snyder.  This package is free software; you
 can redistribute it and/or modify it under the terms of either the GNU

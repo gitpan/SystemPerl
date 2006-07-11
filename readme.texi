@@ -1,5 +1,5 @@
 \input texinfo @c -*-texinfo-*-
-@c $Id: readme.texi 11992 2006-01-16 18:59:58Z wsnyder $
+@c $Id: readme.texi 21533 2006-06-08 14:57:34Z wsnyder $
 @c %**start of header
 @setfilename readme.info
 @settitle Perl SystemC Installation
@@ -150,8 +150,10 @@ SC_MODULE(mod) @{
 @node Obtaining Distribution, Supported Systems, SystemPerl Example, Top
 @section Obtaining Distribution
 
-The latest version is available at 
-@uref{http://www.perl.org/CPAN/}
+SystemPerl is part of the L<http://www.veripool.com/> free SystemC
+software tool suite.  The latest version is available from
+@uref{http://www.perl.org/CPAN/} and from
+@uref{http://www.veripool.com/systemperl.html}.
 
 Download the latest package from that site, and decompress.
 @samp{gunzip SystemPerl_version.tar.gz ; tar xvf SystemPerl_version.tar}

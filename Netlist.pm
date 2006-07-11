@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Id: Netlist.pm 20433 2006-05-19 13:42:08Z wsnyder $
+# $Id: Netlist.pm 22733 2006-07-11 13:37:09Z wsnyder $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -27,7 +27,7 @@ use Verilog::Netlist::Subclass;
 use strict;
 use vars qw($Debug $Verbose $VERSION);
 
-$VERSION = '1.261';
+$VERSION = '1.270';
 
 ######################################################################
 #### Error Handling
@@ -69,7 +69,8 @@ sub sc_version {
     # Return version of SystemC in use
     if (!$self->{sc_version} && $ENV{SYSTEMC}) {
 	my $fh;
-	foreach my $fn ("$ENV{SYSTEMC}/include/systemc/kernel/sc_ver.h",
+	foreach my $fn ("$ENV{SYSTEMC}/include/sysc/kernel/sc_ver.h",
+			"$ENV{SYSTEMC}/include/systemc/kernel/sc_ver.h",
 			"$ENV{SYSTEMC}/include/sc_ver.h") {
 	    $fh = IO::File->new($fn);
 	    last if $fh;
@@ -94,7 +95,9 @@ sub sc_numeric_version {
 	my $scv = $self->sc_version;
 	if (!$scv) { # Indeterminate
 	    $self->{sc_numeric_version} = undef;
-	} elsif ($scv > 20041000) {
+	} elsif ($scv > 20050700) {  # 2.1.v1
+	    $self->{sc_numeric_version} = 2.110;
+	} elsif ($scv > 20041000) {  # 2.1.oct_12_2004.beta
 	    $self->{sc_numeric_version} = 2.100;
 	} elsif ($scv > 20011000) {
 	    $self->{sc_numeric_version} = 2.010;
@@ -351,7 +354,9 @@ Return the version number of SystemC.
 
 =head1 DISTRIBUTION
 
-The latest version is available from CPAN and from L<http://www.veripool.com/>.
+SystemPerl is part of the L<http://www.veripool.com/> free SystemC software
+tool suite.  The latest version is available from CPAN and from
+L<http://www.veripool.com/systemperl.html>.
 
 Copyright 2001-2006 by Wilson Snyder.  This package is free software; you
 can redistribute it and/or modify it under the terms of either the GNU

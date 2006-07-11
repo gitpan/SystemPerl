@@ -1,5 +1,5 @@
 %{
-/* $Id: scgrammer.y 15117 2006-03-02 14:31:01Z wsnyder $
+/* $Id: scgrammer.y 20918 2006-05-25 19:36:50Z wsnyder $
  ******************************************************************************
  * DESCRIPTION: SystemC bison parser
  *
@@ -168,10 +168,7 @@ int scgrammerlex() {
 %%
 //************************************
 // Top Rule:
-sourceText:	expList
-		{ /*clean up!*/
-     		scparser_EmitPrefix();
-		}
+sourceText:	expList				{ /*clean up!*/ scparser_EmitPrefix(); }
 		;
 
 //************************************
@@ -185,72 +182,66 @@ symbol:		  '!' | '"' | '#' | '$' | '%' | '&'
 		| '~' | COLONCOLON
 		;
 
-clAccess:	PUBLIC | PRIVATE | PROTECTED
+clAccess:	PUBLIC | PRIVATE | PROTECTED	{ }
 		;
 
 //************************************
 
-expList:	exp
-		| expList exp
-;
-
-exp:		auto
-		| module
-		| module_continued
-		| ctor
-		| cell
-		| cell_decl
-		| pin
-		| pin_template
-		| decl
-		| traceable
-		| inout
-		| inout_clk
-		| inst_clk
-		| sp
-		| class
-		| enum
-		| STRING	{ SCFree($1); }
-		| SYMBOL	{ scparser_symbol($1); SCFree($1); }
-		| NUMBER	{ SCFree($1); }
-		| PP		{ }
-		| CONST
-		| symbol
-		| clAccess
-		| VIRTUAL
-		| NCSC_MODULE
+expList:	exp				{ }
+		| expList exp			{ }
 		;
 
-auto:		AUTO
-			{
+exp:		auto				{ }
+		| module			{ }
+		| module_continued		{ }
+		| ctor				{ }
+		| cell				{ }
+		| cell_decl			{ }
+		| pin				{ }
+		| pin_template			{ }
+		| decl				{ }
+		| traceable			{ }
+		| inout				{ }
+		| inout_clk			{ }
+		| inst_clk			{ }
+		| sp				{ }
+		| class				{ }
+		| enum				{ }
+		| STRING			{ SCFree($1); }
+		| SYMBOL			{ scparser_symbol($1); SCFree($1); }
+		| NUMBER			{ SCFree($1); }
+		| PP				{ }
+		| CONST				{ }
+		| symbol			{ }
+		| clAccess			{ }
+		| VIRTUAL			{ }
+		| NCSC_MODULE			{ }
+		;
+
+auto:		AUTO				{
 			  scparser_EmitPrefix();
 			  scparser_PrefixCat(sclextext,sclexleng);  /* Emit as independent TEXT */
 			  scparser_call(1,"auto",sclextext);
 			}
 		;
 
-module:		SC_MODULE '(' SYMBOL ')'
-			{ scparser_call(-1,"module",$3); }
-		| SC_MAIN
-			{ scparser_call(1,"module","sc_main"); }
+module:		SC_MODULE '(' SYMBOL ')'	{ scparser_call(-1,"module",$3); }
+		| SC_MAIN			{ scparser_call(1,"module","sc_main"); }
 		;
 
-module_continued: SP_MODULE_CONTINUED '(' SYMBOL ')'
-			{ scparser_call(-1,"module_continued",$3); }
+module_continued: SP_MODULE_CONTINUED '(' SYMBOL ')'		{ scparser_call(-1,"module_continued",$3); }
 		;
 
-class:		CLASS clSymScoped '{'	{ scparser_call(-1,"class",$2); }
-		| CLASS clSymScoped ':' clColList '{'
-			{ scparser_call(-2,"class",$2,$4); }
-		| CLASS clSymScoped ':' PUBLIC NCSC_MODULE '{'
-			{ scparser_call(-1,"module",$2); }
-		| CLASS clSymScoped ';'	{ }	/* Fwd decl */
-		| CLASS clSymScoped '>'	{ }	/* template <class SYMBOL> */
-		| CLASS clSymScoped ','	{ }	/* template <class SYMBOL, ... */
+class:		CLASS clSymScoped '{'				{ scparser_call(-1,"class",$2); }
+		| CLASS clSymScoped ':' clColList '{'		{ scparser_call(-2,"class",$2,$4); }
+		| CLASS clSymScoped ':' PUBLIC NCSC_MODULE '{'	{ scparser_call(-1,"module",$2); }
+		| CLASS clSymScoped ';'		{ }	/* Fwd decl */
+		| CLASS clSymScoped '>'		{ }	/* template <class SYMBOL> */
+		| CLASS clSymScoped ','		{ }	/* template <class SYMBOL, ... */
 		| CLASS clSymScoped clSymScoped { }	/* struct SYM sym; */
-		| CLASS clSymScoped '*'	{ }	/* (struct SYM*) */
-		| CLASS clSymScoped ')'	{ }	/* (struct SYM) */
-		| CLASS '{'		{ }	/* Anonymous struct */
+		| CLASS clSymScoped '*'		{ }	/* (struct SYM*) */
+		| CLASS clSymScoped ')'		{ }	/* (struct SYM) */
+		| CLASS '{'			{ }	/* Anonymous struct */
 		;
 
 clColList:	clList				{ $$ = $1; }
@@ -261,28 +252,27 @@ clList:		clSymAccess			{ $$ = $1; }
 		| clSymAccess ',' clList	{ $$ = scstrjoin3sis ($1,",",$3); }
 		;
 
-clSymAccess:	clSymParamed		{ $$ = $1; }
-		| clAccess clSymParamed	{ $$ = $2; }
-		| VIRTUAL clSymParamed	{ $$ = $2; }
+clSymAccess:	clSymParamed			{ $$ = $1; }
+		| clAccess clSymParamed		{ $$ = $2; }
+		| VIRTUAL clSymParamed		{ $$ = $2; }
 		| VIRTUAL clAccess clSymParamed	{ $$ = $3; }
 		;
 
-clSymParamed:	clSymRef		{ $$ = $1; }
+clSymParamed:	clSymRef			{ $$ = $1; }
 		| clSymRef '<' clList '>'	{ $$ = scstrjoin4sisi ($1,"<",$3,">"); }
 		;
 
-clSymScoped:	SYMBOL			{ $$ = $1; }
+clSymScoped:	SYMBOL				{ $$ = $1; }
 		| SYMBOL COLONCOLON SYMBOL	{ $$ = scstrjoin3sis ($1,"::",$3); }
 		;
 
-clSymRef:	clSymScoped		{ $$ = $1; }
-		| clSymScoped '*'	{ $$ = scstrjoin2si ($1,"*"); }
-		| CONST clSymScoped	{ $$ = $2; }
-		| CONST clSymScoped '*'	{ $$ = scstrjoin2si ($2,"*"); }
+clSymRef:	clSymScoped			{ $$ = $1; }
+		| clSymScoped '*'		{ $$ = scstrjoin2si ($1,"*"); }
+		| CONST clSymScoped		{ $$ = $2; }
+		| CONST clSymScoped '*'		{ $$ = scstrjoin2si ($2,"*"); }
 		;
 
-ctor:		SC_CTOR '(' SYMBOL ')'
-			{ scparser_call(-1,"ctor",$3); }
+ctor:		SC_CTOR '(' SYMBOL ')'		{ scparser_call(-1,"ctor",$3); }
 		;
 // SP_CELL ignores trailing ')' so SP_CELL_FORM is happy
 cell:		SP_CELL '(' cellname ',' SYMBOL
@@ -304,58 +294,54 @@ pin_template:	SP_TEMPLATE '(' string_or_cellname ',' STRING ',' STRING ')' ';'
 			{ scparser_call(-4,"pin_template",$3,$5,$7,$9); }
 		;
 
-string_or_cellname: STRING		{ $$ = $1; }
-		| cellname		{ $$ = $1; }
+string_or_cellname: STRING			{ $$ = $1; }
+		| cellname			{ $$ = $1; }
 		;
 
 //		FOO or FOO::BAR*
-declType:	declType1		{ $$ = $1; }
-		| declType1 '*'	{ char *cp=malloc(strlen($1)+5);
+declType:	declType1			{ $$ = $1; }
+		| declType1 '*'			{ char *cp=malloc(strlen($1)+5);
 			  strcpy (cp,$1); strcat(cp,"*");
 			  SCFree ($1);
 			  $$=cp; }
 		;
 
-declType1:	declTypeBase
-		| SYMBOL COLONCOLON declType1
-			{ $$ = scstrjoin3sis ($1,"::",$3); }
+declType1:	declTypeBase			{ $$ = $1; }
+		| SYMBOL COLONCOLON declType1	{ $$ = scstrjoin3sis ($1,"::",$3); }
 		;
 
 //		uint32_t | sc_bit<4> | unsigned int
-declTypeBase:	SYMBOL
-		| SYMBOL '<' vectorNum '>'
-			{ char *cp=malloc(strlen($1)+strlen($3)+5);
-			  strcpy(cp,$1); strcat(cp,"<");strcat(cp,$3);strcat(cp,">");
-			  SCFree ($1); SCFree ($3);
-			  $$=cp; }
-		| SYMBOL '<' vectorNum ',' vectorNum '>'
-			{ char *cp=malloc(strlen($1)+strlen($3)+strlen($5)+6);
-			  strcpy(cp,$1);  strcat(cp,"<"); strcat(cp,$3);
-			  strcat(cp,","); strcat(cp,$5);  strcat(cp,">");
-			  SCFree ($1); SCFree ($3); SCFree ($5);
-			  $$=cp; }
+declTypeBase:	SYMBOL				{ $$ = $1; }
+		| SYMBOL '<' vectorNum '>'	{ char *cp=malloc(strlen($1)+strlen($3)+5);
+						  strcpy(cp,$1); strcat(cp,"<");strcat(cp,$3);strcat(cp,">");
+						  SCFree ($1); SCFree ($3);
+						  $$=cp; }
+		| SYMBOL '<' vectorNum ',' vectorNum '>' 	{
+						  char *cp=malloc(strlen($1)+strlen($3)+strlen($5)+6);
+						  strcpy(cp,$1);  strcat(cp,"<"); strcat(cp,$3);
+						  strcat(cp,","); strcat(cp,$5);  strcat(cp,">");
+						  SCFree ($1); SCFree ($3); SCFree ($5);
+						  $$=cp; }
 		;
 
 //		sc_in_clk SYMBOL
-inout:		SC_INOUT_CLK SYMBOL vector ';'
-			{
-			  {char *cp = strrchr($1,'_'); if (cp) *cp='\0';} /* Drop _clk */
-			  scparser_call(4,"signal",$1,"sc_clock",$2,$3);
- 			  SCFree($1); SCFree($2); SCFree($3);}
+inout:		SC_INOUT_CLK SYMBOL vector ';'	{
+						  {char *cp = strrchr($1,'_'); if (cp) *cp='\0';} /* Drop _clk */
+						  scparser_call(4,"signal",$1,"sc_clock",$2,$3);
+						  SCFree($1); SCFree($2); SCFree($3);}
 		;
 //		sc_clock SYMBOL ;
-inout_clk:	SC_CLOCK SYMBOL ';'
-			{
-			  scparser_call(3,"signal",$1,"sc_clock",$2);
- 			  SCFree($1); SCFree($2);}
+inout_clk:	SC_CLOCK SYMBOL ';'		{
+						  scparser_call(3,"signal",$1,"sc_clock",$2);
+						  SCFree($1); SCFree($2);}
 		;
 
 		// foo = sc_clk (bar)
-inst_clk:	SC_CLOCK '(' { SCFree($1); }
-		| SC_CLOCK SYMBOL '(' { SCFree($1); scparser_symbol($2); SCFree($2);}
+inst_clk:	SC_CLOCK '(' 			{ SCFree($1); }
+		| SC_CLOCK SYMBOL '(' 		{ SCFree($1); scparser_symbol($2); SCFree($2);}
 		;
 
-sp:		SP	{ scparser_call(1,"preproc_sp",sclextext);}
+sp:		SP				{ scparser_call(1,"preproc_sp",sclextext);}
 		;
 
 //************************************
@@ -393,35 +379,34 @@ traceable:	SP_TRACED declType SYMBOL vector ';'
 //************************************
 // Enumerations
 
-enum:		ENUM enumSymbol '{' enumValList '}'
-  			{ SCFree (scParserLex.enumname); }
+enum:		ENUM enumSymbol '{' enumValList '}'	{ SCFree (scParserLex.enumname); }
 
 		;
-enumSymbol:	SYMBOL	{ scParserLex.enumname = $1; }
-		|	{ scParserLex.enumname = NULL; }
+enumSymbol:	SYMBOL				{ scParserLex.enumname = $1; }
+		|				{ scParserLex.enumname = NULL; }
 		;
-enumValList:	enumVal
- 		| enumValList ',' enumVal
+enumValList:	enumVal				{ }
+ 		| enumValList ',' enumVal	{ }
 		;
-enumVal:	SYMBOL	enumAssign  {
+enumVal:	SYMBOL	enumAssign  		{
 			if (scParserLex.enumname) scparser_call(3,"enum_value",scParserLex.enumname,$1,$2);
 			SCFree($1); SCFree($2); }
 		;
-enumAssign:	'=' enumExpr	{ $$ = $2; }
-		|		{ $$ = strdup(""); }
+enumAssign:	'=' enumExpr			{ $$ = $2; }
+		|				{ $$ = strdup(""); }
 		;
-enumExpr:	NUMBER		{ $$ = $1; }
-		| SYMBOL	{ $$ = $1; }
+enumExpr:	NUMBER				{ $$ = $1; }
+		| SYMBOL			{ $$ = $1; }
 		| SYMBOL '(' ')'			{ $$ = scstrjoin2si($1,"()"); }
 		| SYMBOL '(' enumFunParmList ')'	{ $$ = scstrjoin4sisi($1,"(",$3,")"); }
 		;
-enumFunParmList: enumExpr
+enumFunParmList: enumExpr				{ $$ = $1; }
 		| enumFunParmList ',' enumExpr		{ $$ = scstrjoin3sis($1,",",$3); }
 		;
 
 //************************************
 
-cellname:	SYMBOL
+cellname:	SYMBOL				{ $$ = $1; }
 		| SYMBOL vectors_bra		{ $$ = scstrjoin2ss($1,$2); }
 		;
 
@@ -429,14 +414,14 @@ vectorsE:	/* empty */			{ $$ = strdup(""); }	/* Horrid */
 		| vectors_bra			{ $$ = $1; }
 		;
 
-vectors_bra:	vector_bra
+vectors_bra:	vector_bra			{ $$ = $1; }
 		| vectors_bra vector_bra	{ $$ = scstrjoin2ss($1,$2); }
 		;
 
 vector_bra:	'[' vectorNum ']'		{ char *cp=malloc(strlen($2)+5);
-			  strcpy(cp,"["); strcat(cp,$2); strcat(cp,"]");
-			  SCFree ($2);
-			  $$=cp; }
+						  strcpy(cp,"["); strcat(cp,$2); strcat(cp,"]");
+						  SCFree ($2);
+						  $$=cp; }
 		;
 
 vector:		/* empty */			{ $$ = strdup(""); }	/* Horrid */

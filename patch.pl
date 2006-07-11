@@ -13,23 +13,38 @@ if (!$ENV{SYSTEMC} || !-d $ENV{SYSTEMC}) {
 }
 $ENV{SYSTEMC_KIT} ||= $ENV{SYSTEMC};  # Where the source tree is
 
-if (!-r "$ENV{SYSTEMC_KIT}/src/systemc/datatypes/bit/sc_bv_base.h") {
+if (!-r "$ENV{SYSTEMC_KIT}/src/systemc/datatypes/bit/sc_bv_base.h"
+    && !-r "$ENV{SYSTEMC_KIT}/src/sysc/datatypes/bit/sc_bv_base.h") {
     die "%Error: Unknown version of SystemC,";
 }
 
-my $ver_2_0_1 = (sc_version() < 20040101);
+my $ver_2_1_v1    = 20050714;
+my $ver_2_1_beta1 = 20041012;
+my $ver_2_0_1     = 20040101;
 
-patch ("patch-2-0-1", $ENV{SYSTEMC_KIT},
-       "$ENV{SYSTEMC_KIT}/src/systemc/datatypes/bit/sc_bv_base.h",
-       qr/For SystemPerl/);
-
-if (-d "$ENV{SYSTEMC}/include/systemc/datatypes") {	# May not exist if user hasn't installed systemc
-    patch ("patch-2-0-1-include", $ENV{SYSTEMC},
-	   "$ENV{SYSTEMC}/include/systemc/datatypes/bit/sc_bv_base.h",
+if (sc_version() >= $ver_2_1_v1) {
+    patch ("patch-2-1-v1", $ENV{SYSTEMC_KIT},
+	   "$ENV{SYSTEMC_KIT}/src/sysc/datatypes/bit/sc_bv_base.h",
 	   qr/For SystemPerl/);
+
+    if (-d "$ENV{SYSTEMC}/include/sysc/datatypes") {	# May not exist if user hasn't installed systemc
+	patch ("patch-2-1-v1-include", $ENV{SYSTEMC},
+	       "$ENV{SYSTEMC}/include/sysc/datatypes/bit/sc_bv_base.h",
+	       qr/For SystemPerl/);
+    }
+} else {
+    patch ("patch-2-0-1", $ENV{SYSTEMC_KIT},
+	   "$ENV{SYSTEMC_KIT}/src/systemc/datatypes/bit/sc_bv_base.h",
+	   qr/For SystemPerl/);
+
+    if (-d "$ENV{SYSTEMC}/include/systemc/datatypes") {	# May not exist if user hasn't installed systemc
+	patch ("patch-2-0-1-include", $ENV{SYSTEMC},
+	       "$ENV{SYSTEMC}/include/systemc/datatypes/bit/sc_bv_base.h",
+	       qr/For SystemPerl/);
+    }
 }
 
-if ($ver_2_0_1
+if (sc_version() <= $ver_2_0_1
     && -r "/usr/include/c++/3.2.2/backward/strstream") {
     patch ("patch-2-0-1-gcc322", $ENV{SYSTEMC},
 	   "/usr/include/c++/3.2.2/backward/strstream",
@@ -85,10 +100,12 @@ sub sc_version {
     $ENV{SYSTEMC} or die "%Error: SYSTEMC env var not set,";
     if (!$Sc_Version) {
 	my $fh;
-	foreach my $fn ("$ENV{SYSTEMC_KIT}/src/systemc/kernel/sc_ver.h",
-			"$ENV{SYSTEMC}/include/systemc/kernel/sc_ver.h",
+	foreach my $fn ("$ENV{SYSTEMC_KIT}/src/sysc/kernel/sc_ver.h",	# 2.1.v1+
+			"$ENV{SYSTEMC}/include/sysc/kernel/sc_ver.h",	# 2.1.v1+
+			"$ENV{SYSTEMC_KIT}/src/systemc/kernel/sc_ver.h",# before 2.1.v1
+			"$ENV{SYSTEMC}/include/systemc/kernel/sc_ver.h",# before 2.1.v1
 			"$ENV{SYSTEMC}/include/sc_ver.h") {
-	    $fh = IO::File->new($fn);
+	    $fh = IO::File->new($fn) if -r $fn;
 	    last if $fh;
 	}
 	if ($fh) {

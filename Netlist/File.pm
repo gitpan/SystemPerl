@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Id: File.pm 20433 2006-05-19 13:42:08Z wsnyder $
+# $Id: File.pm 22733 2006-07-11 13:37:09Z wsnyder $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -23,7 +23,7 @@ use SystemC::Template;
 use Verilog::Netlist::Subclass;
 @ISA = qw(SystemC::Netlist::File::Struct
 	Verilog::Netlist::Subclass);
-$VERSION = '1.261';
+$VERSION = '1.270';
 use strict;
 
 structs('new',
@@ -245,16 +245,18 @@ sub auto {
 			   \&SystemC::Netlist::Module::_write_autodecls,
 			   $modref, $self->{fileref}, $prefix]);
     }
-    elsif ($line =~ /^(\s*)\/\*AUTOTRACE\(([a-zA-Z0-9_]+)((,manual)?(,recurse)?(,activity)?(,exists)?)\)\*\//) {
+    elsif ($line =~ /^(\s*)\/\*AUTOTRACE\(([a-zA-Z0-9_]+)((,manual)?(,recurse)?(,activity)?(,exists)?(,standalone)?(,c)?)\)\*\//) {
 	my $prefix = $1; my $modname = $2; my $manual = $3;
 	$modname = $self->{fileref}->module_exp if $modname eq "__MODULE__";
 	my $mod = $self->{netlist}->find_module ($modname);
 	$mod or $self->error ("Declaration for module not found: $modname\n");
 	$mod->_autotrace('on',1);
-	$mod->_autotrace('manual',1) if $manual =~ /manual/;
-	$mod->_autotrace('recurse',1) if $manual =~ /recurse/;
-	$mod->_autotrace('activity',1) if $manual =~ /activity/;
-	$mod->_autotrace('exists',1) if $manual =~ /exists/;
+	$mod->_autotrace('manual',1) if $manual =~ /\bmanual\b/;
+	$mod->_autotrace('recurse',1) if $manual =~ /\brecurse\b/;
+	$mod->_autotrace('activity',1) if $manual =~ /\bactivity\b/;
+	$mod->_autotrace('exists',1) if $manual =~ /\bexists\b/;
+	$mod->_autotrace('standalone',1) if $manual =~ /\bstandalone\b/;
+	$mod->_autotrace('c',1) if $manual =~ /\bc\b/;
 	push_text($self, [ 1, $self->filename, $self->lineno,
 			   \&SystemC::Netlist::AutoTrace::_write_autotrace,
 			   $mod, $self->{fileref}, $prefix,]);
@@ -1393,7 +1395,9 @@ Prints debugging information for this file.
 
 =head1 DISTRIBUTION
 
-The latest version is available from CPAN and from L<http://www.veripool.com/>.
+SystemPerl is part of the L<http://www.veripool.com/> free SystemC software
+tool suite.  The latest version is available from CPAN and from
+L<http://www.veripool.com/systemperl.html>.
 
 Copyright 2001-2006 by Wilson Snyder.  This package is free software; you
 can redistribute it and/or modify it under the terms of either the GNU

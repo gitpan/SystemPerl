@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Id: AutoTrace.pm 20433 2006-05-19 13:42:08Z wsnyder $
+# $Id: AutoTrace.pm 22733 2006-07-11 13:37:09Z wsnyder $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -18,7 +18,7 @@ package SystemC::Netlist::AutoTrace;
 use File::Basename;
 
 use SystemC::Netlist::Module;
-$VERSION = '1.261';
+$VERSION = '1.270';
 use strict;
 
 use vars qw ($Debug_Check_Code);
@@ -32,7 +32,7 @@ sub _write_autotrace {
     my $fileref = shift;
     my $prefix = shift;
     return if !$SystemC::Netlist::File::outputting;
-    return if !$self->netlist->tracing;
+    return if !($self->netlist->tracing || $self->_autotrace('standalone'));
     if ($self->_autotrace('manual')) {
 	$fileref->print
 	    ("${prefix}// Beginning of SystemPerl automatic trace file routine\n",
@@ -91,6 +91,7 @@ sub _tracer_dups_recurse {
 
     # Add our nets to the layout
     foreach my $cellref ($modref->cells_sorted()) {
+	next if $cellref->submod && $cellref->submod->_autotrace('standalone');
 	my $submodhier = $modhier.".".$cellref->name;
 	foreach my $pinref ($cellref->pins_sorted) {
 	    if ($pinref->net && $pinref->port && $pinref->port->net
@@ -185,6 +186,7 @@ sub _tracer_setup {
     }
     if ($trinfo->{recurse}) {
 	foreach my $cellref ($modref->cells_sorted()) {
+	    next if $cellref->submod && $cellref->submod->_autotrace('standalone');
 	    my $subref = {};
 	    push @{$tracesref->{cells}}, $subref;
 	    _tracer_setup($cellref->submod,
@@ -345,8 +347,9 @@ sub _write_tracer_trace {
 
     my $mod = $self->name;
 
+    my $trace_class = $self->_autotrace('c') ? "SpTraceVcdCFile" : "SpTraceFile";
     $fileref->print
-	("void ${mod}::trace (SpTraceFile* tfp, int levels, int options) {\n",
+	("void ${mod}::trace (${trace_class}* tfp, int levels, int options) {\n",
 	 "    if(0 && options) {}  // Prevent unused\n",
 	 "    tfp->spTrace()->addCallback (&${mod}::traceInit, &${mod}::traceFull,  &${mod}::traceChg, this);\n",);
     my $cmt = "";
@@ -359,7 +362,8 @@ sub _write_tracer_trace {
 	my $name = $cellref->name;
 	(my $namenobra = $name) =~ tr/\[\]/()/;
 	if ($cellref->submod  # Else not linked
-	    && $cellref->submod->_autotrace('on')) {
+	    && $cellref->submod->_autotrace('on')
+	    && !$cellref->submod->_autotrace('standalone')) {
 	    $fileref->printf ("    ${cmt}    if (this->${name}) this->${name}->trace (tfp, levels-1, options);  // Is-a %s\n",
 			      $cellref->submod->name);
 	}
@@ -637,7 +641,9 @@ It is called from SystemC::Netlist::Module.
 
 =head1 DISTRIBUTION
 
-The latest version is available from CPAN and from L<http://www.veripool.com/>.
+SystemPerl is part of the L<http://www.veripool.com/> free SystemC software
+tool suite.  The latest version is available from CPAN and from
+L<http://www.veripool.com/systemperl.html>.
 
 Copyright 2001-2006 by Wilson Snyder.  This package is free software; you
 can redistribute it and/or modify it under the terms of either the GNU

@@ -1,4 +1,4 @@
-// $Id: systemperl.h 19553 2006-05-05 14:57:29Z wsnyder $ -*- SystemC -*-
+// $Id: systemperl.h 22711 2006-07-10 20:21:12Z wsnyder $ -*- SystemC -*-
 //********************************************************************
 //
 // THIS MODULE IS PUBLICLY LICENSED
@@ -50,6 +50,15 @@ using namespace std;
 
 #ifndef SYSTEMPERL
 # define SYSTEMPERL 1
+#endif
+
+//********************************************************************
+// Version compatibility
+
+#if (SYSTEMC_VERSION>=20050714) // SystemC 2.1.v1
+typedef std::string sp_string;	///< sc_string or std::string compatible across SC versions
+#else
+typedef sc_string sp_string;	///< sc_string or std::string compatible across SC versions
 #endif
 
 //********************************************************************

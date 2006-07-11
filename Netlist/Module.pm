@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Id: Module.pm 20433 2006-05-19 13:42:08Z wsnyder $
+# $Id: Module.pm 22733 2006-07-11 13:37:09Z wsnyder $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -28,7 +28,7 @@ use SystemC::Netlist::AutoCover;
 use SystemC::Netlist::AutoTrace;
 
 @ISA = qw(Verilog::Netlist::Module);
-$VERSION = '1.261';
+$VERSION = '1.270';
 use strict;
 
 # Some attributes we use:
@@ -294,10 +294,11 @@ sub _write_autodecls {
     $fileref->print($prefix."public:\n") if ($last_meth ne "");
 
     if ($self->_autotrace('on')
-	&& $self->netlist->tracing) {
+	&& ($self->netlist->tracing || $self->_autotrace('standalone'))) {
+	my $trace_class = $self->_autotrace('c') ? "SpTraceVcdCFile" : "SpTraceFile";
 	$fileref->print
 	    ("#if WAVES\n",
-	     "${prefix}void trace (SpTraceFile *tfp, int levels, int options=0);\n",
+	     "${prefix}void trace (${trace_class} *tfp, int levels, int options=0);\n",
 	     "${prefix}static void\ttraceInit",
 	     " (SpTraceVcd* vcdp, void* userthis, uint32_t code);\n",
 	     "${prefix}static void\ttraceFull",
@@ -328,7 +329,9 @@ pin.
 
 =head1 DISTRIBUTION
 
-The latest version is available from CPAN and from L<http://www.veripool.com/>.
+SystemPerl is part of the L<http://www.veripool.com/> free SystemC software
+tool suite.  The latest version is available from CPAN and from
+L<http://www.veripool.com/systemperl.html>.
 
 Copyright 2001-2006 by Wilson Snyder.  This package is free software; you
 can redistribute it and/or modify it under the terms of either the GNU

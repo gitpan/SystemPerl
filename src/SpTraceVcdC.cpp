@@ -1,4 +1,4 @@
-// $Id: SpTraceVcdC.cpp 19553 2006-05-05 14:57:29Z wsnyder $ -*- SystemC -*-
+// $Id: SpTraceVcdC.cpp 22665 2006-07-07 20:26:40Z wsnyder $ -*- SystemC -*-
 //=============================================================================
 //
 // THIS MODULE IS PUBLICLY LICENSED
@@ -98,7 +98,7 @@ void SpTraceVcd::open (const char* filename) {
 void SpTraceVcd::openNext (bool incFilename) {
     // Open next filename in concat sequence, mangle filename if
     // incFilename is true.
-    close(); // Close existing
+    closePrev(); // Close existing
     if (incFilename) {
 	// Find _0000.{ext} in filename
 	string name = m_filename;
@@ -134,7 +134,7 @@ void SpTraceVcd::openNext (bool incFilename) {
 }
 
 SpTraceVcd::~SpTraceVcd() {
-    close();
+    closePrev();
     if (m_wrBufp) { delete[] m_wrBufp; m_wrBufp=NULL; }
     if (m_sigs_oldvalp) { delete[] m_sigs_oldvalp; m_sigs_oldvalp=NULL; }
     // Remove from list of traces
@@ -142,12 +142,22 @@ SpTraceVcd::~SpTraceVcd() {
     if (pos != s_vcdVecp.end()) { s_vcdVecp.erase(pos); }
 }
 
-void SpTraceVcd::close () {
+void SpTraceVcd::closePrev () {
     if (!m_isOpen) return;
 
     bufferFlush();
     m_isOpen = false;
     ::close(m_fd);
+}
+
+void SpTraceVcd::close() {
+    if (!m_isOpen) return;
+    if (m_evcd) {
+	printStr("$vcdclose ");
+	printTime(m_timeLastDump);
+	printStr(" $end\n");
+    }
+    closePrev();
 }
 
 void SpTraceVcd::printStr (const char* str) {
@@ -162,6 +172,22 @@ void SpTraceVcd::printQuad (uint64_t n) {
     char buf [100];
     sprintf(buf,"%llu",(long long unsigned)n);
     printStr(buf);
+}
+
+void SpTraceVcd::printTime (double timestamp) {
+    // VCD file format specification does not allow non-integers for timestamps
+    // Dinotrace doesn't mind, but Cadence vvision seems to choke
+    uint64_t timeui = (uint64_t)timestamp;
+    if (timeui < m_timeLastDump) {
+	timeui = m_timeLastDump;
+	static bool backTime = false;
+	if (!backTime) {
+	    backTime = true;
+	    SP_NOTICE_LN(__FILE__,__LINE__, "VCD time is moving backwards, wave file may be incorrect.\n");
+	}
+    }
+    m_timeLastDump = timeui;
+    printQuad(timeui);
 }
 
 void SpTraceVcd::bufferFlush () {
@@ -259,12 +285,14 @@ void SpTraceVcd::dumpHeader () {
 	//cout <<"hier "<<hiername<<endl<<"  lp "<<lp<<endl<<"  np "<<np<<endl;
 
 	// Any extra .'s in last name are scope ups we need to do
+	bool first = true;
 	for (; *lp; lp++) {
-	    if (*lp=='.') {
+	    if (*lp=='.' || (first && *lp!=' ')) {
 		if (*(lp+1)=='.') break;  // ".." means signal name starts
 		printIndent(-1);
 		printStr("$upscope $end\n");
 	    }
+	    first = false;
 	}
 
 	// Any new .'s are scope downs we need to do
@@ -323,16 +351,25 @@ void SpTraceVcd::declare (uint32_t code, const char* name, int arraynum,
 	int predotlen = dot - basename;
 	string nameasstr = name;
 	basename=dot+1;
-	hiername = m_modName+"."+nameasstr.substr(0,predotlen)+" "+basename;
+	if (m_modName!="") { hiername = m_modName+"."; }  // Make ->module calls optional
+	hiername += nameasstr.substr(0,predotlen)+" "+basename;
     } else {
-	hiername = m_modName+" "+name;
+	if (m_modName!="") { hiername = m_modName+" "; }  // Make ->module calls optional
+	hiername += name;
     }
 
     // Print reference
-    string decl = "$var wire ";
+    string decl = (m_evcd?"$var port ":"$var wire ");
     char buf [1000];
     sprintf(buf, "%2d ", msb-lsb+1);
-    decl += buf+stringCode(code)+" "+basename;
+    decl += buf;
+    if (m_evcd) {
+	sprintf(buf, "<%d", code);
+	decl += buf;
+    } else {
+	decl += stringCode(code);
+    }
+    decl += (string(" "))+basename;
     if (arraynum>=0) {
 	sprintf(buf, "(%d)", arraynum);
 	decl += buf;
@@ -399,20 +436,8 @@ void SpTraceVcd::dump (double timestamp) {
 }
 
 void SpTraceVcd::dumpPrep (double timestamp) {
-    // VCD file format specification does not allow non-integers for timestamps
-    // Dinotrace doesn't mind, but Cadence vvision seems to choke
-    uint64_t timeui = (uint64_t)timestamp;
-    if (timeui < m_timeLastDump) {
-	timeui = m_timeLastDump;
-	static bool backTime = false;
-	if (!backTime) {
-	    backTime = true;
-	    SP_NOTICE_LN(__FILE__,__LINE__, "VCD time is moving backwards, wave file may be incorrect.\n");
-	}
-    }
-    m_timeLastDump = timeui;
     printStr("#");
-    printQuad(timeui);
+    printTime(timestamp);
     printStr("\n");
 }
 
@@ -438,7 +463,7 @@ uint32_t v1, v2, s1, s2[3];
 uint8_t ch;
 double timestamp = 1;
 
-void init (SpTraceVcd* vcdp, void* userthis, uint32_t code) {
+void vcdInit (SpTraceVcd* vcdp, void* userthis, uint32_t code) {
     vcdp->module ("top");
      vcdp->declBus (0x2, "v1",-1,5,1);
      vcdp->declBus (0x3, "v2",-1,6,0);
@@ -447,9 +472,11 @@ void init (SpTraceVcd* vcdp, void* userthis, uint32_t code) {
       vcdp->declBit (0x5, "ch",-1);
      vcdp->module ("top.sub2");
       vcdp->declArray (0x6, "s2",-1, 40,3);
+    vcdp->module ("top2");
+     vcdp->declBus (0x2, "t2v1",-1,5,1);
 }
 
-void full (SpTraceVcd* vcdp, void* userthis, uint32_t code) {
+void vcdFull (SpTraceVcd* vcdp, void* userthis, uint32_t code) {
     vcdp->fullBus  (0x2, v1,5);
     vcdp->fullBus  (0x3, v2,7);
     vcdp->fullBit  (0x4, s1);
@@ -457,7 +484,7 @@ void full (SpTraceVcd* vcdp, void* userthis, uint32_t code) {
     vcdp->fullArray(0x6, &s2[0], 38);
 }
 
-void change (SpTraceVcd* vcdp, void* userthis, uint32_t code) {
+void vcdChange (SpTraceVcd* vcdp, void* userthis, uint32_t code) {
     vcdp->chgBus  (0x2, v1,5);
     vcdp->chgBus  (0x3, v2,7);
     vcdp->chgBit  (0x4, s1);
@@ -470,21 +497,21 @@ main() {
     v1 = v2 = s1 = 0;
     s2[0] = s2[1] = s2[2] = 0;
     ch = 0;
-
-    SpTraceVcdCFile* vcdp = new SpTraceVcdCFile;
-    vcdp->spTrace()->addCallback (&init, &full, &change, 0);
-    vcdp->open ("test.vcd");
-
-    // Dumping
-    vcdp->dump(timestamp++);
-    v1 = 0xfff;
-    vcdp->dump(timestamp++);
-    v2 = 0x1;
-    s2[1] = 2;
-    vcdp->dump(timestamp++);
-    ch = 2;
-    vcdp->dump(timestamp++);
-    vcdp->close();
+    {
+	SpTraceVcdCFile* vcdp = new SpTraceVcdCFile;
+	vcdp->spTrace()->addCallback (&vcdInit, &vcdFull, &vcdChange, 0);
+	vcdp->open ("test.vcd");
+	// Dumping
+	vcdp->dump(timestamp++);
+	v1 = 0xfff;
+	vcdp->dump(timestamp++);
+	v2 = 0x1;
+	s2[1] = 2;
+	vcdp->dump(timestamp++);
+	ch = 2;
+	vcdp->dump(timestamp++);
+	vcdp->close();
+    }
 }
 #endif
 
