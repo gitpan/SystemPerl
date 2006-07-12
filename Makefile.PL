@@ -1,4 +1,4 @@
-# $Id: Makefile.PL 11992 2006-01-16 18:59:58Z wsnyder $
+# $Id: Makefile.PL 22798 2006-07-12 19:22:52Z wsnyder $
 # DESCRIPTION: Perl ExtUtils: Type 'perl Makefile.PL' to create a Makefile for this package
 #
 # Copyright 2001-2006 by Wilson Snyder.  This program is free software;
@@ -62,6 +62,7 @@ WriteMakefile(
 	      PREREQ_PM => {'Verilog::Getopt' => 2.211,
 			    'Verilog::Netlist' => 2.315,
 			},
+	      PMLIBDIRS => [qw( Coverage Netlist Parser)],
 	      EXE_FILES => [qw( sp_preproc sp_includer sp_makecheck vcoverage )],
 	      'clean'	=> {FILES => qw ( ),},
 	      'dist'    => {COMPRESS => 'gzip -9f',
