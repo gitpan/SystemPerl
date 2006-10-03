@@ -2,6 +2,10 @@ Revision history for Perl extension SystemC::Netlist
 
 The contributors that suggested a given feature are shown in [].
 
+* SystemC 1.272 10/3/2006
+
+***	Support SystemC 2.2.05jun06 (via GreenSocs release).
+
 * SystemC 1.271 7/12/2006
 
 *****	Fix missing install of SystemC::Coverage::Item, rt20423.
@@ -355,7 +359,7 @@ The contributors that suggested a given feature are shown in [].
 
 
 ----------------------------------------------------------------------
-$Id: Changes 22797 2006-07-12 19:21:40Z wsnyder $
+$Id: Changes 25920 2006-10-03 15:48:21Z wsnyder $
 DESCRIPTION: Documentation on change history for this package
 ----------------------------------------------------------------------
 

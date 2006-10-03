@@ -1,4 +1,4 @@
-// $Id: SpTraceVcd.h 22697 2006-07-10 14:56:22Z wsnyder $ -*- SystemC -*-
+// $Id: SpTraceVcd.h 25464 2006-09-15 20:51:31Z wsnyder $ -*- SystemC -*-
 //=============================================================================
 //
 // THIS MODULE IS PUBLICLY LICENSED
@@ -42,11 +42,20 @@ class SpTraceFile
 public:
     SpTraceFile() {
 	sc_get_curr_simcontext()->add_trace_file(this);
-# if (SYSTEMC_VERSION>20011000)
+# if (SYSTEMC_VERSION>=20060505)
+	// We want to avoid a depreciated warning, but still be back compatible.
+	// Turning off the message just for this still results in an annoying "to turn off" message.
+	sc_time t1sec(1,SC_SEC);
+	if (t1sec.to_default_time_units()!=0) {
+	    sc_time tunits(1.0/t1sec.to_default_time_units(),SC_SEC);
+	    spTrace()->set_time_unit(tunits.to_string());
+	}
+	spTrace()->set_time_resolution(sc_get_time_resolution().to_string());
+# elif (SYSTEMC_VERSION>20011000)
 	// To confuse matters 2.1.beta returns a char* here, while 2.1.v1 returns a std::string
 	// we allow both flavors with overloaded set_time_* functions.
-	spTrace()->set_time_resolution(sc_get_time_resolution().to_string());
 	spTrace()->set_time_unit(sc_get_default_time_unit().to_string());
+	spTrace()->set_time_resolution(sc_get_time_resolution().to_string());
 # endif
     }
 

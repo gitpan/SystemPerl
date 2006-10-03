@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-#$Id: vcoverage 21533 2006-06-08 14:57:34Z wsnyder $
+#$Id: vcoverage 25171 2006-09-08 14:09:55Z wsnyder $
 ######################################################################
 #
 # Copyright 2001-2006 by Wilson Snyder.  This program is free software;
@@ -93,7 +93,7 @@ line_report($cov, $opt_out_dir);
 #----------------------------------------------------------------------
 
 sub usage {
-    print '$Id: vcoverage 21533 2006-06-08 14:57:34Z wsnyder $ ', "\n";
+    print '$Id: vcoverage 25171 2006-09-08 14:09:55Z wsnyder $ ', "\n";
     $SIG{__WARN__} = sub{};	#pod2text isn't clean.
     pod2text($0);
     exit (1);
@@ -194,7 +194,7 @@ sub line_output_file {
 	my $filename = $fileref->{filename};
 	$filename =~ s/.*\///;
 	my $outfile = $dirname."/".$filename;
-	my $fh = IO::File->new($outfile,"w") or die "%Error: $! writing $outfile\n";
+	my $fh = IO::File->new(">$outfile") or die "%Error: $! writing $outfile\n";
 	my $lineno=-1;  # Yes, there is a line 0, we added it as a comment when we read
 	foreach my $line (@{$fileref->{text}}) {
 	    $lineno++;
@@ -239,7 +239,7 @@ sub src_read_files {
 	my $filename = $fileref->{filename};
 	print "src_read_file $filename:\n" if $Debug;
 	$filename = $Opt->file_path($filename);
-	my $fh = IO::File->new($filename) or die "%Error: $! $filename\n";
+	my $fh = IO::File->new("<$filename") or die "%Error: $! $filename\n";
 	my @text = <$fh>;
 	# Make line 0 a comment so [lineno] works (arrays start at 0)
 	unshift @text, "// Coverage analysis on ".(scalar(localtime))."\n";
@@ -272,7 +272,7 @@ sub linenums {
     my $cov = shift;
     # For developer testing only
     foreach my $filename (glob "obj_$ENV{DIRPROJECT_ARCH}/v/*.sp") {
-	my $fh = IO::File->new($filename) or die "%Error: $! $filename\n";
+	my $fh = IO::File->new("<$filename") or die "%Error: $! $filename\n";
 	while (defined (my $line=$fh->getline)) {
 	    if ($line =~ /SP_AUTO_COVER3\(\"([^\"]+)\",\"([^\"]+)\",([0-9]+)/) {
 		$cov->inc(type=>'block',filename=>$filename,lineno=>$.,count=>0);

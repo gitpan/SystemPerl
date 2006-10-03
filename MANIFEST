@@ -38,6 +38,8 @@ patch-2-0-1-include.diff
 patch-2-0-1.diff
 patch-2-1-v1-include.diff
 patch-2-1-v1.diff
+patch-2-2-include.diff
+patch-2-2.diff
 patch.pl
 README
 readme.texi

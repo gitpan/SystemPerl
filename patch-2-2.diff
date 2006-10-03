@@ -1,0 +1,11 @@
+--- src/sysc/datatypes/bit/sc_bv_base.h	(revision 148)
++++ src/sysc/datatypes/bit/sc_bv_base.h	(working copy)
+@@ -238,6 +238,8 @@
+ 
+     void clean_tail();
+ 
++    // For SystemPerl, allow raw data pointer access
++    unsigned long* get_datap() const { return (unsigned long*)m_data; }
+ 
+     // other methods
+ 

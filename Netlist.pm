@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Id: Netlist.pm 22798 2006-07-12 19:22:52Z wsnyder $
+# $Id: Netlist.pm 25920 2006-10-03 15:48:21Z wsnyder $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -27,7 +27,7 @@ use Verilog::Netlist::Subclass;
 use strict;
 use vars qw($Debug $Verbose $VERSION);
 
-$VERSION = '1.271';
+$VERSION = '1.272';
 
 ######################################################################
 #### Error Handling
@@ -72,7 +72,7 @@ sub sc_version {
 	foreach my $fn ("$ENV{SYSTEMC}/include/sysc/kernel/sc_ver.h",
 			"$ENV{SYSTEMC}/include/systemc/kernel/sc_ver.h",
 			"$ENV{SYSTEMC}/include/sc_ver.h") {
-	    $fh = IO::File->new($fn);
+	    $fh = IO::File->new("<$fn");
 	    last if $fh;
 	}
 	if ($fh) {
@@ -233,7 +233,7 @@ sub write_cell_library {
 		  include_libcells=>0,
 		  @_);
     $self->dependency_out($params{filename});
-    my $fh = IO::File->new($params{filename},"w") or die "%Error: $! $params{filename}\n";
+    my $fh = IO::File->new(">$params{filename}") or die "%Error: $! writing $params{filename}\n";
     foreach my $modref ($self->modules_sorted) {
 	next if $modref->is_libcell() && !$params{include_libcells};
 	print $fh "MODULE ",$modref->name,"\n";
@@ -249,7 +249,7 @@ sub read_cell_library {
     my %params = (filename=>undef,
 		  @_);
     $self->dependency_in($params{filename});
-    my $fh = IO::File->new($params{filename}) or die "%Error: $! $params{filename}\n";
+    my $fh = IO::File->new("<$params{filename}") or die "%Error: $! $params{filename}\n";
     my $modref;
     while (defined (my $line = $fh->getline)) {
 	$line =~ s/#.*$//;

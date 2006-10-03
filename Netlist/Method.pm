@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Id: Method.pm 22798 2006-07-12 19:22:52Z wsnyder $
+# $Id: Method.pm 25920 2006-10-03 15:48:21Z wsnyder $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -24,7 +24,7 @@ use SystemC::Template;
 use Verilog::Netlist::Subclass;
 @ISA = qw(SystemC::Netlist::Method::Struct
 	  Verilog::Netlist::Subclass);
-$VERSION = '1.271';
+$VERSION = '1.272';
 use strict;
 
 structs('new',

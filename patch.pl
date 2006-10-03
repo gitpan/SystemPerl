@@ -13,16 +13,31 @@ if (!$ENV{SYSTEMC} || !-d $ENV{SYSTEMC}) {
 }
 $ENV{SYSTEMC_KIT} ||= $ENV{SYSTEMC};  # Where the source tree is
 
-if (!-r "$ENV{SYSTEMC_KIT}/src/systemc/datatypes/bit/sc_bv_base.h"
-    && !-r "$ENV{SYSTEMC_KIT}/src/sysc/datatypes/bit/sc_bv_base.h") {
-    die "%Error: Unknown version of SystemC,";
+if (!-r "$ENV{SYSTEMC_KIT}/src") {
+    die "%Error: \$SYSTEMC_KIT doesn't point to a SystemC/src directory; no $ENV{SYSTEMC_KIT}/src\n";
 }
 
+if (!-r "$ENV{SYSTEMC_KIT}/src/systemc/datatypes/bit/sc_bv_base.h"
+    && !-r "$ENV{SYSTEMC_KIT}/src/sysc/datatypes/bit/sc_bv_base.h") {
+    die "%Error: Unknown version of SystemC or missing files,";
+}
+
+my $ver_2_2       = 20060505;
 my $ver_2_1_v1    = 20050714;
 my $ver_2_1_beta1 = 20041012;
 my $ver_2_0_1     = 20040101;
 
-if (sc_version() >= $ver_2_1_v1) {
+if (sc_version() >= $ver_2_2) {
+    patch ("patch-2-2", $ENV{SYSTEMC_KIT},
+	   "$ENV{SYSTEMC_KIT}/src/sysc/datatypes/bit/sc_bv_base.h",
+	   qr/For SystemPerl/);
+
+    if (-d "$ENV{SYSTEMC}/include/sysc/datatypes") {	# May not exist if user hasn't installed systemc
+	patch ("patch-2-2-include", $ENV{SYSTEMC},
+	       "$ENV{SYSTEMC}/include/sysc/datatypes/bit/sc_bv_base.h",
+	       qr/For SystemPerl/);
+    }
+} elsif (sc_version() >= $ver_2_1_v1) {
     patch ("patch-2-1-v1", $ENV{SYSTEMC_KIT},
 	   "$ENV{SYSTEMC_KIT}/src/sysc/datatypes/bit/sc_bv_base.h",
 	   qr/For SystemPerl/);
@@ -78,12 +93,12 @@ sub patch {
     run_system("cd $root && pwd");
     run_system("cd $root && patch -b -p0 <$pfile");
 
-    IO::File->new($patchedfile,"w")->close();    # Touch, as SystemPerl looks for patch existence
+    IO::File->new(">$patchedfile")->close();    # Touch, as SystemPerl looks for patch existence
 }
 
 sub wholefile {
     my $file = shift;
-    my $fh = IO::File->new ($file) or die "%Error: $! $file";
+    my $fh = IO::File->new ("<$file") or die "%Error: $! $file";
     my $wholefile;
     {   local $/;
 	undef $/;
@@ -105,7 +120,7 @@ sub sc_version {
 			"$ENV{SYSTEMC_KIT}/src/systemc/kernel/sc_ver.h",# before 2.1.v1
 			"$ENV{SYSTEMC}/include/systemc/kernel/sc_ver.h",# before 2.1.v1
 			"$ENV{SYSTEMC}/include/sc_ver.h") {
-	    $fh = IO::File->new($fn) if -r $fn;
+	    $fh = IO::File->new("<$fn") if -r $fn;
 	    last if $fh;
 	}
 	if ($fh) {

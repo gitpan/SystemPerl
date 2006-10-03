@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Id: Template.pm 22798 2006-07-12 19:22:52Z wsnyder $
+# $Id: Template.pm 25920 2006-10-03 15:48:21Z wsnyder $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -27,7 +27,7 @@ use Verilog::Netlist::Subclass;
 use strict;
 use vars qw ($Debug $Default_Self $VERSION);
 
-$VERSION = '1.271';
+$VERSION = '1.272';
 
 structs('_new_base',
 	'SystemC::Template::Struct'
@@ -75,7 +75,7 @@ sub read {
     # For speed, we don't use the accessor function each loop
     my @text = ();
 
-    my $fh = IO::File->new ($filename) or die "%Error: $! $filename\n";
+    my $fh = IO::File->new ("<$filename") or die "%Error: $! $filename\n";
     while (defined (my $line = $fh->getline())) {
 	push @text, [$self, $filename, $., $line];
     }
@@ -145,7 +145,7 @@ sub write {
     # Read the old file, so we can tell if it changes
     my @old_text;	# Old file contents
     if ($keepstamp) {
-	my $fh = IO::File->new ($filename);
+	my $fh = IO::File->new ("<$filename");
 	if ($fh) {
 	    @old_text = $fh->getlines();
 	    $fh->close();

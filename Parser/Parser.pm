@@ -1,4 +1,4 @@
-#$Id: Parser.pm 22798 2006-07-12 19:22:52Z wsnyder $
+#$Id: Parser.pm 25920 2006-10-03 15:48:21Z wsnyder $
 ######################################################################
 #
 # Copyright 2001-2006 by Wilson Snyder.  This program is free software;
@@ -21,7 +21,7 @@ require DynaLoader;
 use strict;
 use vars qw($VERSION);
 
-$VERSION = '1.271';
+$VERSION = '1.272';
 
 ######################################################################
 #### Configuration Section

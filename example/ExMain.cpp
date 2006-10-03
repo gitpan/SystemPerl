@@ -1,4 +1,4 @@
-// $Id: ExMain.cpp 15117 2006-03-02 14:31:01Z wsnyder $
+// $Id: ExMain.cpp 25464 2006-09-15 20:51:31Z wsnyder $
 // DESCRIPTION: SystemPerl: Example main()
 //
 // Copyright 2001-2006 by Wilson Snyder.  This program is free software;
@@ -19,6 +19,8 @@
 
 int sc_main (int argc, char *argv[]) {
 
+    cout << "SYSTEMC_VERSION="<<dec<<SYSTEMC_VERSION<<endl;
+
 #ifndef NC_SYSTEMC
     // Simulation logfile
     sp_log_file splog;
@@ -27,7 +29,11 @@ int sc_main (int argc, char *argv[]) {
 #endif
 
     // Pins
+#if SYSTEMC_VERSION >= 20060505
+    sc_clock clk("clk",10,SC_NS);
+#else
     sc_clock clk("clk",10);
+#endif
 
     ExBench* bench;
     SP_CELL (bench,ExBench);
@@ -35,7 +41,9 @@ int sc_main (int argc, char *argv[]) {
     bench->configure();	// Verify the #sp include worked
 
 #ifndef NC_SYSTEMC
+# if SYSTEMC_VERSION < 20060505
     sc_initialize();
+# endif
 #endif
 
     // Example enumeration usage
@@ -69,7 +77,11 @@ int sc_main (int argc, char *argv[]) {
 #endif
 
     cout << "Starting\n";
+#if SYSTEMC_VERSION >= 20060505
+    sc_start();
+#else
     sc_start(-1);
+#endif
     cout << "Done\n";
 
 #ifndef NC_SYSTEMC

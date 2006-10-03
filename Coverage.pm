@@ -1,4 +1,4 @@
-# $Id: Coverage.pm 22798 2006-07-12 19:22:52Z wsnyder $
+# $Id: Coverage.pm 25920 2006-10-03 15:48:21Z wsnyder $
 ######################################################################
 #
 # Copyright 2001-2006 by Wilson Snyder.  This program is free software;
@@ -29,7 +29,7 @@ use vars qw($_Default_Self);
 ######################################################################
 #### Configuration Section
 
-$VERSION = '1.271';
+$VERSION = '1.272';
 
 use constant DEFAULT_FILENAME => 'logs/coverage.pl';
 
@@ -66,7 +66,7 @@ sub read {
     print "SystemC::Coverage::read $params{filename}\n" if $Debug;
     $params{filename} or croak "%Error: Undefined filename,";
 
-    my $fh = IO::File->new($params{filename}) or croak "%Error: $! $params{filename},";
+    my $fh = IO::File->new("<$params{filename}") or croak "%Error: $! $params{filename},";
     my $fmt = $fh->getline;
     if ($fmt =~ /Mode:perl/) {
 	$! = $@ = undef;
@@ -102,7 +102,7 @@ sub write {
     $params{filename} or croak "%Error: Undefined filename,";
     my $tempfilename = $params{filename}.".tmp";
     unlink $tempfilename;
-    my $fh = IO::File->new($tempfilename,"w") or croak "%Error: $! $tempfilename,";
+    my $fh = IO::File->new(">$tempfilename") or croak "%Error: $! writing $tempfilename,";
 
     if ($params{binary}) {
 	print $fh "# SystemC::Coverage-3\n";

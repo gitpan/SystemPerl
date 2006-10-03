@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# $Id: 10_netlist.t 11992 2006-01-16 18:59:58Z wsnyder $
+# $Id: 10_netlist.t 25464 2006-09-15 20:51:31Z wsnyder $
 # DESCRIPTION: Perl ExtUtils: Type 'make test' to test this package
 #
 # Copyright 2001-2006 by Wilson Snyder.  This program is free software;
@@ -17,6 +17,9 @@ ok(1);
 
 my $nl = new SystemC::Netlist ();
 ok($nl);
+
+my $v = $nl->sc_version() || "undef";
+print "Version: $v\n";
 
 $nl->read_file (filename=>'example/ExMod.sp',
 		strip_autos=>1);

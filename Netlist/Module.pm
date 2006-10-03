@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Id: Module.pm 22798 2006-07-12 19:22:52Z wsnyder $
+# $Id: Module.pm 25920 2006-10-03 15:48:21Z wsnyder $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -28,7 +28,7 @@ use SystemC::Netlist::AutoCover;
 use SystemC::Netlist::AutoTrace;
 
 @ISA = qw(Verilog::Netlist::Module);
-$VERSION = '1.271';
+$VERSION = '1.272';
 use strict;
 
 # Some attributes we use:
@@ -151,7 +151,7 @@ sub _autos1_recurse_inherits {
 	print "Module::autos1_inh ",$self->name,"  $inh  $fromref\n" if $Verilog::Netlist::Debug;
 	if ($fromref) {
 	    # Clone I/O
-	    foreach my $portref ($fromref->ports_sorted) {
+	    foreach my $portref ($fromref->ports) {
 		my $newport = $self->new_port
 		    (name	=> $portref->name,
 		     filename	=> ($self->filename.":INHERITED("
@@ -165,7 +165,7 @@ sub _autos1_recurse_inherits {
 		     );
 		$newport->inherited(1);
 	    }
-	    foreach my $netref ($fromref->nets_sorted) {
+	    foreach my $netref ($fromref->nets) {
 		my $newnet = $self->new_net
 		    (name	=> $netref->name,
 		     filename	=> ($self->filename.":INHERITED("

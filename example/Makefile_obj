@@ -1,4 +1,4 @@
-# $Id: Makefile_obj 11992 2006-01-16 18:59:58Z wsnyder $ -*- Makefile -*-
+# $Id: Makefile_obj 25464 2006-09-15 20:51:31Z wsnyder $ -*- Makefile -*-
 # DESCRIPTION: SystemPerl: Example makefile
 #
 # This is executed in the "test_dir", not in this directory
@@ -20,7 +20,7 @@ LIBDIR += -L. -L$(SYSTEMPERL)/src -L$(SYSTEMC)/lib-$(SYSTEMC_ARCH)
 VPATH += ../example $(SYSTEMPERL)/src
 MAKEFILES += ../example/Makefile_obj
 
-SC_LIBS = -lsystemc
+SC_LIBS = -lsystemc $(SYSTEMC_LIBS)
 ifneq ($(wildcard $(SYSTEMC)/lib-$(SYSTEMC_ARCH)/*numeric_bit*),)
   # Systemc 1.2.1beta
   SC_LIBS   += -lnumeric_bit -lqt
@@ -33,7 +33,7 @@ SP_SP = $(wildcard ../example/*.sp)
 CFLAGS += -DWAVES -Wno-deprecated
 
 ifeq ($(VERILATOR_AUTHOR_SITE),1)	# Local... Else don't burden users
-CFLAGS += -Wall -Wno-char-subscripts -Werror -m32
+CFLAGS += -Wall -Wno-char-subscripts -Werror $(SYSTEMC_CXX_FLAGS)
 endif
 
 # List Objects in bottom-up order, that way lower modules get errors first
