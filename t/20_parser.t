@@ -1,8 +1,8 @@
 #!/usr/bin/perl -w
-# $Id: 01_parser.t 11992 2006-01-16 18:59:58Z wsnyder $
+# $Id: 20_parser.t 37619 2007-04-30 13:20:11Z wsnyder $
 # DESCRIPTION: Perl ExtUtils: Type 'make test' to test this package
 #
-# Copyright 2001-2006 by Wilson Snyder.  This program is free software;
+# Copyright 2001-2007 by Wilson Snyder.  This program is free software;
 # you can redistribute it and/or modify it under the terms of either the GNU
 # General Public License or the Perl Artistic License.
 
@@ -43,7 +43,7 @@ sub include {
     my $self = shift;
     my $auto = shift;
     if ($auto =~ /AUTOINCLUDE/) {
-	$self->read_include(filename=>"t/01_parser.spinc");
+	$self->read_include(filename=>"t/20_parser.spinc");
     }
 }
 
@@ -94,13 +94,13 @@ package main;
 
 {
     # We'll write out all text, to make sure nothing gets dropped
-    $::Fh = IO::File->new (">test_dir/01_parser.out");
-    $::Fdump = IO::File->new (">test_dir/01_parser.parse");
-    $::Fsyms = IO::File->new (">test_dir/01_parser.syms");
+    $::Fh = IO::File->new (">test_dir/20_parser.out");
+    $::Fdump = IO::File->new (">test_dir/20_parser.parse");
+    $::Fsyms = IO::File->new (">test_dir/20_parser.syms");
     my $sp = Trialparser->new();
-    $sp->{lastfile} = "t/01_parser.sp";
+    $sp->{lastfile} = "t/20_parser.sp";
     $sp->{lastline} = 1;
-    $sp->read (filename=>"t/01_parser.sp");
+    $sp->read (filename=>"t/20_parser.sp");
     $sp->writesyms ($::Fsyms);
     $::Fh->close();
     $::Fdump->close();
@@ -110,8 +110,8 @@ ok(1);
 
 {
     # Ok, let's make sure the right data went through
-    my $f1 = wholefile ("t/01_parser.sp") or die;
-    my $f2 = wholefile ("test_dir/01_parser.out") or die;
+    my $f1 = wholefile ("t/20_parser.sp") or die;
+    my $f2 = wholefile ("test_dir/20_parser.out") or die;
     $f1 =~ s/(\/\*)?AUTOINCLUDE(;|\*\/)/${1}AUTOINCLUDE${2}\/\*AUTO_FROM_INCLUDE\*\/\n/g;
     my @l1 = split ("\n", $f1);
     my @l2 = split ("\n", $f2);

@@ -1,8 +1,8 @@
 #!/usr/bin/perl -w
-#$Id: sp_includer 21533 2006-06-08 14:57:34Z wsnyder $
+#$Id: sp_includer 37619 2007-04-30 13:20:11Z wsnyder $
 ######################################################################
 #
-# Copyright 2001-2006 by Wilson Snyder.  This program is free software;
+# Copyright 2001-2007 by Wilson Snyder.  This program is free software;
 # you can redistribute it and/or modify it under the terms of either the GNU
 # General Public License or the Perl Artistic License.
 # 
@@ -16,7 +16,7 @@
 require 5.005;
 use Getopt::Long;
 use IO::File;
-use Pod::Text;
+use Pod::Usage;
 use strict;
 
 use vars qw ($Debug);
@@ -31,7 +31,7 @@ if (! GetOptions (
 		  "debug"	=> \&debug,
 		  "<>"		=> \&parameter,
 		  )) {
-    usage();
+    die "%Error: Bad usage, try 'sp_includer --help'\n";
 }
 
 foreach my $param (@params) {
@@ -41,9 +41,8 @@ foreach my $param (@params) {
 #----------------------------------------------------------------------
 
 sub usage {
-    print '$Id: sp_includer 21533 2006-06-08 14:57:34Z wsnyder $ ', "\n";
-    $SIG{__WARN__} = sub{};	#pod2text isn't clean.
-    pod2text($0);
+    print '$Id: sp_includer 37619 2007-04-30 13:20:11Z wsnyder $ ', "\n";
+    pod2usage(-verbose=>2, -exitval => 2);
     exit (1);
 }
 
@@ -109,7 +108,7 @@ SystemPerl is part of the L<http://www.veripool.com/> free SystemC software
 tool suite.  The latest version is available from CPAN and from
 L<http://www.veripool.com/systemperl.html>.
 
-Copyright 2001-2006 by Wilson Snyder.  This package is free software; you
+Copyright 2001-2007 by Wilson Snyder.  This package is free software; you
 can redistribute it and/or modify it under the terms of either the GNU
 Lesser General Public License or the Perl Artistic License.
 

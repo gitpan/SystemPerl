@@ -1,8 +1,8 @@
 #!/usr/bin/perl -w
-#$Id: vcoverage 25171 2006-09-08 14:09:55Z wsnyder $
+#$Id: vcoverage 37565 2007-04-27 14:21:13Z wsnyder $
 ######################################################################
 #
-# Copyright 2001-2006 by Wilson Snyder.  This program is free software;
+# Copyright 2001-2007 by Wilson Snyder.  This program is free software;
 # you can redistribute it and/or modify it under the terms of either the GNU
 # General Public License or the Perl Artistic License.
 # 
@@ -15,9 +15,10 @@
 
 require 5.005;
 
+use File::Spec;
 use Getopt::Long;
 use IO::File;
-use Pod::Text;
+use Pod::Usage;
 
 use FindBin qw($RealBin);
 use lib "$RealBin/lib";
@@ -49,6 +50,8 @@ $Debug = 0;
 $Opt_Min_Count = 10;
 my $opt_write;
 my $opt_out_dir = 'logs/coverage_source';
+my $opt_report = 1;
+my $opt_unlink;
 
 # Option parsing
 $Opt = new Verilog::Getopt() if !$Opt;   # Opt preloaded in internal bootstrap test
@@ -62,14 +65,16 @@ if (! GetOptions (
 		  "all-files!"	=> \$Opt_All_Files,
 		  "all-types!"	=> sub {},  # Depreciated, now always true
 		  "min=i"	=> \$Opt_Min_Count,
-		  "write=s"	=> \$opt_write,
 		  "o=s"		=> \$opt_out_dir,
+		  "report!"	=> \$opt_report,
+		  "unlink!"	=> \$opt_unlink,
+		  "write=s"	=> \$opt_write,
 		  # Debugging
 		  "linenums!"	=> \$Opt_Linenums,	# Undocumented developer-check line# annotations
 		  # Additional parameters
 		  "<>"		=> \&parameter,
 		  )) {
-    usage();
+    die "%Error: Bad usage, try 'vcoverage --help'\n";
 }
 
 our $cov = new SystemC::Coverage();
@@ -86,16 +91,25 @@ foreach my $data (@Opt_Datas) {
 }
 if ($opt_write) {
     $cov->write(filename=>$opt_write);
+    if ($opt_unlink) {
+	foreach my $data (@Opt_Datas) {
+	    # Don't erase what we created!
+	    if (File::Spec->rel2abs($data) ne File::Spec->rel2abs($opt_write)) {
+		unlink $data;
+	    }
+	}
+    }
 }
 
-line_report($cov, $opt_out_dir);
+if ($opt_report) {
+    line_report($cov, $opt_out_dir);
+}
 
 #----------------------------------------------------------------------
 
 sub usage {
-    print '$Id: vcoverage 25171 2006-09-08 14:09:55Z wsnyder $ ', "\n";
-    $SIG{__WARN__} = sub{};	#pod2text isn't clean.
-    pod2text($0);
+    print '$Id: vcoverage 37565 2007-04-27 14:21:13Z wsnyder $ ', "\n";
+    pod2usage(-verbose=>2, -exitval => 2);
     exit (1);
 }
 
@@ -283,6 +297,7 @@ sub linenums {
     push @Opt_Datas, undef;
 }
 
+1;
 #######################################################################
 #######################################################################
 __END__
@@ -295,7 +310,10 @@ vcoverage - Verilog/SystemC coverage analyzer
 
 =head1 SYNOPSIS
 
-  vcoverage <datafile>...
+ Create report:
+    vcoverage -f input.vc <datafile>
+ Merge reports
+    vcoverage --noreport -write <merged.dat>  <datafiles>
 
 =head1 DESCRIPTION
 
@@ -332,10 +350,19 @@ Displays this message and program version and exits.
 Specifies the minimum occurrence count that should be flagged if the
 coverage point does not include a specified threshold.  Defaults to 10.
 
+=item --noreport
+
+Don't produce output files.  Used with --write to merge files.
+
 =item --o I<output_directory>
 
 Sprcifies the directory name that source files with annotated coverage data
 should be written to.
+
+=item --unlink
+
+When using --write to combine coverage data, unlink all input files after
+the output has been created.
 
 =item --write I<filename>
 
@@ -382,7 +409,7 @@ SystemPerl is part of the L<http://www.veripool.com/> free SystemC software
 tool suite.  The latest version is available from CPAN and from
 L<http://www.veripool.com/systemperl.html>.
 
-Copyright 2001-2006 by Wilson Snyder.  This package is free software; you
+Copyright 2001-2007 by Wilson Snyder.  This package is free software; you
 can redistribute it and/or modify it under the terms of either the GNU
 Lesser General Public License or the Perl Artistic License.
 

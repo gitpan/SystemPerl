@@ -1,7 +1,7 @@
-# $Id: Makefile.PL 22798 2006-07-12 19:22:52Z wsnyder $
+# $Id: Makefile.PL 37619 2007-04-30 13:20:11Z wsnyder $
 # DESCRIPTION: Perl ExtUtils: Type 'perl Makefile.PL' to create a Makefile for this package
 #
-# Copyright 2001-2006 by Wilson Snyder.  This program is free software;
+# Copyright 2001-2007 by Wilson Snyder.  This program is free software;
 # you can redistribute it and/or modify it under the terms of either the GNU
 # General Public License or the Perl Artistic License.
 
@@ -59,7 +59,8 @@ WriteMakefile(
 	      ABSTRACT  => 'SystemC Netlist Utilities and Parsing',
 	      VERSION_FROM  => 'Netlist.pm',
 	      NO_META	=> 1,
-	      PREREQ_PM => {'Verilog::Getopt' => 2.211,
+	      PREREQ_PM => {'Pod::Usage' => 0,
+			    'Verilog::Getopt' => 2.211,
 			    'Verilog::Netlist' => 2.315,
 			},
 	      PMLIBDIRS => [qw( Coverage Netlist Parser)],

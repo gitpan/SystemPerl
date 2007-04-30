@@ -1,10 +1,11 @@
 # http://module-build.sourceforge.net/META-spec.html
 name:         SystemPerl
-version:      1.272
+version:      1.280
 version_from: Netlist.pm
 license:      perl
 installdirs:  site
 requires:
+    Pod::Usage:                    0
     Verilog::Getopt:               2.211
     Verilog::Netlist:              2.315
 

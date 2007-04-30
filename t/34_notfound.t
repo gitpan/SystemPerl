@@ -1,8 +1,8 @@
 #!/usr/bin/perl -w
-# $Id: 15_notfound.t 11992 2006-01-16 18:59:58Z wsnyder $
+# $Id: 34_notfound.t 37619 2007-04-30 13:20:11Z wsnyder $
 # DESCRIPTION: Perl ExtUtils: Type 'make test' to test this package
 #
-# Copyright 2001-2006 by Wilson Snyder.  This program is free software;
+# Copyright 2001-2007 by Wilson Snyder.  This program is free software;
 # you can redistribute it and/or modify it under the terms of either the GNU
 # General Public License or the Perl Artistic License.
 
@@ -19,7 +19,7 @@ ok(1);
     my $nl = new SystemC::Netlist (link_read_nonfatal=>1,);
     ok($nl);
 
-    $nl->read_file (filename=>"t/15_notfound.sp");
+    $nl->read_file (filename=>"t/34_notfound.sp");
     ok($nl);
 
     $nl->link();

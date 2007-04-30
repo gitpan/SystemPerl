@@ -1,9 +1,9 @@
-// $Id: SpFunctor.h 20428 2006-05-19 13:26:41Z wsnyder $ -*- SystemC -*-
+// $Id: SpFunctor.h 37619 2007-04-30 13:20:11Z wsnyder $ -*- SystemC -*-
 //=============================================================================
 //
 // THIS MODULE IS PUBLICLY LICENSED
 //
-// Copyright 2001-2006 by Wilson Snyder.  This program is free software;
+// Copyright 2001-2007 by Wilson Snyder.  This program is free software;
 // you can redistribute it and/or modify it under the terms of either the GNU
 // General Public License or the Perl Artistic License.
 //
@@ -53,6 +53,7 @@ class SpFunctor {
   public:
     SpFunctor() {};
     virtual void call(void* userdata) = 0;
+    virtual ~SpFunctor() {};
 };
 
 ///  SpFunctor templated for a specific class

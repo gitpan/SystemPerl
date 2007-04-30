@@ -1,7 +1,7 @@
-// $Id: ExMain.cpp 25464 2006-09-15 20:51:31Z wsnyder $
+// $Id: ExMain.cpp 37619 2007-04-30 13:20:11Z wsnyder $
 // DESCRIPTION: SystemPerl: Example main()
 //
-// Copyright 2001-2006 by Wilson Snyder.  This program is free software;
+// Copyright 2001-2007 by Wilson Snyder.  This program is free software;
 // you can redistribute it and/or modify it under the terms of either the GNU
 // General Public License or the Perl Artistic License.
 
@@ -21,6 +21,16 @@ int sc_main (int argc, char *argv[]) {
 
     cout << "SYSTEMC_VERSION="<<dec<<SYSTEMC_VERSION<<endl;
 
+    // Timescale
+#if (SYSTEMC_VERSION>20011000)
+    sc_set_time_resolution(100.0, SC_FS);
+    sc_set_default_time_unit(1.0, SC_NS);
+    sc_report::make_warnings_errors(true);
+#else
+    sc_time dut(1.0, sc_ns);
+    sc_set_default_time_unit(dut);
+#endif
+
 #ifndef NC_SYSTEMC
     // Simulation logfile
     sp_log_file splog;
@@ -30,9 +40,9 @@ int sc_main (int argc, char *argv[]) {
 
     // Pins
 #if SYSTEMC_VERSION >= 20060505
-    sc_clock clk("clk",10,SC_NS);
+    sc_clock clk("clk",5,SC_NS);  // We want a non-integer half period to prove VCD works
 #else
-    sc_clock clk("clk",10);
+    sc_clock clk("clk",5);
 #endif
 
     ExBench* bench;

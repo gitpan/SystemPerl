@@ -1,7 +1,7 @@
-# $Id: Makefile.PL 11992 2006-01-16 18:59:58Z wsnyder $
+# $Id: Makefile.PL 37619 2007-04-30 13:20:11Z wsnyder $
 # DESCRIPTION: Perl ExtUtils: Type 'perl Makefile.PL' to create a Makefile for this package
 #
-# Copyright 2001-2006 by Wilson Snyder.  This program is free software;
+# Copyright 2001-2007 by Wilson Snyder.  This program is free software;
 # you can redistribute it and/or modify it under the terms of either the GNU
 # General Public License or the Perl Artistic License.
 
@@ -16,14 +16,17 @@ CFLAGS += -Wall
 #CFLAGS += -DFLEX_DEBUG
 #LEXFLAGS += -d -L
 
-sclex.c: sclex.l  scgrammer.h scparse.h
+sclex_prefix.c: sclex.l  scgrammer.h scparse.h
 	${LEX} ${LEXFLAGS} -Psclex -o$@ $<
+
+sclex.c: sclex_prefix.c
+	sed "s/(void) *fwrite(\(.*\))/if (fwrite(\1)) {}/" < $< > $@    # GCC 4.1.0 warn_unused_result
 
 scgrammer.c scgrammer.h:	scgrammer.y scparse.h
 	${YACC} ${YFLAGS} --debug --verbose -d -k $< -pscgrammer -o scgrammer.c
 
 clean::
-	-rm -rf test *.o sclex.c scgrammer.h scgrammer.c *.output
+	-rm -rf test *.o sclex*.c scgrammer.h scgrammer.c *.output
 ';
 }
 

@@ -1,9 +1,9 @@
-// $Id: SpTraceVcdC.cpp 22665 2006-07-07 20:26:40Z wsnyder $ -*- SystemC -*-
+// $Id: SpTraceVcdC.cpp 37619 2007-04-30 13:20:11Z wsnyder $ -*- SystemC -*-
 //=============================================================================
 //
 // THIS MODULE IS PUBLICLY LICENSED
 //
-// Copyright 2001-2006 by Wilson Snyder.  This program is free software;
+// Copyright 2001-2007 by Wilson Snyder.  This program is free software;
 // you can redistribute it and/or modify it under the terms of either the GNU
 // General Public License or the Perl Artistic License.
 //
@@ -69,7 +69,7 @@ protected:
 // Opening/Closing
 
 void SpTraceVcd::open (const char* filename) {
-    if (m_isOpen) return;
+    if (isOpen()) return;
 
     // Assertions, as we cast enum to uint32_t pointers in AutoTrace.pm
     enum SpTraceVcd_enumtest { FOO = 1 };
@@ -82,6 +82,7 @@ void SpTraceVcd::open (const char* filename) {
     s_vcdVecp.push_back(this);
 
     openNext (m_rolloverMB!=0);
+    if (!isOpen()) return;
 
     dumpHeader();
 
@@ -91,7 +92,8 @@ void SpTraceVcd::open (const char* filename) {
     }
 
     if (m_rolloverMB) {
-	this->openNext(true);
+	openNext(true);
+	if (!isOpen()) return;
     }
 }
 
@@ -124,12 +126,17 @@ void SpTraceVcd::openNext (bool incFilename) {
 	}
 	m_filename = name;
     }
-    m_isOpen = true;
     if (m_filename[0]=='|') {
 	assert(0);	// Not supported yet.
     } else {
 	m_fd = ::open (m_filename.c_str(), O_CREAT|O_WRONLY|O_TRUNC, 0666);
+	if (m_fd<0) {
+	    // User code can check isOpen()
+	    m_isOpen = false;
+	    return;
+	}
     }
+    m_isOpen = true;
     m_fullDump = true;	// First dump must be full
 }
 
@@ -143,7 +150,7 @@ SpTraceVcd::~SpTraceVcd() {
 }
 
 void SpTraceVcd::closePrev () {
-    if (!m_isOpen) return;
+    if (!isOpen()) return;
 
     bufferFlush();
     m_isOpen = false;
@@ -151,7 +158,7 @@ void SpTraceVcd::closePrev () {
 }
 
 void SpTraceVcd::close() {
-    if (!m_isOpen) return;
+    if (!isOpen()) return;
     if (m_evcd) {
 	printStr("$vcdclose ");
 	printTime(m_timeLastDump);
@@ -194,7 +201,7 @@ void SpTraceVcd::bufferFlush () {
     // We add output data to m_writep.
     // When it gets nearly full we dump it using this routine which calls write()
     // This is much faster then using buffered I/O
-    if (!m_isOpen) return;
+    if (!isOpen()) return;
     char* wp = m_wrBufp;
     while (1) {
 	size_t remaining = (m_writep - wp);
@@ -219,16 +226,47 @@ void SpTraceVcd::bufferFlush () {
 //=============================================================================
 // Simple methods
 
-void SpTraceVcd::set_time_unit (const char* unit) {
-    string unitstr (unit);
-    if (!isdigit(unitstr[0])) unitstr = "1"+unitstr;
-    m_timeUnit = unitstr;
+void SpTraceVcd::set_time_unit (const char* unitp) {
+    string unitstr (unitp);
+    //cout<<" set_time_unit ("<<unitp<<") == "<<timescaleToDouble(unitp)<<" == "<<doubleToTimescale(timescaleToDouble(unitp))<<endl;
+    m_timeUnit = timescaleToDouble(unitp);
 }
 
-void SpTraceVcd::set_time_resolution (const char* unit) {
-    string unitstr (unit);
-    if (!isdigit(unitstr[0])) unitstr = "1"+unitstr;
-    m_timeRes = unitstr;
+void SpTraceVcd::set_time_resolution (const char* unitp) {
+    string unitstr (unitp);
+    //cout<<"set_time_resolution ("<<unitp<<") == "<<timescaleToDouble(unitp)<<" == "<<doubleToTimescale(timescaleToDouble(unitp))<<endl;
+    m_timeRes = timescaleToDouble(unitp);
+}
+
+double SpTraceVcd::timescaleToDouble (const char* unitp) {
+    char* endp;
+    double value = strtod(unitp, &endp);
+    if (!value) value=1;  // On error so we allow just "ns" to return 1e-9.
+    unitp=endp;
+    while (*unitp && isspace(*unitp)) unitp++;
+    switch (*unitp) {
+    case 's': value *= 1e1; break;
+    case 'm': value *= 1e-3; break;
+    case 'u': value *= 1e-6; break;
+    case 'n': value *= 1e-9; break;
+    case 'p': value *= 1e-12; break;
+    case 'f': value *= 1e-15; break;
+    case 'a': value *= 1e-18; break;
+    }
+    return value;
+}
+
+string SpTraceVcd::doubleToTimescale (double value) {
+    char* suffixp = "s";
+    if	    (value>=1e0)   { suffixp="s"; value *= 1e0; }
+    else if (value>=1e-3 ) { suffixp="ms"; value *= 1e3; }
+    else if (value>=1e-6 ) { suffixp="us"; value *= 1e6; }
+    else if (value>=1e-9 ) { suffixp="ns"; value *= 1e9; }
+    else if (value>=1e-12) { suffixp="ps"; value *= 1e12; }
+    else if (value>=1e-15) { suffixp="fs"; value *= 1e15; }
+    else if (value>=1e-18) { suffixp="as"; value *= 1e18; }
+    char valuestr[100]; sprintf(valuestr,"%d%s",(int)(value), suffixp);
+    return valuestr;  // Gets converted to string, so no ref to stack
 }
 
 //=============================================================================
@@ -247,7 +285,7 @@ void SpTraceVcd::dumpHeader () {
     printStr("$date "); printStr(ctime(&time_str)); printStr(" $end\n");
 
     printStr("$timescale ");
-    printStr(m_timeRes.c_str());
+    printStr(doubleToTimescale(m_timeRes).c_str());
     printStr(" $end\n");
 
     // Take signal information from each module and build m_namemapp
@@ -400,7 +438,7 @@ void SpTraceVcd::addCallback (
     SpTraceCallback_t initcb, SpTraceCallback_t fullcb, SpTraceCallback_t changecb,
     void* userthis)
 {
-    if (m_isOpen) {
+    if (isOpen()) {
 	SP_ABORT("%Error: SpTraceVcd::"<<__FUNCTION__<<" called with already open file\n");
     }
     SpTraceCallInfo* vci = new SpTraceCallInfo(initcb, fullcb, changecb, userthis, nextCode());
@@ -420,13 +458,16 @@ void SpTraceVcd::dumpFull (double timestamp) {
 }
 
 void SpTraceVcd::dump (double timestamp) {
-    if (!m_isOpen) return;
+    if (!isOpen()) return;
     if (m_fullDump) {
 	m_fullDump = false;	// No need for more full dumps
 	dumpFull(timestamp);
 	return;
     }
-    if (m_rolloverMB && (lseek(m_fd, 0, SEEK_CUR)/1e6 >= this->m_rolloverMB)) this->openNext(true);
+    if (m_rolloverMB && (lseek(m_fd, 0, SEEK_CUR)/1e6 >= this->m_rolloverMB)) {
+	openNext(true);
+	if (!isOpen()) return;
+    }
     dumpPrep (timestamp);
     for (uint32_t ent = 0; ent< m_callbacks.size(); ent++) {
 	SpTraceCallInfo *cip = m_callbacks[ent];

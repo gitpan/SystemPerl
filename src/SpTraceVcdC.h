@@ -1,9 +1,9 @@
-// $Id: SpTraceVcdC.h 22697 2006-07-10 14:56:22Z wsnyder $ -*- SystemC -*-
+// $Id: SpTraceVcdC.h 37619 2007-04-30 13:20:11Z wsnyder $ -*- SystemC -*-
 //=============================================================================
 //
 // THIS MODULE IS PUBLICLY LICENSED
 //
-// Copyright 2001-2006 by Wilson Snyder.  This program is free software;
+// Copyright 2001-2007 by Wilson Snyder.  This program is free software;
 // you can redistribute it and/or modify it under the terms of either the GNU
 // General Public License or the Perl Artistic License.
 //
@@ -74,8 +74,8 @@ private:
     bool		m_fullDump;	///< True indicates dump ignoring if changed
     uint32_t		m_nextCode;	///< Next code number to assign
     string		m_modName;	///< Module name being traced now
-    string		m_timeRes;	///< Time resolution (ns/ms etc)
-    string		m_timeUnit;	///< Time units (ns/ms etc)
+    double		m_timeRes;	///< Time resolution (ns/ms etc)
+    double		m_timeUnit;	///< Time units (ns/ms etc)
     uint64_t		m_timeLastDump;	///< Last time we did a dump
 
     char*		m_wrBufp;	///< Output buffer
@@ -133,7 +133,7 @@ public:
 	m_wrBufp = new char [bufferSize()];
 	m_writep = m_wrBufp;
 	m_namemapp = NULL;
-	m_timeRes = m_timeUnit = "ns";
+	m_timeRes = m_timeUnit = 1e-9;
 	m_timeLastDump = 0;
 	m_sigs_oldvalp = NULL;
 	m_evcd = false;
@@ -145,9 +145,11 @@ public:
     uint32_t nextCode() const {return m_nextCode;}
     /// Set size in megabytes after which new file should be created
     void rolloverMB(size_t rolloverMB) { m_rolloverMB=rolloverMB; };
+    /// Is file open?
+    bool isOpen() const { return m_isOpen; }
 
     // METHODS
-    void open (const char* filename);	///< Open the file
+    void open (const char* filename);	///< Open the file; call isOpen() to see if errors
     void openNext (bool incFilename);	///< Open next data-only file
     void flush() { bufferFlush(); }	///< Flush any remaining data
     static void flush_all();		///< Flush any remaining data from all files
@@ -157,10 +159,15 @@ public:
     void set_time_unit (const string& unit) { set_time_unit(unit.c_str()); }
 
     void set_time_resolution (const char* unit); ///< Set time resolution (s/ms, defaults to ns)
-    void set_time_resolution (const string& unit) { set_time_unit(unit.c_str()); }
+    void set_time_resolution (const string& unit) { set_time_resolution(unit.c_str()); }
+
+    double timescaleToDouble (const char* unitp);
+    string doubleToTimescale (double value);
 
     /// Inside dumping routines, called each cycle to make the dump
     void dump     (double timestamp);
+    /// Call dump with a absolute unscaled time in seconds
+    void dumpSeconds (double secs) { dump(secs * m_timeRes); }
 
     /// Inside dumping routines, declare callbacks for tracings
     void addCallback (SpTraceCallback_t init, SpTraceCallback_t full, SpTraceCallback_t change,
@@ -274,8 +281,13 @@ public:
 class SpTraceVcdCFile {
     SpTraceVcd		m_sptrace;	///< SystemPerl trace file being created
 public:
+    // CONSTRUCTORS
     SpTraceVcdCFile() {}
     ~SpTraceVcdCFile() {}
+    // ACCESSORS
+    /// Is file open?
+    bool isOpen() const { return m_sptrace.isOpen(); }
+    // METHODS
     /// Open a new VCD file
     void open (const char* filename) { m_sptrace.open(filename); }
     /// Continue a VCD dump by rotating to a new file name

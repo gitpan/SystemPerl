@@ -2,9 +2,21 @@ Revision history for Perl extension SystemC::Netlist
 
 The contributors that suggested a given feature are shown in [].
 
+* SystemC 1.280 4/30/2007
+
+***	Add vcoverage --unlink option.
+
+****	Fix systemc-mode.el Emacs highlighting.  [Brian Cassell]
+
+****	Fix --help to use Pod::Usage instead of depreciated pod2text.
+
+****	Fix timescale problems in trace files.
+
 * SystemC 1.272 10/3/2006
 
 ***	Support SystemC 2.2.05jun06 (via GreenSocs release).
+
+****	Report error on close if sp_log file fills disk. [Greg Waters]
 
 * SystemC 1.271 7/12/2006
 
@@ -359,13 +371,13 @@ The contributors that suggested a given feature are shown in [].
 
 
 ----------------------------------------------------------------------
-$Id: Changes 25920 2006-10-03 15:48:21Z wsnyder $
+$Id: Changes 37619 2007-04-30 13:20:11Z wsnyder $
 DESCRIPTION: Documentation on change history for this package
 ----------------------------------------------------------------------
 
 This uses outline mode in Emacs.  See C-h m [M-x describe-mode].
 
-Copyright 2001-2006 by Wilson Snyder.  This program is free software;
+Copyright 2001-2007 by Wilson Snyder.  This program is free software;
 you can redistribute it and/or modify it under the terms of either the GNU
 General Public License or the Perl Artistic License.
 

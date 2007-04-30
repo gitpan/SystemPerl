@@ -1,9 +1,9 @@
-// $Id: systemperl.h 22711 2006-07-10 20:21:12Z wsnyder $ -*- SystemC -*-
+// $Id: systemperl.h 37619 2007-04-30 13:20:11Z wsnyder $ -*- SystemC -*-
 //********************************************************************
 //
 // THIS MODULE IS PUBLICLY LICENSED
 //
-// Copyright 2001-2006 by Wilson Snyder.  This program is free software;
+// Copyright 2001-2007 by Wilson Snyder.  This program is free software;
 // you can redistribute it and/or modify it under the terms of either the GNU
 // General Public License or the Perl Artistic License.
 //

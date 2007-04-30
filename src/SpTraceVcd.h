@@ -1,9 +1,9 @@
-// $Id: SpTraceVcd.h 25464 2006-09-15 20:51:31Z wsnyder $ -*- SystemC -*-
+// $Id: SpTraceVcd.h 37619 2007-04-30 13:20:11Z wsnyder $ -*- SystemC -*-
 //=============================================================================
 //
 // THIS MODULE IS PUBLICLY LICENSED
 //
-// Copyright 2001-2006 by Wilson Snyder.  This program is free software;
+// Copyright 2001-2007 by Wilson Snyder.  This program is free software;
 // you can redistribute it and/or modify it under the terms of either the GNU
 // General Public License or the Perl Artistic License.
 //
@@ -59,17 +59,15 @@ public:
 # endif
     }
 
-# if (SYSTEMC_VERSION>20011000)
-    // VCD files must have integer timestamps, so we write all times in increments of time_resolution
-    inline static double scTimeStampDouble() { return (sc_time_stamp().to_double() / sc_get_time_resolution().to_double()); }
-# else
-    inline static double scTimeStampDouble() { return (sc_time_stamp().to_double()); }
-# endif
-
     virtual ~SpTraceFile() {}
     /// Called by SystemC simulate()
     virtual void cycle (bool delta_cycle) {
-	if (!delta_cycle) { spTrace()->dump(scTimeStampDouble()); }
+# if (SYSTEMC_VERSION>20011000)
+	if (!delta_cycle) { spTrace()->dump(sc_time_stamp().to_double()); }
+# else
+	// VCD files must have integer timestamps, so we write all times in increments of time_resolution
+	if (!delta_cycle) { spTrace()->dump(sc_time_stamp().to_double()); }
+# endif
     }
 
 private:

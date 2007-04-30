@@ -1,6 +1,6 @@
 %option noyywrap align never-interactive prefix="sclex"
 %{
-/* $Id: sclex.l 11992 2006-01-16 18:59:58Z wsnyder $
+/* $Id: sclex.l 37619 2007-04-30 13:20:11Z wsnyder $
  ******************************************************************************
  * DESCRIPTION: SystemC lexer
  * 
@@ -12,7 +12,7 @@
  * 
  ******************************************************************************
  * 
- * Copyright 2001-2006 by Wilson Snyder.  This program is free software;
+ * Copyright 2001-2007 by Wilson Snyder.  This program is free software;
  * you can redistribute it and/or modify it under the terms of either the GNU
  * General Public License or the Perl Artistic License.
  * 

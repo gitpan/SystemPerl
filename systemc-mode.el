@@ -1,6 +1,6 @@
 ;; systemc-mode.el --- major mode for editing SystemC files
 ;;
-;; $Id: systemc-mode.el 13029 2006-01-31 15:55:25Z wsnyder $
+;; $Id: systemc-mode.el 37619 2007-04-30 13:20:11Z wsnyder $
 
 ;; Author          : Wilson Snyder <wsnyder@wsnyder.org>
 ;; Keywords        : languages
@@ -27,7 +27,7 @@
 ;;
 ;; COPYING:
 ;;
-;; Copyright 2001-2006 by Wilson Snyder.  This program is free software;
+;; Copyright 2001-2007 by Wilson Snyder.  This program is free software;
 ;; you can redistribute it and/or modify it under the terms of either the GNU
 ;; General Public License or the Perl Artistic License.
 ;;
@@ -82,17 +82,19 @@
 (defvar systemc-font-lock-keywords
   (append c++-font-lock-keywords-3
 	  '(
-	    ;; Commentary
-	    ("//.*$" 0 'font-lock-comment-face t)	; red
+	    ;; Keywords
+	    ("^\\s *AUTO[A-Z0-9_]+" 0 'font-lock-builtin-face t)
+	    ("\\bsc_bv\\b" 0 'font-lock-type-face t)
+	    ("\\bS[PC]_\\(TRACED\\|CELL\\|PIN\\|METHOD\\|THREAD\\)\\b" 0 'font-lock-keyword-face t)
+	    ("\\bSP_AUTO[A-Z0-9_]+" 0 'font-lock-keyword-face t)
+	    ;; Fontify preprocessor directive names.
+	    ;; / is a hack so "#sp  // comment" gets some highlighting.
+	    ("^#\\s *\\(sp\\s +[^\n/]*\\)" 1 'font-lock-builtin-face)
 	    ;; Fontify filenames in #include <...> preprocessor directives as strings.
 	    ("^#\\s *\\(sp\\s +use\\)\\s *\\([\"]?[^\"\n]*[\"]?\\)"
 	     nil nil (1 font-lock-builtin-face) (2 font-lock-string-face))
-	    ;; Fontify preprocessor directive names.
-	    ("^#\\s *\\(sp\\s +[^\n]*\\)" 1 'font-lock-builtin-face)
-	    ("^\\s *AUTO[A-Z0-9_]+" 0 'font-lock-builtin-face t)
-	    ("\\bsc_bv\\b" 0 'font-lock-type-face t)
-	    ("\\bS[PC]_\\(TRACED\\|CELL\\|PIN\\|METHOD\\)\\b" 0 'font-lock-keyword-face t)
-	    ("\\bSP_AUTO[A-Z0-9_]+" 0 'font-lock-keyword-face t)
+	    ;; Commentary
+	    ("//.*$" 0 'font-lock-comment-face t)	; red
 	    )))
 
 ;;;;
