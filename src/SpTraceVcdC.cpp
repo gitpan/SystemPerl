@@ -1,4 +1,4 @@
-// $Id: SpTraceVcdC.cpp 37619 2007-04-30 13:20:11Z wsnyder $ -*- SystemC -*-
+// $Id: SpTraceVcdC.cpp 43369 2007-08-16 13:59:01Z wsnyder $ -*- SystemC -*-
 //=============================================================================
 //
 // THIS MODULE IS PUBLICLY LICENSED
@@ -35,6 +35,10 @@
 // Note cannot include systemperl.h, or we won't work with non-SystemC compiles
 #include "SpCommon.h"
 #include "SpTraceVcdC.h"
+
+#ifndef O_LARGEFILE
+# define O_LARGEFILE 0
+#endif
 
 //=============================================================================
 // Global
@@ -129,7 +133,7 @@ void SpTraceVcd::openNext (bool incFilename) {
     if (m_filename[0]=='|') {
 	assert(0);	// Not supported yet.
     } else {
-	m_fd = ::open (m_filename.c_str(), O_CREAT|O_WRONLY|O_TRUNC, 0666);
+	m_fd = ::open (m_filename.c_str(), O_CREAT|O_WRONLY|O_TRUNC|O_LARGEFILE, 0666);
 	if (m_fd<0) {
 	    // User code can check isOpen()
 	    m_isOpen = false;
@@ -138,6 +142,7 @@ void SpTraceVcd::openNext (bool incFilename) {
     }
     m_isOpen = true;
     m_fullDump = true;	// First dump must be full
+    m_wroteBytes = 0;
 }
 
 SpTraceVcd::~SpTraceVcd() {
@@ -181,10 +186,9 @@ void SpTraceVcd::printQuad (uint64_t n) {
     printStr(buf);
 }
 
-void SpTraceVcd::printTime (double timestamp) {
+void SpTraceVcd::printTime (uint64_t timeui) {
     // VCD file format specification does not allow non-integers for timestamps
     // Dinotrace doesn't mind, but Cadence vvision seems to choke
-    uint64_t timeui = (uint64_t)timestamp;
     if (timeui < m_timeLastDump) {
 	timeui = m_timeLastDump;
 	static bool backTime = false;
@@ -210,6 +214,7 @@ void SpTraceVcd::bufferFlush () {
 	int got = write (m_fd, wp, remaining);
 	if (got>0) {
 	    wp += got;
+	    m_wroteBytes += got;
 	} else if (got < 0) {
 	    if (errno != EAGAIN && errno != EINTR) {
 		/* write failed, presume error */
@@ -448,8 +453,8 @@ void SpTraceVcd::addCallback (
 //=============================================================================
 // Dumping
 
-void SpTraceVcd::dumpFull (double timestamp) {
-    dumpPrep (timestamp);
+void SpTraceVcd::dumpFull (uint64_t timeui) {
+    dumpPrep (timeui);
     for (uint32_t ent = 0; ent< m_callbacks.size(); ent++) {
 	SpTraceCallInfo *cip = m_callbacks[ent];
 	(cip->m_fullcb) (this, cip->m_userthis, cip->m_code);
@@ -457,18 +462,18 @@ void SpTraceVcd::dumpFull (double timestamp) {
     dumpDone ();
 }
 
-void SpTraceVcd::dump (double timestamp) {
+void SpTraceVcd::dump (uint64_t timeui) {
     if (!isOpen()) return;
     if (m_fullDump) {
 	m_fullDump = false;	// No need for more full dumps
-	dumpFull(timestamp);
+	dumpFull(timeui);
 	return;
     }
-    if (m_rolloverMB && (lseek(m_fd, 0, SEEK_CUR)/1e6 >= this->m_rolloverMB)) {
+    if (m_rolloverMB && m_wroteBytes > this->m_rolloverMB) {
 	openNext(true);
 	if (!isOpen()) return;
     }
-    dumpPrep (timestamp);
+    dumpPrep (timeui);
     for (uint32_t ent = 0; ent< m_callbacks.size(); ent++) {
 	SpTraceCallInfo *cip = m_callbacks[ent];
 	(cip->m_changecb) (this, cip->m_userthis, cip->m_code);
@@ -476,9 +481,9 @@ void SpTraceVcd::dump (double timestamp) {
     dumpDone();
 }
 
-void SpTraceVcd::dumpPrep (double timestamp) {
+void SpTraceVcd::dumpPrep (uint64_t timeui) {
     printStr("#");
-    printTime(timestamp);
+    printTime(timeui);
     printStr("\n");
 }
 
@@ -502,7 +507,7 @@ void SpTraceVcd::flush_all() {
 #if SPTRACEVCD_TEST
 uint32_t v1, v2, s1, s2[3];
 uint8_t ch;
-double timestamp = 1;
+uint64_t timestamp = 1;
 
 void vcdInit (SpTraceVcd* vcdp, void* userthis, uint32_t code) {
     vcdp->module ("top");
@@ -535,6 +540,8 @@ void vcdChange (SpTraceVcd* vcdp, void* userthis, uint32_t code) {
 }
 
 main() {
+    cout<<"test: O_LARGEFILE="<<O_LARGEFILE<<endl;
+
     v1 = v2 = s1 = 0;
     s2[0] = s2[1] = s2[2] = 0;
     ch = 0;
@@ -551,6 +558,13 @@ main() {
 	vcdp->dump(timestamp++);
 	ch = 2;
 	vcdp->dump(timestamp++);
+# if SPTRACEVCD_TEST_64BIT
+	uint64_t bytesPerDump = 15ULL;
+	for (uint64_t i=0; i<((1ULL<<32) / bytesPerDump); i++) {
+	    v1 = i;
+	    vcdp->dump(timestamp++);
+	}
+# endif
 	vcdp->close();
     }
 }

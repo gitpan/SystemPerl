@@ -1,4 +1,4 @@
-// $Id: SpTraceVcdC.h 37619 2007-04-30 13:20:11Z wsnyder $ -*- SystemC -*-
+// $Id: SpTraceVcdC.h 43369 2007-08-16 13:59:01Z wsnyder $ -*- SystemC -*-
 //=============================================================================
 //
 // THIS MODULE IS PUBLICLY LICENSED
@@ -69,7 +69,7 @@ private:
     bool		m_evcd;		///< True for evcd format
     int			m_fd;		///< File descriptor we're writing to
     string		m_filename;	///< Filename we're writing to (if open)
-    size_t		m_rolloverMB;	///< MB of file size to rollover at
+    uint64_t		m_rolloverMB;	///< MB of file size to rollover at
     int			m_modDepth;	///< Depth of module hierarchy
     bool		m_fullDump;	///< True indicates dump ignoring if changed
     uint32_t		m_nextCode;	///< Next code number to assign
@@ -80,6 +80,7 @@ private:
 
     char*		m_wrBufp;	///< Output buffer
     char*		m_writep;	///< Write pointer into output buffer
+    uint64_t		m_wroteBytes;	///< Number of bytes written to this file
 
     uint32_t*			m_sigs_oldvalp;	///< Pointer to old signal values
     vector<SpTraceVcdSig>	m_sigs;		///< Pointer to signal information
@@ -102,12 +103,12 @@ private:
     void printIndent (int levelchange);
     void printStr (const char* str);
     void printQuad (uint64_t n);
-    void printTime (double timestamp);
+    void printTime (uint64_t timeui);
     void declare (uint32_t code, const char* name, int arraynum, int msb, int lsb);
 
     void dumpHeader();
-    void dumpPrep (double timestamp);
-    void dumpFull (double timestamp);
+    void dumpPrep (uint64_t timeui);
+    void dumpFull (uint64_t timeui);
     void dumpDone ();
     inline void printCode (uint32_t code) {
 	if (code>=(94*94*94)) *m_writep++ = ((char)((code/94/94/94)%94+33));
@@ -137,6 +138,7 @@ public:
 	m_timeLastDump = 0;
 	m_sigs_oldvalp = NULL;
 	m_evcd = false;
+	m_wroteBytes = 0;
     }
     ~SpTraceVcd();
 
@@ -144,7 +146,7 @@ public:
     /// Inside dumping routines, return next VCD signal code
     uint32_t nextCode() const {return m_nextCode;}
     /// Set size in megabytes after which new file should be created
-    void rolloverMB(size_t rolloverMB) { m_rolloverMB=rolloverMB; };
+    void rolloverMB(uint64_t rolloverMB) { m_rolloverMB=rolloverMB; };
     /// Is file open?
     bool isOpen() const { return m_isOpen; }
 
@@ -165,9 +167,9 @@ public:
     string doubleToTimescale (double value);
 
     /// Inside dumping routines, called each cycle to make the dump
-    void dump     (double timestamp);
+    void dump     (uint64_t timeui);
     /// Call dump with a absolute unscaled time in seconds
-    void dumpSeconds (double secs) { dump(secs * m_timeRes); }
+    void dumpSeconds (double secs) { dump((uint64_t)(secs * m_timeRes)); }
 
     /// Inside dumping routines, declare callbacks for tracings
     void addCallback (SpTraceCallback_t init, SpTraceCallback_t full, SpTraceCallback_t change,
@@ -299,7 +301,12 @@ public:
     /// Flush dump
     void flush() { m_sptrace.flush(); }
     /// Write one cycle of dump data
-    void dump (double timestamp) { m_sptrace.dump(timestamp); }
+    void dump (uint64_t timeui) { m_sptrace.dump(timeui); }
+    /// Write one cycle of dump data - backward compatible and to reduce
+    /// conversion warnings.  It's better to use a uint64_t time instead.
+    void dump (double timestamp) { dump((uint64_t)timestamp); }
+    void dump (uint32_t timestamp) { dump((uint64_t)timestamp); }
+    void dump (int timestamp) { dump((uint64_t)timestamp); }
     /// Internal class access
     inline SpTraceVcd* spTrace () { return &m_sptrace; };
 };

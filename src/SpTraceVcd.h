@@ -1,4 +1,4 @@
-// $Id: SpTraceVcd.h 37619 2007-04-30 13:20:11Z wsnyder $ -*- SystemC -*-
+// $Id: SpTraceVcd.h 43369 2007-08-16 13:59:01Z wsnyder $ -*- SystemC -*-
 //=============================================================================
 //
 // THIS MODULE IS PUBLICLY LICENSED
@@ -63,10 +63,10 @@ public:
     /// Called by SystemC simulate()
     virtual void cycle (bool delta_cycle) {
 # if (SYSTEMC_VERSION>20011000)
-	if (!delta_cycle) { spTrace()->dump(sc_time_stamp().to_double()); }
+	if (!delta_cycle) { this->dump(sc_time_stamp().to_double()); }
 # else
 	// VCD files must have integer timestamps, so we write all times in increments of time_resolution
-	if (!delta_cycle) { spTrace()->dump(sc_time_stamp().to_double()); }
+	if (!delta_cycle) { this->dump(sc_time_stamp().to_double()); }
 # endif
     }
 

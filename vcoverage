@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-#$Id: vcoverage 37565 2007-04-27 14:21:13Z wsnyder $
+#$Id: vcoverage 38008 2007-05-03 19:14:56Z wsnyder $
 ######################################################################
 #
 # Copyright 2001-2007 by Wilson Snyder.  This program is free software;
@@ -37,8 +37,11 @@ use vars qw ($Debug
 	     $Opt_All_Files
 	     $Opt_Linenums
 	     @Opt_Datas
+	     @Opt_Write_Params
 	     %LineData
 	     );
+
+#@Opt_Write_Params  # Set by some wrapper scripts
 
 #######################################################################
 # main
@@ -90,7 +93,7 @@ foreach my $data (@Opt_Datas) {
     $cov->read(filename=>$data);
 }
 if ($opt_write) {
-    $cov->write(filename=>$opt_write);
+    $cov->write(@Opt_Write_Params, filename=>$opt_write);
     if ($opt_unlink) {
 	foreach my $data (@Opt_Datas) {
 	    # Don't erase what we created!
@@ -108,7 +111,7 @@ if ($opt_report) {
 #----------------------------------------------------------------------
 
 sub usage {
-    print '$Id: vcoverage 37565 2007-04-27 14:21:13Z wsnyder $ ', "\n";
+    print '$Id: vcoverage 38008 2007-05-03 19:14:56Z wsnyder $ ', "\n";
     pod2usage(-verbose=>2, -exitval => 2);
     exit (1);
 }
@@ -285,7 +288,8 @@ sub src_kill_ascii_defaults {
 sub linenums {
     my $cov = shift;
     # For developer testing only
-    foreach my $filename (glob "obj_$ENV{DIRPROJECT_ARCH}/v/*.sp") {
+    my $arch = $ENV{DIRPROJECT_ARCH} or die "%Error: for developer testing only,";
+    foreach my $filename (glob "obj_${arch}/v/*.sp") {
 	my $fh = IO::File->new("<$filename") or die "%Error: $! $filename\n";
 	while (defined (my $line=$fh->getline)) {
 	    if ($line =~ /SP_AUTO_COVER3\(\"([^\"]+)\",\"([^\"]+)\",([0-9]+)/) {

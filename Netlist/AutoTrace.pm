@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Id: AutoTrace.pm 37619 2007-04-30 13:20:11Z wsnyder $
+# $Id: AutoTrace.pm 43371 2007-08-16 14:00:54Z wsnyder $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -18,7 +18,7 @@ package SystemC::Netlist::AutoTrace;
 use File::Basename;
 
 use SystemC::Netlist::Module;
-$VERSION = '1.280';
+$VERSION = '1.281';
 use strict;
 
 use vars qw ($Debug_Check_Code);
