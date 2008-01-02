@@ -1,9 +1,9 @@
-// $Id: SpCommon.h 37619 2007-04-30 13:20:11Z wsnyder $ -*- SystemC -*-
+// $Id: SpCommon.h 49154 2008-01-02 14:22:02Z wsnyder $ -*- SystemC -*-
 //=============================================================================
 //
 // THIS MODULE IS PUBLICLY LICENSED
 //
-// Copyright 2001-2007 by Wilson Snyder.  This program is free software;
+// Copyright 2001-2008 by Wilson Snyder.  This program is free software;
 // you can redistribute it and/or modify it under the terms of either the GNU
 // General Public License or the Perl Artistic License.
 //
@@ -41,8 +41,8 @@
 # define SP_ATTR_ALIGNED(alignment)	///< Align structure to specified byte alignment
 # define SP_ATTR_NORETURN		///< Function does not ever return
 # define SP_ATTR_UNUSED			///< Function that may be never used
-# define SP_LIKELY(x)	(!!(x))		///< Boolean expression more often true then false
-# define SP_UNLIKELY(x)	(!!(x))		///< Boolean expression more often false then true
+# define SP_LIKELY(x)	(!!(x))		///< Boolean expression more often true than false
+# define SP_UNLIKELY(x)	(!!(x))		///< Boolean expression more often false than true
 #endif
 
 //=============================================================================

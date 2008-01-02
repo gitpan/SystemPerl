@@ -1,9 +1,9 @@
 # SystemC - SystemC Perl Interface
-# $Id: Net.pm 43371 2007-08-16 14:00:54Z wsnyder $
+# $Id: Net.pm 49154 2008-01-02 14:22:02Z wsnyder $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
-# Copyright 2001-2007 by Wilson Snyder.  This program is free software;
+# Copyright 2001-2008 by Wilson Snyder.  This program is free software;
 # you can redistribute it and/or modify it under the terms of either the GNU
 # General Public License or the Perl Artistic License.
 # 
@@ -20,7 +20,7 @@ use Class::Struct;
 use Verilog::Netlist;
 use SystemC::Netlist;
 @ISA = qw(Verilog::Netlist::Net);
-$VERSION = '1.281';
+$VERSION = '1.282';
 use strict;
 
 ######################################################################
@@ -40,6 +40,13 @@ sub sc_type {
     my $self = shift;
     my $typeref = $self->netlist->find_class($self->type);
     return $typeref && $typeref->sc_type;
+}
+
+sub sc_type_from_verilog {
+    my $self = shift;
+    return ((!$self->width || $self->width == 1)
+	    ? 'bool'
+	    : "sp_ui<".$self->msb.",".$self->lsb.">");
 }
 
 sub is_sc_bv {
@@ -80,6 +87,9 @@ sub lint {
     my $self = shift;
     $self->SUPER::lint();
     # We peek into simple sequential logic to see what symbols are referenced
+    if ($self->module->attributes("autotieoff")) {
+	$self->_used_out_inc(1);
+    }
     if (!$self->module->lesswarn
 	&& (($self->_used_in() && !$self->_used_out())
 	    || ($self->module->attributes('check_inputs_used')
@@ -151,7 +161,7 @@ SystemPerl is part of the L<http://www.veripool.com/> free SystemC software
 tool suite.  The latest version is available from CPAN and from
 L<http://www.veripool.com/systemperl.html>.
 
-Copyright 2001-2007 by Wilson Snyder.  This package is free software; you
+Copyright 2001-2008 by Wilson Snyder.  This package is free software; you
 can redistribute it and/or modify it under the terms of either the GNU
 Lesser General Public License or the Perl Artistic License.
 

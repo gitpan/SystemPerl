@@ -1,9 +1,9 @@
-// $Id: SpTraceVcd.h 43369 2007-08-16 13:59:01Z wsnyder $ -*- SystemC -*-
+// $Id: SpTraceVcd.h 49154 2008-01-02 14:22:02Z wsnyder $ -*- SystemC -*-
 //=============================================================================
 //
 // THIS MODULE IS PUBLICLY LICENSED
 //
-// Copyright 2001-2007 by Wilson Snyder.  This program is free software;
+// Copyright 2001-2008 by Wilson Snyder.  This program is free software;
 // you can redistribute it and/or modify it under the terms of either the GNU
 // General Public License or the Perl Artistic License.
 //

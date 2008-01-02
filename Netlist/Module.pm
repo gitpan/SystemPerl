@@ -1,9 +1,9 @@
 # SystemC - SystemC Perl Interface
-# $Id: Module.pm 43371 2007-08-16 14:00:54Z wsnyder $
+# $Id: Module.pm 49154 2008-01-02 14:22:02Z wsnyder $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
-# Copyright 2001-2007 by Wilson Snyder.  This program is free software;
+# Copyright 2001-2008 by Wilson Snyder.  This program is free software;
 # you can redistribute it and/or modify it under the terms of either the GNU
 # General Public License or the Perl Artistic License.
 # 
@@ -28,7 +28,7 @@ use SystemC::Netlist::AutoCover;
 use SystemC::Netlist::AutoTrace;
 
 @ISA = qw(Verilog::Netlist::Module);
-$VERSION = '1.281';
+$VERSION = '1.282';
 use strict;
 
 # Some attributes we use:
@@ -121,6 +121,15 @@ sub autos1 {
 	    $fromref->autos1();
 	    # Copy ports
 	    foreach my $portref ($fromref->ports_sorted) {
+		my $type = $portref->type;
+		if ($type eq 'wire') {  # From verilog
+		    if (my $net = $fromref->find_net($portref->name)) {
+			my $newtype = $net->sc_type_from_verilog;
+			my $typeref = $self->netlist->find_class($newtype);
+			$typeref or die;   # Should always be able to convert.
+			$type = $newtype;
+		    }
+		}
 		my $newport = $self->new_port
 		    (name	=> $portref->name,
 		     filename	=> ($self->filename.":AUTOINOUT_MODULE("
@@ -128,7 +137,7 @@ sub autos1 {
 				    .$portref->lineno.")"),
 		     lineno	=> $self->lineno,
 		     direction	=> $portref->direction,
-		     type	=> $portref->type,
+		     type	=> $type,
 		     comment	=> " From AUTOINOUT_MODULE(".$fromref->name.")",
 		     array	=> $portref->array,
 		     sp_autocreated=>1,
@@ -311,6 +320,23 @@ sub _write_autodecls {
     $fileref->print ("${prefix}// End of SystemPerl automatic declarations\n");
 }
 
+sub _write_autotieoff {
+    my $self = shift;
+    my $fileref = shift;
+    my $prefix = shift;
+    return if !$SystemC::Netlist::File::outputting;
+    $fileref->print ("${prefix}// Beginning of SystemPerl automatic tieoffs\n");
+    foreach my $portref ($self->ports_sorted) {
+	 if ($portref->direction =~ /out/) {
+	     $fileref->printf ("%s%s.write(%s);\n"
+			       ,$prefix
+			       ,$portref->name
+			       ,0);
+	 }
+    }
+    $fileref->print ("${prefix}// End of SystemPerl automatic tieoffs\n");
+}
+
 ######################################################################
 #### Package return
 1;
@@ -333,7 +359,7 @@ SystemPerl is part of the L<http://www.veripool.com/> free SystemC software
 tool suite.  The latest version is available from CPAN and from
 L<http://www.veripool.com/systemperl.html>.
 
-Copyright 2001-2007 by Wilson Snyder.  This package is free software; you
+Copyright 2001-2008 by Wilson Snyder.  This package is free software; you
 can redistribute it and/or modify it under the terms of either the GNU
 Lesser General Public License or the Perl Artistic License.
 

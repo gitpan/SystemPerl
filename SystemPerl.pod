@@ -1,7 +1,7 @@
-#$Id: SystemPerl.pod 37619 2007-04-30 13:20:11Z wsnyder $
+#$Id: SystemPerl.pod 49154 2008-01-02 14:22:02Z wsnyder $
 ######################################################################
 #
-# Copyright 2001-2007 by Wilson Snyder.  This program is free software;
+# Copyright 2001-2008 by Wilson Snyder.  This program is free software;
 # you can redistribute it and/or modify it under the terms of either the GNU
 # General Public License or the Perl Artistic License.
 # 
@@ -60,6 +60,51 @@ changed in any way, but are simply required for SystemPerl to be able to
 derive required information from the source code.
 
 =over 4
+
+=item SP_AUTO_COVER()
+
+Create a coverage point at the current file and line number.  If the
+statement is executed, the coverage bucket will increment.
+
+=item SP_AUTO_COVER_CMT (I<comment>)
+
+Create a coverage point at the current file and line number, and note the
+specified comment.  If the statement is executed, the coverage bucket will
+increment.
+
+=item SP_AUTO_COVER_CMT_IF (I<comment>,I<condition>)
+
+Create a coverage point at the current file and line number, and note the
+specified comment.  If the statement is executed and the specified
+condition is true, the coverage bucket will increment.
+
+=item SP_COVER_INSERT (I<valuePtr>,I<key>,I<value>[,I<key2>,I<value2>...])
+
+Create a coverage point at the current file and line number.  Store the key
+and value pairs as attributes of the coverage bucket; generally these are
+arbitrary text; use "comment" to set the general comment field.
+
+The coverage variable is passed as a pointer, which the user must increment
+manually.  The pointer will be read by dereference at the end of time, and
+so must still point to a valid structure at that time.
+
+For example:
+
+    // In the class declaration:
+    SpUInt32Zeroed m_fcCases[FsmState::MAX][FsmState::MAX]; // [old][new]
+
+    ...
+    // In the constructor:
+    for (a = 0; a<FsmState::MAX; a++) {
+      for (b = 0; b<FsmState::MAX; b++) {
+        SP_COVER_INSERT(&m_fcCases[*a][*b],
+	            "comment","FsmState Transitions",
+                    "OldState",*a,
+	            "NewState",*b,
+                    "TestplanSectionNumber","1.4.2.1");
+
+    // Wherever you need to increment:
+    ++m_fcCases[oldstate][newstate];
 
 =item SP_CLASS (I<class>)
 
@@ -188,6 +233,19 @@ For example:
 Sets a internal attribute.  There are no attributes currently specified for
 general usage.
 
+=item /*AUTOCTOR*/
+
+AUTOCTOR creates the pin name initializers required in the SC_MODULE's
+constructor.  For example:
+
+    sc_in<bool> in_signal;
+    ...
+    SP_CTOR_IMP(__MODULE__) /*AUTOCTOR*/ {
+
+Becomes:
+
+    SP_CTOR_IMP(__MODULE__) : in_signal("in_signal") {
+
 =item /*AUTOINIT*/
 
 AUTOINIT creates signal and port name initializers for SC_CTOR's.
@@ -303,6 +361,12 @@ Becomes:
 	      SP_PIN (sub, clk,	    clk);
 	      // End of SystemPerl automatic instantiation pins
 
+=item /*AUTOINTERFACE*/
+
+AUTOINTERFACE includes function definitions required inside the .h file.
+Nothing needs to be inserted there yet, so this AUTO does not need to be
+used.
+
 =item /*AUTOMETHODS*/
 
 AUTOMETHODS indicates where interface declarations should be inserted.  It
@@ -399,6 +463,22 @@ Becomes:
 	    SP_CELL (sub, submod);
 	      SP_PIN (sub, a,	    a);
     
+=item /*AUTOTIEOFF*/
+
+AUTOTIEOFF creates zeroing assignments for all outputs of the module.
+Normally this is used in a method called at reset time.
+
+For example:
+
+    /*AUTOTIEOFF*/
+    
+Becomes:
+
+    /*AUTOTIEOFF*/
+    // Beginning of SystemPerl automatic tieoffs
+    a.write(0);
+    // End of SystemPerl automatic tieoffs
+
 =item /*AUTOTRACE(I<module>,I<recurse>)*/
 
 AUTOTRACE creates a routine to trace the ports and signals in the current
@@ -485,7 +565,7 @@ Verilator requires for created shells.  Thus a Verilog definition
 
      input [35:3]  signal;
 
-is equivelent to the SystemPerl declaration:
+is equivalent to the SystemPerl declaration:
 
      sc_in<sp_ui<35,3> >   signal;
 
@@ -536,7 +616,7 @@ This allows a common .sp file to contain both .h and .cpp information.
 This specifies a file that must be #included at compile time.  In addition
 the file is a .sp file, which must be preprocessed by sp_preproc, and added
 to the link list.  Thus using #sp use automatically finds the objects
-required for linking against the includer.  (Just like perl's package and
+required for linking against the includer.  (Just like Perl's package and
 use statements.)
 
 In addition to specifying an exact string like with #include, you may also
@@ -553,7 +633,7 @@ SystemPerl is part of the L<http://www.veripool.com/> free SystemC software
 tool suite.  The latest version is available from CPAN and from
 L<http://www.veripool.com/systemperl.html>.
 
-Copyright 2001-2007 by Wilson Snyder.  This package is free software; you
+Copyright 2001-2008 by Wilson Snyder.  This package is free software; you
 can redistribute it and/or modify it under the terms of either the GNU
 Lesser General Public License or the Perl Artistic License.
 

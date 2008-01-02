@@ -1,14 +1,14 @@
-# $Id: test_utils.pl 37619 2007-04-30 13:20:11Z wsnyder $
+# $Id: test_utils.pl 49154 2008-01-02 14:22:02Z wsnyder $
 # DESCRIPTION: Perl ExtUtils: Common routines required by package tests
 #
-# Copyright 2001-2007 by Wilson Snyder.  This program is free software;
+# Copyright 2001-2008 by Wilson Snyder.  This program is free software;
 # you can redistribute it and/or modify it under the terms of either the GNU
 # General Public License or the Perl Artistic License.
 
 use IO::File;
 use vars qw($PERL);
 
-$PERL = "$^X -Iblib/arch -Iblib/lib";
+$PERL = "$^X -Iblib/arch -Iblib/lib -I../Verilog/blib/lib -I../Verilog/blib/arch";
 
 mkdir 'test_dir',0777;
 

@@ -1,9 +1,9 @@
-// $Id: SpTraceVcdC.cpp 43369 2007-08-16 13:59:01Z wsnyder $ -*- SystemC -*-
+// $Id: SpTraceVcdC.cpp 49154 2008-01-02 14:22:02Z wsnyder $ -*- SystemC -*-
 //=============================================================================
 //
 // THIS MODULE IS PUBLICLY LICENSED
 //
-// Copyright 2001-2007 by Wilson Snyder.  This program is free software;
+// Copyright 2001-2008 by Wilson Snyder.  This program is free software;
 // you can redistribute it and/or modify it under the terms of either the GNU
 // General Public License or the Perl Artistic License.
 //
@@ -28,7 +28,11 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include <unistd.h>
+#if defined(_WIN32) && !defined(__MINGW32__) && !defined(__CYGWIN__)
+# include <io.h>
+#else
+# include <unistd.h>
+#endif
 #include <errno.h>
 #include <stdio.h>
 
@@ -204,7 +208,7 @@ void SpTraceVcd::printTime (uint64_t timeui) {
 void SpTraceVcd::bufferFlush () {
     // We add output data to m_writep.
     // When it gets nearly full we dump it using this routine which calls write()
-    // This is much faster then using buffered I/O
+    // This is much faster than using buffered I/O
     if (!isOpen()) return;
     char* wp = m_wrBufp;
     while (1) {
@@ -390,7 +394,7 @@ void SpTraceVcd::declare (uint32_t code, const char* name, int arraynum,
     // Split name into basename
     string hiername;	// space separates scope from basename of signal
     const char* basename = name;
-    if (char* dot = strrchr(basename,'.')) {
+    if (char* dot = (char*)strrchr(basename,'.')) {
 	int predotlen = dot - basename;
 	string nameasstr = name;
 	basename=dot+1;

@@ -1,5 +1,5 @@
 %{
-/* $Id: scgrammer.y 37619 2007-04-30 13:20:11Z wsnyder $
+/* $Id: scgrammer.y 49154 2008-01-02 14:22:02Z wsnyder $
  ******************************************************************************
  * DESCRIPTION: SystemC bison parser
  *
@@ -11,7 +11,7 @@
  *
  ******************************************************************************
  *
- * Copyright 2001-2007 by Wilson Snyder.  This program is free software;
+ * Copyright 2001-2008 by Wilson Snyder.  This program is free software;
  * you can redistribute it and/or modify it under the terms of either the GNU
  * General Public License or the Perl Artistic License.
  *

@@ -1,5 +1,5 @@
 \input texinfo @c -*-texinfo-*-
-@c $Id: readme.texi 37619 2007-04-30 13:20:11Z wsnyder $
+@c $Id: readme.texi 49154 2008-01-02 14:22:02Z wsnyder $
 @c %**start of header
 @setfilename readme.info
 @settitle Perl SystemC Installation
@@ -29,7 +29,7 @@ This is the SystemC Perl Package, aka SystemPerl.
 @node Copyright, Summary, Top, Top
 @section Copyright
 
-This package is Copyright 2001-2007 by Wilson Snyder @email{wsnyder@@wsnyder.org}.
+This package is Copyright 2001-2008 by Wilson Snyder @email{wsnyder@@wsnyder.org}.
 
 You may distribute under the terms of either the GNU General Public License
 or the Perl Artistic License, as specified in the Perl README file.
@@ -170,8 +170,8 @@ This version of SystemPerl has been built and tested on:
 It should run on any system with Perl, a C compiler, bison, and flex.
 
 SystemC must be installed to get the complete function.  Currently
-1.2.1beta and 2.0.1 are the versions supported for tracing, other
-versions should work without tracing.
+1.2.1beta, 2.0.1, 2.1 and 2.2 are the versions supported for tracing,
+other versions should work without tracing or with minor editing.
 
 @node Installation,  , Supported Systems, Top
 @section Installation
@@ -188,7 +188,7 @@ the line
     @samp{export SYSTEMC=/path/to/systemc}
 in your @samp{~/.bashrc} file.
 
-If different then the above, make sure the @code{SYSTEMC_KIT}
+If different than the above, make sure the @code{SYSTEMC_KIT}
 environment variable points to your original SystemC source code kit.
 
 @item

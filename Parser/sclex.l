@@ -1,6 +1,6 @@
 %option noyywrap align never-interactive prefix="sclex"
 %{
-/* $Id: sclex.l 37619 2007-04-30 13:20:11Z wsnyder $
+/* $Id: sclex.l 49154 2008-01-02 14:22:02Z wsnyder $
  ******************************************************************************
  * DESCRIPTION: SystemC lexer
  * 
@@ -12,7 +12,7 @@
  * 
  ******************************************************************************
  * 
- * Copyright 2001-2007 by Wilson Snyder.  This program is free software;
+ * Copyright 2001-2008 by Wilson Snyder.  This program is free software;
  * you can redistribute it and/or modify it under the terms of either the GNU
  * General Public License or the Perl Artistic License.
  * 
@@ -76,7 +76,7 @@ FLOATNUM	[0-9]+"."*[0-9]*[eE][0-9]+
 "#include"	{ return(PP); }
 "#"{WHITESPACE}*"sp".*\n	{ LINENO++; return(SP); }
 
-	/* Special macros we recognise */
+	/* Special macros we recognize */
 "VL_MODULE"	{ return(SC_MODULE); }
 "SC_MODULE"	{ return(SC_MODULE); }
 "SP_MODULE_CONTINUED"	{ return(SP_MODULE_CONTINUED); }

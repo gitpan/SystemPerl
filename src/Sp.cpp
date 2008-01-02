@@ -1,9 +1,9 @@
-// $Id: Sp.cpp 37619 2007-04-30 13:20:11Z wsnyder $ -*- SystemC -*-
+// $Id: Sp.cpp 49154 2008-01-02 14:22:02Z wsnyder $ -*- SystemC -*-
 //=============================================================================
 //
 // THIS MODULE IS PUBLICLY LICENSED
 //
-// Copyright 2001-2007 by Wilson Snyder.  This program is free software;
+// Copyright 2001-2008 by Wilson Snyder.  This program is free software;
 // you can redistribute it and/or modify it under the terms of either the GNU
 // General Public License or the Perl Artistic License.
 //
@@ -22,7 +22,7 @@
 /// This includes all SystemPerl modules into one CPP file.
 ///
 /// Thus users can simply compile this one file and get all SystemPerl stuff,
-/// at a much better compile time then each separately.
+/// at a much better compile time than each separately.
 //=============================================================================
 
 #include "SpTraceVcd.cpp"

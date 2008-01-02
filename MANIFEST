@@ -1,3 +1,4 @@
+.cvsignore
 Changes
 COPYING
 Coverage.pm
@@ -14,6 +15,7 @@ example/Makefile_ncsc
 example/Makefile_obj
 Makefile.PL
 MANIFEST
+MANIFEST.SKIP
 META.yml			Module meta-data (added by MakeMaker)
 Netlist.pm
 Netlist/AutoCover.pm
@@ -26,6 +28,7 @@ Netlist/Module.pm
 Netlist/Net.pm
 Netlist/Pin.pm
 Netlist/Port.pm
+Parser/.cvsignore
 Parser/Makefile.PL
 Parser/Parser.pm
 Parser/Parser.xs
@@ -43,8 +46,10 @@ patch-2-2.diff
 patch.pl
 README
 readme.texi
+sclite/.cvsignore
 sclite/include/sc_lite.h
 sclite/include/systemc.h
+sclite/src/.cvsignore
 sclite/src/empty.cpp
 sclite/src/sc_lite.cpp
 sp_includer
@@ -67,6 +72,7 @@ systemc-mode.el
 SystemPerl.pod
 t/00_pod.t
 t/01_manifest.t
+t/02_help.t
 t/10_template.in
 t/10_template.out
 t/10_template.t

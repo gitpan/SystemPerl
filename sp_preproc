@@ -1,8 +1,8 @@
 #!/usr/bin/perl -w
-#$Id: sp_preproc 37619 2007-04-30 13:20:11Z wsnyder $
+#$Id: sp_preproc 49154 2008-01-02 14:22:02Z wsnyder $
 ######################################################################
 #
-# Copyright 2001-2007 by Wilson Snyder.  This program is free software;
+# Copyright 2001-2008 by Wilson Snyder.  This program is free software;
 # you can redistribute it and/or modify it under the terms of either the GNU
 # General Public License or the Perl Artistic License.
 # 
@@ -56,7 +56,7 @@ my $opt_trace_duplicates = 0;
 my $opt_write_verilog;
 my $opt_hier_only;
 
-my $opt = new Verilog::Getopt(gcc_style=>1, vcs_style=>0);
+my $opt = new Verilog::Getopt(gcc_style=>1, vcs_style=>1);
 $opt->libext([".sp"]);
 @ARGV = $opt->parameter(@ARGV);	# Strip -D and -U flags
 if (! GetOptions (
@@ -153,7 +153,7 @@ if ($opt_makedeps) {
 #----------------------------------------------------------------------
 
 sub usage {
-    print '$Id: sp_preproc 37619 2007-04-30 13:20:11Z wsnyder $ ', "\n";
+    print '$Id: sp_preproc 49154 2008-01-02 14:22:02Z wsnyder $ ', "\n";
     pod2usage(-verbose=>2, -exitval => 2);
     exit (1);
 }
@@ -165,6 +165,7 @@ sub verbose {
 sub debug {
     verbose();
     $SystemC::Netlist::Debug = 1;
+    $Verilog::Netlist::Debug = 1;
     $Debug = 1;
 }
 
@@ -418,7 +419,7 @@ SystemPerl is part of the L<http://www.veripool.com/> free SystemC software
 tool suite.  The latest version is available from CPAN and from
 L<http://www.veripool.com/systemperl.html>.
 
-Copyright 2001-2007 by Wilson Snyder.  This package is free software; you
+Copyright 2001-2008 by Wilson Snyder.  This package is free software; you
 can redistribute it and/or modify it under the terms of either the GNU
 Lesser General Public License or the Perl Artistic License.
 

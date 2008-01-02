@@ -1,8 +1,8 @@
 #!/usr/bin/perl -w
-#$Id: vcoverage 38008 2007-05-03 19:14:56Z wsnyder $
+#$Id: vcoverage 49154 2008-01-02 14:22:02Z wsnyder $
 ######################################################################
 #
-# Copyright 2001-2007 by Wilson Snyder.  This program is free software;
+# Copyright 2001-2008 by Wilson Snyder.  This program is free software;
 # you can redistribute it and/or modify it under the terms of either the GNU
 # General Public License or the Perl Artistic License.
 # 
@@ -111,7 +111,7 @@ if ($opt_report) {
 #----------------------------------------------------------------------
 
 sub usage {
-    print '$Id: vcoverage 38008 2007-05-03 19:14:56Z wsnyder $ ', "\n";
+    print '$Id: vcoverage 49154 2008-01-02 14:22:02Z wsnyder $ ', "\n";
     pod2usage(-verbose=>2, -exitval => 2);
     exit (1);
 }
@@ -413,7 +413,7 @@ SystemPerl is part of the L<http://www.veripool.com/> free SystemC software
 tool suite.  The latest version is available from CPAN and from
 L<http://www.veripool.com/systemperl.html>.
 
-Copyright 2001-2007 by Wilson Snyder.  This package is free software; you
+Copyright 2001-2008 by Wilson Snyder.  This package is free software; you
 can redistribute it and/or modify it under the terms of either the GNU
 Lesser General Public License or the Perl Artistic License.
 

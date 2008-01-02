@@ -1,9 +1,9 @@
-// $Id: SpTraceVcdC.h 43369 2007-08-16 13:59:01Z wsnyder $ -*- SystemC -*-
+// $Id: SpTraceVcdC.h 49154 2008-01-02 14:22:02Z wsnyder $ -*- SystemC -*-
 //=============================================================================
 //
 // THIS MODULE IS PUBLICLY LICENSED
 //
-// Copyright 2001-2007 by Wilson Snyder.  This program is free software;
+// Copyright 2001-2008 by Wilson Snyder.  This program is free software;
 // you can redistribute it and/or modify it under the terms of either the GNU
 // General Public License or the Perl Artistic License.
 //
@@ -25,7 +25,13 @@
 #define _SPTRACEVCDC_H_ 1
 
 #include <sys/types.h>	// uint32_t
-#include <stdint.h>	// uint32_t
+#if defined(_WIN32) && !defined(__MINGW32__) && !defined(__CYGWIN__)
+typedef unsigned long uint32_t;
+typedef unsigned long long uint64_t;
+#else
+# include <stdint.h>	// uint32_t
+#endif
+
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -188,7 +194,7 @@ public:
     inline void fullBit (uint32_t code, const uint32_t newval) {
 	// Note the &1, so we don't require clean input -- makes more common no change case faster
 	m_sigs_oldvalp[code] = newval;
-	*m_writep++=('0'+(newval&1)); printCode(code); *m_writep++='\n';
+	*m_writep++=('0'+(char)(newval&1)); printCode(code); *m_writep++='\n';
 	bufferCheck();
     }
     inline void fullBus (uint32_t code, const uint32_t newval, int bits) {

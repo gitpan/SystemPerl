@@ -1,9 +1,9 @@
-// $Id: systemperl.h 37619 2007-04-30 13:20:11Z wsnyder $ -*- SystemC -*-
+// $Id: systemperl.h 49154 2008-01-02 14:22:02Z wsnyder $ -*- SystemC -*-
 //********************************************************************
 //
 // THIS MODULE IS PUBLICLY LICENSED
 //
-// Copyright 2001-2007 by Wilson Snyder.  This program is free software;
+// Copyright 2001-2008 by Wilson Snyder.  This program is free software;
 // you can redistribute it and/or modify it under the terms of either the GNU
 // General Public License or the Perl Artistic License.
 //
@@ -27,6 +27,10 @@
 
 #ifndef _SYSTEMPERL_H_
 #define _SYSTEMPERL_H_
+
+#ifdef _VERILATED_H_
+# error "You must include systemperl.h before verilator.h"
+#endif
 
 /* Necessary includes */
 #include <sstream>	// For AUTOENUM
@@ -67,7 +71,7 @@ typedef sc_string sp_string;	///< sc_string or std::string compatible across SC 
 /// Like SC_MODULE but not managed as a module (for coverage, etc)
 #define SP_CLASS(name) class name
 
-/// Allows constructor to be in implementation rather then the header
+/// Allows constructor to be in implementation rather than the header
 #define SP_CTOR_IMP(name) name::name(sc_module_name)
 
 /// Declaration of cell for interface
