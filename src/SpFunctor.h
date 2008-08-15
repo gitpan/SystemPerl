@@ -1,4 +1,4 @@
-// $Id: SpFunctor.h 49154 2008-01-02 14:22:02Z wsnyder $ -*- SystemC -*-
+// $Id: SpFunctor.h 55774 2008-06-12 14:15:21Z wsnyder $ -*- SystemC -*-
 //=============================================================================
 //
 // THIS MODULE IS PUBLICLY LICENSED
@@ -63,7 +63,7 @@ template <class T> class SpFunctorSpec : public SpFunctor {
   public:
     typedef void (T::*Func)(void*);
     SpFunctorSpec(T* obj, void (T::*cb)(void*)) : m_cb(cb), m_obj(obj) {}
-    virtual void call(void* userdata) { (*m_obj.*m_cb)(userdata); } 
+    virtual void call(void* userdata) { (*m_obj.*m_cb)(userdata); }
     virtual ~SpFunctorSpec() {}
 };
 

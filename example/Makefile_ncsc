@@ -1,4 +1,4 @@
-# $Id: Makefile_ncsc 49154 2008-01-02 14:22:02Z wsnyder $ -*- Makefile -*-
+# $Id: Makefile_ncsc 55774 2008-06-12 14:15:21Z wsnyder $ -*- Makefile -*-
 # DESCRIPTION: SystemPerl: Example makefile for Cadence NC-SystemC
 #
 # This is executed in the "test_dir", not in this directory
@@ -51,12 +51,12 @@ ifeq ($(NCSC_USE_MAKEFILE),)
 
  ncall: ncbuild ncrun
 
- ncbuild: 
+ ncbuild:
 	@echo Ncsc_run Build
 	ncsc_run $(OUR_NCSC_FLAGS) $(OUR_NCSC_CPP) $(INCDIR) -use ncsim -stop hdl_elab
 
 # ExMain.cpp shouldn't be required, but bug in ncsc 05.40-p004 requires it
- ncrun: 
+ ncrun:
 	@echo Ncsc_run on pre-elaborated design
 	ncsc_run -r worklib.sc_main:sc_module ExMain.cpp
 
@@ -66,20 +66,20 @@ else
 
  SYSTEMC_MAKEFILES = $(NC_ROOT)/tools/systemc/files/make
  SYSTEMC_SOURCES = $(OUR_NCSC_CPP)
- VERILOG_SOURCES = 
+ VERILOG_SOURCES =
  COMPILER = gnu
- USER_IFLAGS = 
- USER_LFLAGS = 
+ USER_IFLAGS =
+ USER_LFLAGS =
  USER_DFLAGS = -g
- USER_LIBS += 
+ USER_LIBS +=
  USER_SIM_OPTIONS =
- USER_ELAB_OPTIONS = 
+ USER_ELAB_OPTIONS =
  USER_VLOG_OPTIONS =
- USER_CPP_OPTIONS += 
+ USER_CPP_OPTIONS +=
  DEBUG = -g
  CPP_EXT = cpp
  ARCH = lnx86
- DESIGN_TOP = 
+ DESIGN_TOP =
  SNAPSHOT_NAME = simx
  export LD_LIBRARY_PATH
 

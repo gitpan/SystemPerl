@@ -1,4 +1,4 @@
-// $Id: sc_lite.h 49154 2008-01-02 14:22:02Z wsnyder $ -*- C++ -*-
+// $Id: sc_lite.h 55774 2008-06-12 14:15:21Z wsnyder $ -*- C++ -*-
 //********************************************************************
 //
 // Copyright 2001-2008 by Wilson Snyder.  This program is free software;
@@ -129,7 +129,7 @@ template <class T> class SclFunctorSpec : public SclFunctor {
     T*	m_obj;		// Module object to invoke on
   public:
     SclFunctorSpec(T* obj, void (T::*cb)()) : m_cb(cb), m_obj(obj) {}
-    virtual void call() { (*m_obj.*m_cb)(); } 
+    virtual void call() { (*m_obj.*m_cb)(); }
 };
 //Usage:
 //    SC_METHOD(clock);

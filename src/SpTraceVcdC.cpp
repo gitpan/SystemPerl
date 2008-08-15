@@ -1,4 +1,4 @@
-// $Id: SpTraceVcdC.cpp 49154 2008-01-02 14:22:02Z wsnyder $ -*- SystemC -*-
+// $Id: SpTraceVcdC.cpp 55129 2008-05-28 19:44:59Z wsnyder $ -*- SystemC -*-
 //=============================================================================
 //
 // THIS MODULE IS PUBLICLY LICENSED
@@ -21,10 +21,10 @@
 ///
 //=============================================================================
 
-#include <time.h>
+#include <ctime>
 #include <iostream>
 #include <fstream>
-#include <assert.h>
+#include <cassert>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -33,8 +33,8 @@
 #else
 # include <unistd.h>
 #endif
-#include <errno.h>
-#include <stdio.h>
+#include <cerrno>
+#include <cstdio>
 
 // Note cannot include systemperl.h, or we won't work with non-SystemC compiles
 #include "SpCommon.h"
@@ -166,6 +166,16 @@ void SpTraceVcd::closePrev () {
     ::close(m_fd);
 }
 
+void SpTraceVcd::closeErr () {
+    // Close due to an error.  We might abort before even getting here,
+    // depending on the definition of SP_ABORT.
+    if (!isOpen()) return;
+
+    // No buffer flush, just fclose
+    m_isOpen = false;
+    ::close(m_fd);  // May get error, just ignore it
+}
+
 void SpTraceVcd::close() {
     if (!isOpen()) return;
     if (m_evcd) {
@@ -221,8 +231,9 @@ void SpTraceVcd::bufferFlush () {
 	    m_wroteBytes += got;
 	} else if (got < 0) {
 	    if (errno != EAGAIN && errno != EINTR) {
-		/* write failed, presume error */
-		perror("bin-write");
+		/* write failed, presume error (perhaps out of disk space) */
+		SP_ABORT("%Error: SpTraceVcd::bufferFlush: "<<strerror(errno)<<endl);
+		closeErr();
 		break;
 	    }
 	}
@@ -266,7 +277,7 @@ double SpTraceVcd::timescaleToDouble (const char* unitp) {
 }
 
 string SpTraceVcd::doubleToTimescale (double value) {
-    char* suffixp = "s";
+    const char* suffixp = "s";
     if	    (value>=1e0)   { suffixp="s"; value *= 1e0; }
     else if (value>=1e-3 ) { suffixp="ms"; value *= 1e3; }
     else if (value>=1e-6 ) { suffixp="us"; value *= 1e6; }

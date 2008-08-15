@@ -1,4 +1,4 @@
-// $Id: systemperl.h 49154 2008-01-02 14:22:02Z wsnyder $ -*- SystemC -*-
+// $Id: systemperl.h 55129 2008-05-28 19:44:59Z wsnyder $ -*- SystemC -*-
 //********************************************************************
 //
 // THIS MODULE IS PUBLICLY LICENSED
@@ -41,7 +41,7 @@ using namespace std;
 # include <systemc.h>
 #endif
 #include <stdint.h>      // uint32_t
-#include <stdarg.h>      // ... vaargs
+#include <cstdarg>      // ... vaargs
 
 #include "SpCommon.h"
 

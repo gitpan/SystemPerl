@@ -25,7 +25,7 @@ connection of hierarchy like my Verilog-Mode, trace files and netlist
 linting.  Its netlist and parsing utilities are general enough for
 writing your own tools.  Two additional tools provide for speeding up
 GCC compiles and dependency correction.  You can download SystemC from
-the link off of http://www.veripool.com/systemperl.html
+the link off of http://www.veripool.org/systemperl
 
 1.3 Description
 ===============
@@ -120,10 +120,10 @@ simulation, such as changing cout to send to both the screen and a file.
 1.5 Obtaining Distribution
 ==========================
 
-SystemPerl is part of the L<http://www.veripool.com/> free SystemC
+SystemPerl is part of the L<http://www.veripool.org/> free SystemC
 software tool suite.  The latest version is available from
 `http://www.perl.org/CPAN/' and from
-`http://www.veripool.com/systemperl.html'.
+`http://www.veripool.org/systemperl'.
 
    Download the latest package from that site, and decompress.  `gunzip
 SystemPerl_version.tar.gz ; tar xvf SystemPerl_version.tar'

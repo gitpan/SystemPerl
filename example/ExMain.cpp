@@ -1,4 +1,4 @@
-// $Id: ExMain.cpp 49154 2008-01-02 14:22:02Z wsnyder $
+// $Id: ExMain.cpp 58966 2008-08-12 12:57:16Z wsnyder $
 // DESCRIPTION: SystemPerl: Example main()
 //
 // Copyright 2001-2008 by Wilson Snyder.  This program is free software;
@@ -20,9 +20,12 @@
 int sc_main (int argc, char *argv[]) {
 
     cout << "SYSTEMC_VERSION="<<dec<<SYSTEMC_VERSION<<endl;
+    cout << "Compiled with pointer size "<<((sizeof(char*)==8) ? "-m64":"-m32")<<endl;
 
     // Timescale
-#if (SYSTEMC_VERSION>20011000)
+#if (SYSTEMC_VERSION>=20070314)
+    sc_set_time_resolution(100.0, SC_FS);
+#elif (SYSTEMC_VERSION>20011000)
     sc_set_time_resolution(100.0, SC_FS);
     sc_set_default_time_unit(1.0, SC_NS);
     sc_report::make_warnings_errors(true);
@@ -72,6 +75,10 @@ int sc_main (int argc, char *argv[]) {
 # ifndef _SC_LITE_
     sc_trace(tf, clk, "clk");
 # endif
+
+#if SYSTEMC_VERSION >= 20070314
+    tf->set_time_unit(1, SC_NS);
+#endif
 
     // SystemPerl traces
     SpTraceFile* stp = new SpTraceFile;

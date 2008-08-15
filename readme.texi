@@ -1,5 +1,5 @@
 \input texinfo @c -*-texinfo-*-
-@c $Id: readme.texi 49154 2008-01-02 14:22:02Z wsnyder $
+@c $Id: readme.texi 55774 2008-06-12 14:15:21Z wsnyder $
 @c %**start of header
 @setfilename readme.info
 @settitle Perl SystemC Installation
@@ -17,13 +17,13 @@
 This is the SystemC Perl Package, aka SystemPerl.
 
 @menu
-* Copyright::                   
-* Summary::                     
-* Description::                 
-* SystemPerl Example::          
-* Obtaining Distribution::      
-* Supported Systems::           
-* Installation::                
+* Copyright::
+* Summary::
+* Description::
+* SystemPerl Example::
+* Obtaining Distribution::
+* Supported Systems::
+* Installation::
 @end menu
 
 @node Copyright, Summary, Top, Top
@@ -46,7 +46,7 @@ connection of hierarchy like my Verilog-Mode, trace files and netlist
 linting.  Its netlist and parsing utilities are general enough for
 writing your own tools.  Two additional tools provide for speeding up
 GCC compiles and dependency correction.  You can download SystemC from
-the link off of http://www.veripool.com/systemperl.html
+the link off of http://www.veripool.org/systemperl
 
 @node Description, SystemPerl Example, Summary, Top
 @section Description
@@ -150,10 +150,10 @@ SC_MODULE(mod) @{
 @node Obtaining Distribution, Supported Systems, SystemPerl Example, Top
 @section Obtaining Distribution
 
-SystemPerl is part of the L<http://www.veripool.com/> free SystemC
+SystemPerl is part of the L<http://www.veripool.org/> free SystemC
 software tool suite.  The latest version is available from
 @uref{http://www.perl.org/CPAN/} and from
-@uref{http://www.veripool.com/systemperl.html}.
+@uref{http://www.veripool.org/systemperl}.
 
 Download the latest package from that site, and decompress.
 @samp{gunzip SystemPerl_version.tar.gz ; tar xvf SystemPerl_version.tar}

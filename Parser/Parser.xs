@@ -1,28 +1,28 @@
 #/* SystemC.xs -- SystemC Booter  -*- Mode: C -*-
-#* $Id: Parser.xs 49154 2008-01-02 14:22:02Z wsnyder $
+#* $Id: Parser.xs 55774 2008-06-12 14:15:21Z wsnyder $
 #*********************************************************************
 #*
 #* Vl SystemC perl utility library
-#* 
+#*
 #* Author: Wilson Snyder <wsnyder@wsnyder.org> or <wsnyder@iname.com>
-#* 
-#* Code available from: http://www.veripool.com/vl
-#* 
+#*
+#* Code available from: http://www.veripool.org/
+#*
 #*********************************************************************
-#* 
+#*
 #* Copyright 2001-2008 by Wilson Snyder.  This program is free software;
 #* you can redistribute it and/or modify it under the terms of either the GNU
 #* General Public License or the Perl Artistic License.
-#* 
+#*
 #* This program is distributed in the hope that it will be useful,
 #* but WITHOUT ANY WARRANTY; without even the implied warranty of
 #* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #* GNU General Public License for more details.
-#* 
+#*
 #* You should have received a copy of the Perl Artistic License
 #* along with this module; see the file COPYING.  If not, see
 #* www.cpan.org
-#*									     
+#*
 #***********************************************************************/
 
 /* Mine: */
@@ -222,7 +222,7 @@ OUTPUT: RETVAL
 #/**********************************************************************/
 #/* self->read (filename) */
 
-int 
+int
 _read_xs (CLASS, filename, strip_autos)
 SV *CLASS
 char *filename
@@ -270,7 +270,7 @@ OUTPUT: RETVAL
 #/**********************************************************************/
 #/* self->read_include (filename) */
 
-int 
+int
 _read_include_xs (CLASS, filename)
 SV *CLASS
 char *filename

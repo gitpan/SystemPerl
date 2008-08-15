@@ -1,16 +1,16 @@
-#$Id: SystemPerl.pod 49154 2008-01-02 14:22:02Z wsnyder $
+#$Id: SystemPerl.pod 59047 2008-08-13 18:33:27Z wsnyder $
 ######################################################################
 #
 # Copyright 2001-2008 by Wilson Snyder.  This program is free software;
 # you can redistribute it and/or modify it under the terms of either the GNU
 # General Public License or the Perl Artistic License.
-# 
+#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
-#                                                                           
+#
+#
 ######################################################################
 
 =pod
@@ -44,7 +44,7 @@ removes full SystemC compatibility.
 AUTOmatics provide a way of expanding interconnections, while potentially
 retaining fully compatible SystemC code.  The preprocessor can edit the
 source code file directly, resulting in the source code having the expanded
-automatics.  
+automatics.
 
 Code with expanded AUTOs are fully valid SystemC code, and can be sent to
 anyone who does not even have system perl.  Anyone with SystemPerl has the
@@ -139,13 +139,13 @@ SP_CELL_FORM instantiates the given module named refname as a instantiation.
 The instantiation is named by using a sprintf of the given format and arguments.
 Generally this is used for arrays: i.e.:
 
+    SP_CELL_FORM(slice[i], smm_pi_slice, "slice[%d]", i);
+
 =item SC_MODULE (I<modulename>)
 
 Though a standard optional SystemC construct, SystemC requires use of the
 SC_MODULE macro when defining a module class. For example "struct mod1 :
 public sc_module" must instead be coded as "SC_MODULE(mod1)".
-
-    SP_CELL_FORM(slice[i], smm_pi_slice, "slice[%d]", i);
 
 =item SP_MODULE_CONTINUED (I<modulename>)
 
@@ -185,7 +185,7 @@ The optional fourth parameter is a regular expression which must match the
 type of the cell's pin.  For example "sc_out" would make a template that
 matches only outputs.
 
-For example, 
+For example,
 
     SP_TEMPLATE("sub(\d+)", "arrayed_(.*)", "$2_array$1");
 
@@ -257,7 +257,7 @@ For example:
     SC_MODULE(submod) {
 	sc_in_clk   clk;
 	...
-    
+
     SC_MODULE(mod) {
 	SC_CTOR(mod) /*AUTOINIT*/ {
 
@@ -320,7 +320,7 @@ Becomes:
     inline bool operator== (MyENumClass lhs, MyENumClass rhs) { return (lhs.e_en == rhs.e_en); }
     //... other accessors
     // End of SystemPerl automatic enumeration
-    
+
 =item /*AUTOINOUT_MODULE(I<mod>)*/
 
 AUTOINOUT_MODULE indicates the input/output list should be copied from the
@@ -346,7 +346,7 @@ For example:
     SC_MODULE(submod) {
 	sc_in_clk   clk;
 	...
-    
+
     SC_MODULE(mod) {
 	SC_CTOR(mod) {
 	    SP_CELL (sub, submod);
@@ -405,7 +405,7 @@ For example:
 	SC_CTOR(mod) {
 	    SP_CELL (sub, submod);
 	      SP_PIN (sub, a,	    a);
-    
+
 Becomes:
 
     SC_MODULE(mod) {
@@ -413,11 +413,11 @@ Becomes:
 	// Beginning of SystemPerl automatic subcells
 	submod		  *sub;
 	// End of SystemPerl automatic subcells
-    
+
 	SC_CTOR(mod) {
 	    SP_CELL (sub, submod);
 	      SP_PIN (sub, a,	    a);
-    
+
 =item /*AUTOSUBCELL_INCLUDE*/
 
 AUTOSUBCELL_INCLUDE creates includes for the submodules instantiated in
@@ -429,7 +429,7 @@ For example:
     SC_MODULE(mod) {
 	SC_CTOR(mod) {
 	    SP_CELL (sub, submod);
-    
+
 Becomes:
 
     /*AUTOSUBCELL_INCLUDE*/
@@ -437,7 +437,7 @@ Becomes:
     #include "submod.h"
     // End of SystemPerl automatic subcell includes
     ...
-    
+
 =item /*AUTOSIGNAL*/
 
 AUTOSIGNAL declares any signals used in SP_PIN connections that are not
@@ -450,7 +450,7 @@ For example:
 	SC_CTOR(mod) {
 	    SP_CELL (sub, submod);
 	      SP_PIN (sub, a,	    a);
-    
+
 Becomes:
 
     SC_MODULE(mod) {
@@ -458,11 +458,11 @@ Becomes:
 	// Beginning of SystemPerl automatic signals
 	sc_signal<bool>		    a;	     // For submod
 	// End of SystemPerl automatic signals
-    
+
 	SC_CTOR(mod) {
 	    SP_CELL (sub, submod);
 	      SP_PIN (sub, a,	    a);
-    
+
 =item /*AUTOTIEOFF*/
 
 AUTOTIEOFF creates zeroing assignments for all outputs of the module.
@@ -471,7 +471,7 @@ Normally this is used in a method called at reset time.
 For example:
 
     /*AUTOTIEOFF*/
-    
+
 Becomes:
 
     /*AUTOTIEOFF*/
@@ -503,14 +503,14 @@ Example:
 	...
 	sc_in<bool>	    in;
 	SP_CELL_DECL(ExModSub,		suba);
-    
+
 	/*AUTOMETHODS*/
 	// Beginning of SystemPerl automatic declarations
 	void trace (sc_trace_file *tf, const sc_string& prefix, int levels, int options=0);
 	// End of SystemPerl automatic declarations
     }
     ...
-    
+
     /*AUTOTRACE(ExMod)*/
     // Beginning of SystemPerl automatic trace file routine
     void ExMod::trace (sc_trace_file *tf, const sc_string& prefix, int levels, int options=0) {
@@ -520,7 +520,7 @@ Example:
 	}
     }
     // End of SystemPerl automatic trace file routine
-    
+
 =item SP_AUTO_CTOR
 
 SP_AUTO_CTOR should be called first in every constructor.  It will call
@@ -629,9 +629,9 @@ will be substituted to find the file to be included.  If a name of the form
 
 =head1 DISTRIBUTION
 
-SystemPerl is part of the L<http://www.veripool.com/> free SystemC software
+SystemPerl is part of the L<http://www.veripool.org/> free SystemC software
 tool suite.  The latest version is available from CPAN and from
-L<http://www.veripool.com/systemperl.html>.
+L<http://www.veripool.org/systemperl>.
 
 Copyright 2001-2008 by Wilson Snyder.  This package is free software; you
 can redistribute it and/or modify it under the terms of either the GNU

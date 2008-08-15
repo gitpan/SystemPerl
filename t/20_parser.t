@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# $Id: 20_parser.t 49154 2008-01-02 14:22:02Z wsnyder $
+# $Id: 20_parser.t 55774 2008-06-12 14:15:21Z wsnyder $
 # DESCRIPTION: Perl ExtUtils: Type 'make test' to test this package
 #
 # Copyright 2001-2008 by Wilson Snyder.  This program is free software;
@@ -110,8 +110,8 @@ ok(1);
 
 {
     # Ok, let's make sure the right data went through
-    my $f1 = wholefile ("t/20_parser.sp") or die;
-    my $f2 = wholefile ("test_dir/20_parser.out") or die;
+    my $f1 = wholefile_filter ("t/20_parser.sp") or die;
+    my $f2 = wholefile_filter ("test_dir/20_parser.out") or die;
     $f1 =~ s/(\/\*)?AUTOINCLUDE(;|\*\/)/${1}AUTOINCLUDE${2}\/\*AUTO_FROM_INCLUDE\*\/\n/g;
     my @l1 = split ("\n", $f1);
     my @l2 = split ("\n", $f2);
@@ -121,15 +121,9 @@ ok(1);
 }
 ok(1);
 
-sub wholefile {
+sub wholefile_filter {
     my $file = shift;
-    my $fh = IO::File->new ($file) or die "%Error: $! $file";
-    my $wholefile;
-    {   local $/;
-	undef $/;
-	$wholefile = <$fh>;
-    }
-    $fh->close();
+    my $wholefile = wholefile($file);
 
     $wholefile =~ s/[ \t]*#sp[^\n]*\n//mg;
     $wholefile =~ s/[ \t]*#line[^\n]*\n//mg;

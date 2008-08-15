@@ -1,10 +1,10 @@
-# $Id: Coverage.pm 49154 2008-01-02 14:22:02Z wsnyder $
+# $Id: Coverage.pm 59163 2008-08-15 01:15:56Z wsnyder $
 ######################################################################
 #
 # Copyright 2001-2008 by Wilson Snyder.  This program is free software;
 # you can redistribute it and/or modify it under the terms of either the GNU
 # General Public License or the Perl Artistic License.
-# 
+#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -29,7 +29,7 @@ use vars qw($_Default_Self);
 ######################################################################
 #### Configuration Section
 
-$VERSION = '1.282';
+$VERSION = '1.283';
 
 use constant DEFAULT_FILENAME => 'logs/coverage.pl';
 
@@ -256,9 +256,9 @@ back by simply evaluating the file.
 
 =head1 DISTRIBUTION
 
-SystemPerl is part of the L<http://www.veripool.com/> free SystemC software
+SystemPerl is part of the L<http://www.veripool.org/> free SystemC software
 tool suite.  The latest version is available from CPAN and from
-L<http://www.veripool.com/systemperl.html>.
+L<http://www.veripool.org/systemperl>.
 
 Copyright 2001-2008 by Wilson Snyder.  This package is free software; you
 can redistribute it and/or modify it under the terms of either the GNU

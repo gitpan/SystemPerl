@@ -1,4 +1,4 @@
-// $Id: SpTraceVcd.cpp 49154 2008-01-02 14:22:02Z wsnyder $ -*- SystemC -*-
+// $Id: SpTraceVcd.cpp 55129 2008-05-28 19:44:59Z wsnyder $ -*- SystemC -*-
 //=============================================================================
 //
 // THIS MODULE IS PUBLICLY LICENSED
@@ -23,7 +23,7 @@
 
 #include <sys/types.h>
 #include <unistd.h>
-#include <stdio.h>
+#include <cstdio>
 
 #include <systemperl.h>
 

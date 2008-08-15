@@ -30,7 +30,7 @@ rip this out please
     /*AUTOSIGNAL*/
 
     enum {reset_s, first_s, second_s, third_s, output_s} state;
-    sc_in<sc_int<4> > source_id;       
+    sc_in<sc_int<4> > source_id;
 
     sc_signal<TTEMxb> 	cac_pdm;	// CAC->PDM Return
     SC_CTOR(tte) {

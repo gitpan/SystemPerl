@@ -1,4 +1,4 @@
-// $Id: SpCoverage.cpp 49154 2008-01-02 14:22:02Z wsnyder $ -*- SystemC -*-
+// $Id: SpCoverage.cpp 55774 2008-06-12 14:15:21Z wsnyder $ -*- SystemC -*-
 //=============================================================================
 //
 // THIS MODULE IS PUBLICLY LICENSED
@@ -21,9 +21,9 @@
 ///
 //=============================================================================
 
-#include <stdio.h>
-#include <stdarg.h>
-#include <assert.h>
+#include <cstdio>
+#include <cstdarg>
+#include <cassert>
 #include "systemperl.h"
 #include "SpCoverage.h"
 #include "SpFunctor.h"
@@ -63,7 +63,7 @@ public:
 //=============================================================================
 // SpCoverageImp
 /// Implementation class for SpCoverage.  See that class for public method information.
-/// All value and keys are indexed into a unique number.  Thus we can greatly reduce 
+/// All value and keys are indexed into a unique number.  Thus we can greatly reduce
 /// the storage requirements for otherwise identical keys.
 
 class SpCoverageImp : SpCoverageImpBase {

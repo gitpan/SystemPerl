@@ -1,5 +1,5 @@
 %{
-/* $Id: scgrammer.y 49154 2008-01-02 14:22:02Z wsnyder $
+/* $Id: scgrammer.y 55774 2008-06-12 14:15:21Z wsnyder $
  ******************************************************************************
  * DESCRIPTION: SystemC bison parser
  *
@@ -7,7 +7,7 @@
  *
  * Author: Wilson Snyder <wsnyder@wsnyder.org>
  *
- * Code available from: http://www.veripool.com/systemperl
+ * Code available from: http://www.veripool.org/systemperl
  *
  ******************************************************************************
  *
@@ -348,32 +348,32 @@ sp:		SP				{ scparser_call(1,"preproc_sp",sclextext);}
 // Tracables
 
 traceable:	SP_TRACED declType SYMBOL vector ';'
- 			{ scparser_call(4,"signal","sp_traced",$2,$3,$4);
- 			  SCFree($2); SCFree($3); SCFree($4)}
+			{ scparser_call(4,"signal","sp_traced",$2,$3,$4);
+			  SCFree($2); SCFree($3); SCFree($4)}
 		| VL_SIG '(' SYMBOL vectorsE ',' NUMBER ',' NUMBER ')' ';'
- 			{ scparser_call(6,"signal","sp_traced_vl","uint32_t",$3,$4,$6,$8);
- 			  SCFree($3); SCFree($4); SCFree($6); SCFree($8);}
+			{ scparser_call(6,"signal","sp_traced_vl","uint32_t",$3,$4,$6,$8);
+			  SCFree($3); SCFree($4); SCFree($6); SCFree($8);}
 		| VL_SIGW '(' SYMBOL vectorsE ',' NUMBER ',' NUMBER ',' vectorNum ')' ';'
- 			{ scparser_call(6,"signal","sp_traced_vl","uint32_t",$3,$4,$6,$8);
- 			  SCFree($3); SCFree($4); SCFree($6); SCFree($8); SCFree($10);}
+			{ scparser_call(6,"signal","sp_traced_vl","uint32_t",$3,$4,$6,$8);
+			  SCFree($3); SCFree($4); SCFree($6); SCFree($8); SCFree($10);}
 		| VL_INOUT '(' SYMBOL vectorsE ',' NUMBER ',' NUMBER ')' ';'
- 			{ scparser_call(6,"signal","vl_inout","uint32_t",$3,$4,$6,$8);
- 			  SCFree($3); SCFree($4); SCFree($6); SCFree($8);}
+			{ scparser_call(6,"signal","vl_inout","uint32_t",$3,$4,$6,$8);
+			  SCFree($3); SCFree($4); SCFree($6); SCFree($8);}
 		| VL_INOUTW '(' SYMBOL vectorsE ',' NUMBER ',' NUMBER ',' vectorNum ')' ';'
- 			{ scparser_call(6,"signal","vl_inout","uint32_t",$3,$4,$6,$8);
- 			  SCFree($3); SCFree($4); SCFree($6); SCFree($8); SCFree($10);}
+			{ scparser_call(6,"signal","vl_inout","uint32_t",$3,$4,$6,$8);
+			  SCFree($3); SCFree($4); SCFree($6); SCFree($8); SCFree($10);}
 		| VL_IN '(' SYMBOL vectorsE ',' NUMBER ',' NUMBER ')' ';'
- 			{ scparser_call(6,"signal","vl_in","uint32_t",$3,$4,$6,$8);
- 			  SCFree($3); SCFree($4); SCFree($6); SCFree($8);}
+			{ scparser_call(6,"signal","vl_in","uint32_t",$3,$4,$6,$8);
+			  SCFree($3); SCFree($4); SCFree($6); SCFree($8);}
 		| VL_INW '(' SYMBOL vectorsE ',' NUMBER ',' NUMBER ',' vectorNum ')' ';'
- 			{ scparser_call(6,"signal","vl_in","uint32_t",$3,$4,$6,$8);
- 			  SCFree($3); SCFree($4); SCFree($6); SCFree($8); SCFree($10);}
+			{ scparser_call(6,"signal","vl_in","uint32_t",$3,$4,$6,$8);
+			  SCFree($3); SCFree($4); SCFree($6); SCFree($8); SCFree($10);}
 		| VL_OUT '(' SYMBOL vectorsE ',' NUMBER ',' NUMBER ')' ';'
- 			{ scparser_call(6,"signal","vl_out","uint32_t",$3,$4,$6,$8);
- 			  SCFree($3); SCFree($4); SCFree($6); SCFree($8);}
+			{ scparser_call(6,"signal","vl_out","uint32_t",$3,$4,$6,$8);
+			  SCFree($3); SCFree($4); SCFree($6); SCFree($8);}
 		| VL_OUTW '(' SYMBOL vectorsE ',' NUMBER ',' NUMBER ',' vectorNum ')' ';'
- 			{ scparser_call(6,"signal","vl_out","uint32_t",$3,$4,$6,$8);
- 			  SCFree($3); SCFree($4); SCFree($6); SCFree($8); SCFree($10);}
+			{ scparser_call(6,"signal","vl_out","uint32_t",$3,$4,$6,$8);
+			  SCFree($3); SCFree($4); SCFree($6); SCFree($8); SCFree($10);}
 		;
 
 //************************************
@@ -386,7 +386,7 @@ enumSymbol:	SYMBOL				{ scParserLex.enumname = $1; }
 		|				{ scParserLex.enumname = NULL; }
 		;
 enumValList:	enumVal				{ }
- 		| enumValList ',' enumVal	{ }
+		| enumValList ',' enumVal	{ }
 		;
 enumVal:	SYMBOL	enumAssign  		{
 			if (scParserLex.enumname) scparser_call(3,"enum_value",scParserLex.enumname,$1,$2);
@@ -430,7 +430,7 @@ vector:		/* empty */			{ $$ = strdup(""); }	/* Horrid */
 
 vectorNum:	SYMBOL				{ $$ = $1; }
 		| NUMBER			{ $$ = $1; }
-	 	| SYMBOL COLONCOLON SYMBOL	{ $$ = scstrjoin3sis ($1,":",$3); }
+		| SYMBOL COLONCOLON SYMBOL	{ $$ = scstrjoin3sis ($1,":",$3); }
 		;
 
 %%

@@ -1,24 +1,24 @@
-/* $Id: scparse.h 49154 2008-01-02 14:22:02Z wsnyder $
+/* $Id: scparse.h 55774 2008-06-12 14:15:21Z wsnyder $
  ******************************************************************************
  * DESCRIPTION: SystemC parser header file
- * 
- * This file is part of SystemC-Perl.  
- * 
+ *
+ * This file is part of SystemC-Perl.
+ *
  * Author: Wilson Snyder <wsnyder@wsnyder.org>
- * 
- * Code available from: http://www.veripool.com/systemperl
- * 
+ *
+ * Code available from: http://www.veripool.org/systemperl
+ *
  ******************************************************************************
- * 
+ *
  * Copyright 2001-2008 by Wilson Snyder.  This program is free software;
  * you can redistribute it and/or modify it under the terms of either the GNU
  * General Public License or the Perl Artistic License.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *									     
+ *
  *****************************************************************************/
 
 #include <stdio.h>

@@ -1,4 +1,4 @@
-// $Id: SpFunctor.cpp 49154 2008-01-02 14:22:02Z wsnyder $ -*- SystemC -*-
+// $Id: SpFunctor.cpp 55774 2008-06-12 14:15:21Z wsnyder $ -*- SystemC -*-
 //=============================================================================
 //
 // THIS MODULE IS PUBLICLY LICENSED
@@ -28,7 +28,7 @@
 // SpFunctorNamedImp
 ///  Implementation of SpFunctorNamed
 
-class SpFunctorNamedImp {	
+class SpFunctorNamedImp {
 public:
     typedef multimap<string, SpFunctor*>  FtMap;	///< Map typedef
     static FtMap	s_map;	///< Multimap of all functors for each name

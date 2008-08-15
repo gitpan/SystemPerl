@@ -2,7 +2,15 @@ Revision history for Perl extension SystemC::Netlist
 
 The contributors that suggested a given feature are shown in [].
 
-* SystemC 1.282 2007/1/2
+* SystemPerl 1.283 2008/8/14
+
+***	Support SystemC 2.2.0 20070314 without warnings.
+
+****	Report tracer write problems as fatal errors. [Ed Spittles]
+
+****	Fix systemc-mode.el to support GNU Emacs 22.
+
+* SystemPerl 1.282 2008/1/2
 
 ***	Allow AUTOINOUT_MODULE to read Verilog pins.
 
@@ -10,14 +18,14 @@ The contributors that suggested a given feature are shown in [].
 
 ****	Patches to support MSVC++. [John Stroebel]
 
-* SystemC 1.281 2007/8/16
+* SystemPerl 1.281 2007/8/16
 
 ***	Support wave timestamps using uint64_t.  [John Stroebel]
 
 ****	Support wave files over 4GB using 32 bit compilers. [Brian Cassell]
 	This requires gcc with -D_GNU_SOURCE or -D_LARGEFILE_SOURCE.
 
-* SystemC 1.280 2007/4/30
+* SystemPerl 1.280 2007/4/30
 
 ***	Add vcoverage --unlink option.
 
@@ -27,29 +35,29 @@ The contributors that suggested a given feature are shown in [].
 
 ****	Fix timescale problems in trace files.
 
-* SystemC 1.272 2006/10/3
+* SystemPerl 1.272 2006/10/3
 
-***	Support SystemC 2.2.05jun06 (via GreenSocs release).
+***	Support SystemPerl 2.2.05jun06 (via GreenSocs release).
 
 ****	Report error on close if sp_log file fills disk. [Greg Waters]
 
-* SystemC 1.271 2006/7/12
+* SystemPerl 1.271 2006/7/12
 
 *****	Fix missing install of SystemC::Coverage::Item, rt20423.
 
-* SystemC 1.270 2006/7/11
+* SystemPerl 1.270 2006/7/11
 
-**	Support SystemC 2.1.v1.  [Oleg Petlin]
+**	Support SystemPerl 2.1.v1.  [Oleg Petlin]
 
 ****	Fix SpTraceVcdC to allow multiple top modules. [Robert Woods-Corwin]
 
-* SystemC 1.261 2006/5/19
+* SystemPerl 1.261 2006/5/19
 
 ***	Cleanup SpCoverage memory at exit for leak checkers.  [Prabhat Gupta]
 
 ****	Fix AUTOENUM iterator begin() ignoring zero elements.  [James Kilham]
 
-* SystemC 1.260 2006/3/13
+* SystemPerl 1.260 2006/3/13
 
 **	Added iterators to AUTOENUM structures.  [Nijan Datar]
 
@@ -57,7 +65,7 @@ The contributors that suggested a given feature are shown in [].
 
 ***	Added faster file format for SystemC::Coverage data.
 
-* SystemC 1.250 2006/1/16
+* SystemPerl 1.250 2006/1/16
 
 ***	Improved trace-file performance.
 
@@ -69,7 +77,7 @@ The contributors that suggested a given feature are shown in [].
 
 ****	Fix 32-bit trace timestamps (again). [Andy Meier]
 
-* SystemC 1.240 2005/11/2
+* SystemPerl 1.240 2005/11/2
 
 **	Added SP_AUTO_METHOD for declaring methods and sensitivities.
 
@@ -87,7 +95,7 @@ The contributors that suggested a given feature are shown in [].
 
 ****	Fix SP_TEMPLATE with ${#} replacements.  [Bryce Denney]
 
-* SystemC 1.230 2005/9/20
+* SystemPerl 1.230 2005/9/20
 
 **	Rewrote the coverage analysis classes to allow cross products.
 	Note this may break tools that used the lower level coverage classes.
@@ -95,7 +103,7 @@ The contributors that suggested a given feature are shown in [].
 ***	Vcoverage may now report multiple coverage items per line.
 	This occurs when multiple items were declared on the same line.
 
-* SystemC 1.220 2005/8/12
+* SystemPerl 1.220 2005/8/12
 
 **	SP_TEMPLATE can now apply to specified pin types, for example 'sc_in's.
 
@@ -103,17 +111,17 @@ The contributors that suggested a given feature are shown in [].
 
 ****	Fix missing Class.pm file.  [Marek R]
 
-* SystemC 1.210 2005/7/27
+* SystemPerl 1.210 2005/7/27
 
 **	Parse SP_TRACED inside classes used inside sp_in/outs.  [Matt Reilly]
 
 ***	Add SP_MODULE_CONTINUED for huge Verilated files.
 
-* SystemC 1.201 2005/5/30
+* SystemPerl 1.201 2005/5/30
 
-****	Support SystemC 2.1 Beta. [Fuat Keceli]
+****	Support SystemPerl 2.1 Beta. [Fuat Keceli]
 
-* SystemC 1.200 2005/5/23
+* SystemPerl 1.200 2005/5/23
 
 ***	Parse pinouts from ncshell (ncsc_foreign_modules).
 
@@ -125,23 +133,23 @@ The contributors that suggested a given feature are shown in [].
 
 ****	Fix C++ Comments [Merijn Brand]
 
-* SystemC 1.190 2005/3/21
+* SystemPerl 1.190 2005/3/21
 
 **	Add AUTOINIT for constructing port names in SC_CTORs.
 
-* SystemC 1.180 2005/3/14
+* SystemPerl 1.180 2005/3/14
 
 **	Add SP_TEMPLATE for wildcarding AUTOINST signals.  [Bryce Denney]
 
 ***	Add support for Cadence NC-SystemC.
 
-* SystemC 1.171 2005/3/2
+* SystemPerl 1.171 2005/3/2
 
 ***	Fix tracing at time scales other than ns.  [Matt Reilly]
 
 ****	Fix make test no matching function compile error.  [Thomas Dodd]
 
-* SystemC 1.170 2005/3/1
+* SystemPerl 1.170 2005/3/1
 
 **	NEWS is now renamed Changes, to support CPAN indexing. [Offer Kaye]
 
@@ -149,7 +157,7 @@ The contributors that suggested a given feature are shown in [].
 
 ***	Add Doxygen comments to C++ sources.
 
-***	Fix sc_in<sc_clock> vs. sc_in_clk SystemC 2.0.1 difference.
+***	Fix sc_in<sc_clock> vs. sc_in_clk SystemPerl 2.0.1 difference.
 
 ***	Fix tracing of uint64_t. [Bryce Denney]
 
@@ -157,15 +165,15 @@ The contributors that suggested a given feature are shown in [].
 
 ***	Fix make test "0" is not a reference error.  [Thomas Dodd]
 
-* SystemC 1.163 2004/11/18
+* SystemPerl 1.163 2004/11/18
 
 ****	Fix sc_lite.cpp compile error on GCC 3.3.3. [Hans van Antwerpen]
 
-* SystemC 1.162 2004/10/26
+* SystemPerl 1.162 2004/10/26
 
 ****	Allow any filename to be a coverage file.  [Dawn Campanelli]
 
-* SystemC 1.161 2004/8/26
+* SystemPerl 1.161 2004/8/26
 
 ***	Support macro calls in enumeration values.
 
@@ -175,54 +183,54 @@ The contributors that suggested a given feature are shown in [].
 
 ****	Fix pod documentation errors. [Offer Kaye]
 
-* SystemC 1.160 2004/8/12
+* SystemPerl 1.160 2004/8/12
 
 **	Added vcoverage, SystemC::Coverage, and related coverage examples.
 	Functions named sp_coverage_* have been changed to SpCoverage::*
 
 ***	Added uint64 tracing and structure support for Verilator 3.240.
 
-* SystemC 1.150 2004/6/16
+* SystemPerl 1.150 2004/6/16
 
 ***	Trace file code now supports standalone C code.
 
 ****	More reliable detection of existing patches.
 
-* SystemC 1.149 2004/3/10
+* SystemPerl 1.149 2004/3/10
 
 ***	Patch process fixes for Solaris.
 
-* SystemC 1.148 2004/1/27
+* SystemPerl 1.148 2004/1/27
 
 ****	Documentation fixes
 
-* SystemC 1.147 2003/12/5
+* SystemPerl 1.147 2003/12/5
 
 ****	Support Verilator Modules
 
-* SystemC 1.146 2003/10/28
+* SystemPerl 1.146 2003/10/28
 
 ****	Support Verilator PVT cell names
 
-* SystemC 1.145 2003/8/19
+* SystemPerl 1.145 2003/8/19
 
 ****	Fix rare array-out-of-bounds crash with tracing array signal
 
 ****	More Redhat 9 and GCC 3.2.2 fixes
 
-* SystemC 1.144 2003/8/12
+* SystemPerl 1.144 2003/8/12
 
 ****	Redhat 9 and GCC 3.2.2 fixes
 
-* SystemC 1.143 2003/7/30
+* SystemPerl 1.143 2003/7/30
 
 ****	Redhat 9 installation fixes
 
-* SystemC 1.142 2003/7/16
+* SystemPerl 1.142 2003/7/16
 
-****	Support tracing of uint8_t's  
+****	Support tracing of uint8_t's
 
-* SystemC 1.141 2003/7/15
+* SystemPerl 1.141 2003/7/15
 
 ***	Allow "sp use .cell.subcell.subsubcell" to include entire paths.
 
@@ -230,7 +238,7 @@ The contributors that suggested a given feature are shown in [].
 
 ****	Fix some RedHat 9.0 warnings
 
-* SystemC 1.140 2003/4/6
+* SystemPerl 1.140 2003/4/6
 
 ***	Allow "sp use DEFINE" where DEFINE is a symbol like ALIAS_CELL
 	that should be replaced with the definition value of ALIAS_CELL.
@@ -248,30 +256,30 @@ The contributors that suggested a given feature are shown in [].
 
 ****	Support bison 1.75
 
-* SystemC 1.130 2002/11/3
+* SystemPerl 1.130 2002/11/3
 
-**	Support SystemC version 2.0.1.  A patch is required for tracing
+**	Support SystemPerl version 2.0.1.  A patch is required for tracing
 	input signals and sc_bv types, see the the README file.
 
 ***	Add example of SP_COVER statement.
 
-* SystemC 1.122 2002/8/29
+* SystemPerl 1.122 2002/8/29
 
 ***	Put AUTOINOUT signals under that label, so they can be public
 	while AUTOSIGNALs can be private.  [Greg Waters]
 
 ***	Support signals in inherited sc_modules. [Navit Fedida]
 
-* SystemC 1.120 2002/8/19
+* SystemPerl 1.120 2002/8/19
 
 ***	Support modules declared as inherited from sc_module. [Navit Fedida]
 
-* SystemC 1.110 2002/8/8
+* SystemPerl 1.110 2002/8/8
 
 ****	Allow traced modules to determine if they might have any activity.
 	Used for Verilator3 to improve trace speed by about 60%.
 
-* SystemC 1.100 2002/3/11
+* SystemPerl 1.100 2002/3/11
 
 **	Added Emacs mode in systemc-mode.el
 
@@ -285,10 +293,10 @@ The contributors that suggested a given feature are shown in [].
 
 ****	Improve tracing to allow smaller files, rollover, inlining child traces.
 
-* SystemC 1.000 2001/11/16
+* SystemPerl 1.000 2001/11/16
 
 **	Moved Netlist guts into Verilog package,
-	made SystemC a derived class.  This allows mixed-mode netlists.
+	made SystemPerl a derived class.  This allows mixed-mode netlists.
 
 **	$SYSTEMPERL should now point to the root of this package,
 	not the root/src directory.
@@ -299,9 +307,9 @@ The contributors that suggested a given feature are shown in [].
 ***	Allow tracing of sc_bv<>'s
 
 ****	Addition of experimental sclite library
-	for testing package without SystemC installed.
+	for testing package without SystemPerl installed.
 
-* SystemC 0.430 2001/9/26
+* SystemPerl 0.430 2001/9/26
 
 **	Added #sp include directive.  [Experimental, some crashes]
 
@@ -330,7 +338,7 @@ The contributors that suggested a given feature are shown in [].
 
 ***	Handle nested typenames (e.g. sc_out<ClassFoo::EnumBar>).
 
-* SystemC 0.420 2001/6/27
+* SystemPerl 0.420 2001/6/27
 
 **	Added AUTOSUBCELL_INCLUDE and AUTOSUBCELL_CLASS
 
@@ -345,16 +353,16 @@ The contributors that suggested a given feature are shown in [].
 
 ***	Fixed bug with recognizing sc_inouts.  [Amir Sahar]
 
-* SystemC 0.410 2001/5/21
+* SystemPerl 0.410 2001/5/21
 
 **	Added AUTOTRACE for creating trace statements for all signals.
 
-**	Added sp_includer and sp_makecheck for faster SystemC compiles.
+**	Added sp_includer and sp_makecheck for faster SystemPerl compiles.
 
 ***	Added sp_preproc --libcell for cells that are not to be expanded.
 	This is useful for hierarchical sp_preproc'essing.
 
-* SystemC 0.400 2001/5/4
+* SystemPerl 0.400 2001/5/4
 
 **	Added AUTOENUM_* for ascii displays of enum values.
 
@@ -370,7 +378,7 @@ The contributors that suggested a given feature are shown in [].
 
 ****	The debugging dump methods are now ->dump, not ->print.
 
-* SystemC 0.300 2001/4/3
+* SystemPerl 0.300 2001/4/3
 
 **	sc_clocks are now recognized as signal declarations.
 
@@ -380,13 +388,13 @@ The contributors that suggested a given feature are shown in [].
 
 ****	Many, Many bug fixes.
 
-* SystemC 0.1 2001/3/31
+* SystemPerl 0.1 2001/3/31
 
 ****	Package Created
 
 
 ----------------------------------------------------------------------
-$Id: Changes 49154 2008-01-02 14:22:02Z wsnyder $
+$Id: Changes 59163 2008-08-15 01:15:56Z wsnyder $
 DESCRIPTION: Documentation on change history for this package
 ----------------------------------------------------------------------
 

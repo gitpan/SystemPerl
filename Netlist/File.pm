@@ -1,17 +1,17 @@
 # SystemC - SystemC Perl Interface
-# $Id: File.pm 49154 2008-01-02 14:22:02Z wsnyder $
+# $Id: File.pm 59163 2008-08-15 01:15:56Z wsnyder $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
 # Copyright 2001-2008 by Wilson Snyder.  This program is free software;
 # you can redistribute it and/or modify it under the terms of either the GNU
 # General Public License or the Perl Artistic License.
-# 
+#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 ######################################################################
 
 package SystemC::Netlist::File;
@@ -23,7 +23,7 @@ use SystemC::Template;
 use Verilog::Netlist::Subclass;
 @ISA = qw(SystemC::Netlist::File::Struct
 	Verilog::Netlist::Subclass);
-$VERSION = '1.282';
+$VERSION = '1.283';
 use strict;
 
 structs('new',
@@ -45,7 +45,7 @@ structs('new',
 	   _impl_done	=> '$', #'	# For autoimpl, already inserted it
 	   _uses	=> '%',		# For #sp use
 	   ]);
-	
+
 ######################################################################
 ######################################################################
 #### Read class
@@ -328,26 +328,26 @@ sub auto {
 			   $modref, $self->{fileref}, $1]);
     }
     elsif ($line    =~ /^(\s*)SP_AUTO_COVER	  # $1 prefix
-	   		 (?:  inc \s* \( \s* \d+, # SP_AUTO_COVERinc(id, 
+			 (?:  inc \s* \( \s* \d+, # SP_AUTO_COVERinc(id,
 			  |   \d* \s* \( )	  # SP_AUTO_COVER1(
-	   		 (?:     \s* \"([^\"]+)\" |) # What
+			 (?:     \s* \"([^\"]+)\" |) # What
 	                 (?: \s*,\s* \"([^\"]+)\" |) # File
 			 (?: \s*,\s*   (\d+)      |) # Line
 	                 (?: \s*,\s* \"([^\"]+)\" |) # Comment
-	   		 ()			  # Enable
-	   		 \s* \) \s* ;/x
+			 ()			  # Enable
+			 \s* \) \s* ;/x
 	   || $line    =~ /^(\s*)SP_AUTO_COVER_CMT # $1 prefix
-	   		 (?:  \d* \s* \( )	  # #(
+			 (?:  \d* \s* \( )	  # #(
 	                 ()()()			  # What, File, Line
 	                 (?: \s* \"([^\"]+)\"  )  # Comment
-	   		 ()			  # Enable
-	   		 \s* \) \s* ;/x
+			 ()			  # Enable
+			 \s* \) \s* ;/x
 	   || $line    =~ /^(\s*)SP_AUTO_COVER_CMT_IF # $1 prefix
-	   		 (?:  \d* \s* \( )	  # #(
+			 (?:  \d* \s* \( )	  # #(
 	                 ()()()			  # What, File, Line
 	                 (?: \s* \"([^\"]+)\"  )  # Comment
-	   		 \s* , \s* ([^;]+)	  # Enable (should check for matching parens...)
-	   		 \s* \) \s* ;/x
+			 \s* , \s* ([^;]+)	  # Enable (should check for matching parens...)
+			 \s* \) \s* ;/x
 	   ) {
 	my ($prefix,$what,$file,$line,$cmt,$enable) = ($1,$2,$3,$4,$5,$6);
 	$what = 'line' if !defined $what;
@@ -410,7 +410,7 @@ sub cell {
 	return $self->error ("SP_CELL outside of module definition", $instname);
     }
     $self->{cellref} = $modref->new_cell
-	(name=>$instname, 
+	(name=>$instname,
 	 filename=>$self->filename, lineno=>$self->lineno,
 	 submodname=>$submodname);
 }
@@ -1133,7 +1133,7 @@ sub _write_autoenum_class {
 	("${prefix}// Beginning of SystemPerl automatic enumeration\n"
 	 ."${prefix}enum ${enumtype} e_${enumtype};\n"
 	 ."${prefix}// Avoid the default constructor; it may become private.\n"
-	 ."${prefix}inline ${class} () : e_${enumtype}(static_cast<${enumtype}>(0x0 /* 0xdeadbeef */)) {};\n"   
+	 ."${prefix}inline ${class} () : e_${enumtype}(static_cast<${enumtype}>(0x0 /* 0xdeadbeef */)) {};\n"
 	 .("${prefix}inline ${class} (${enumtype} _e)"
 	   ." : e_${enumtype}(_e) {};\n")
 	 .("${prefix}explicit inline ${class} (int _e)"
@@ -1404,9 +1404,9 @@ Prints debugging information for this file.
 
 =head1 DISTRIBUTION
 
-SystemPerl is part of the L<http://www.veripool.com/> free SystemC software
+SystemPerl is part of the L<http://www.veripool.org/> free SystemC software
 tool suite.  The latest version is available from CPAN and from
-L<http://www.veripool.com/systemperl.html>.
+L<http://www.veripool.org/systemperl>.
 
 Copyright 2001-2008 by Wilson Snyder.  This package is free software; you
 can redistribute it and/or modify it under the terms of either the GNU

@@ -1,4 +1,4 @@
-// $Id: sp_log.h 49154 2008-01-02 14:22:02Z wsnyder $ -*- C++ -*-
+// $Id: sp_log.h 55129 2008-05-28 19:44:59Z wsnyder $ -*- C++ -*-
 //********************************************************************
 //
 // THIS MODULE IS PUBLICLY LICENSED
@@ -33,7 +33,7 @@
 # endif
 #endif
 
-#include <stdio.h>
+#include <cstdio>
 
 // Some functions may be used by generic C compilers!
 #ifdef __cplusplus

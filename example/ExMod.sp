@@ -1,4 +1,4 @@
-// $Id: ExMod.sp 49154 2008-01-02 14:22:02Z wsnyder $
+// $Id: ExMod.sp 55774 2008-06-12 14:15:21Z wsnyder $
 // DESCRIPTION: SystemPerl: Example source module
 //
 // Copyright 2001-2008 by Wilson Snyder.  This program is free software;
@@ -53,15 +53,15 @@ SP_CTOR_IMP(__MODULE__) /*AUTOINIT*/ {
 
     SP_CELL (sub[0], ExModSub);
     SP_PIN  (sub[0], out, out_array[0]);
-    /*AUTOINST*/	
+    /*AUTOINST*/
 
     SP_CELL (sub[1], ExModSub);
     SP_PIN  (sub[1], out, out_array[1]);
-    /*AUTOINST*/	
+    /*AUTOINST*/
 
     //Error test:
     //SP_PIN  (sub0, nonexisting_error, cross);
-    
+
     //====
     SP_CELL (suba, ExModSub);
     SP_PIN  (suba, in, out_array[0]);

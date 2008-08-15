@@ -79,7 +79,7 @@ sub patch {
     my $origfile = wholefile($testfilename);
     if ($origfile =~ /$testre/) {
 	print "Patch $pname already applied\n";
-	return; 
+	return;
     }
 
     (-w $testfilename)

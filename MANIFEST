@@ -1,4 +1,4 @@
-.cvsignore
+.gitignore
 Changes
 COPYING
 Coverage.pm
@@ -28,7 +28,7 @@ Netlist/Module.pm
 Netlist/Net.pm
 Netlist/Pin.pm
 Netlist/Port.pm
-Parser/.cvsignore
+Parser/.gitignore
 Parser/Makefile.PL
 Parser/Parser.pm
 Parser/Parser.xs
@@ -46,10 +46,10 @@ patch-2-2.diff
 patch.pl
 README
 readme.texi
-sclite/.cvsignore
+sclite/.gitignore
 sclite/include/sc_lite.h
 sclite/include/systemc.h
-sclite/src/.cvsignore
+sclite/src/.gitignore
 sclite/src/empty.cpp
 sclite/src/sc_lite.cpp
 sp_includer
@@ -73,6 +73,7 @@ SystemPerl.pod
 t/00_pod.t
 t/01_manifest.t
 t/02_help.t
+t/03_spaces.t
 t/10_template.in
 t/10_template.out
 t/10_template.t

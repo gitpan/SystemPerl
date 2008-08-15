@@ -1,26 +1,26 @@
 %option noyywrap align never-interactive prefix="sclex"
 %{
-/* $Id: sclex.l 49154 2008-01-02 14:22:02Z wsnyder $
+/* $Id: sclex.l 58970 2008-08-12 13:24:36Z wsnyder $
  ******************************************************************************
  * DESCRIPTION: SystemC lexer
- * 
- * This file is part of SystemC-Perl.  
- * 
+ *
+ * This file is part of SystemC-Perl.
+ *
  * Author: Wilson Snyder <wsnyder@wsnyder.org>
- * 
- * Code available from: http://www.veripool.com/systemperl
- * 
+ *
+ * Code available from: http://www.veripool.org/systemperl
+ *
  ******************************************************************************
- * 
+ *
  * Copyright 2001-2008 by Wilson Snyder.  This program is free software;
  * you can redistribute it and/or modify it under the terms of either the GNU
  * General Public License or the Perl Artistic License.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details. 
- *									     
+ * GNU General Public License for more details.
+ *
  *****************************************************************************/
 
 #include "scparse.h"
@@ -157,7 +157,7 @@ FLOATNUM	[0-9]+"."*[0-9]*[eE][0-9]+
 {QUOTE}		{ StashPrefix;
 		  /* Room for trailing '\"' or '\'', and '\0' */
 		  str_buf_size = yyleng + 2;
-		  str_bufp = malloc(str_buf_size);
+		  str_bufp = (char*)malloc(str_buf_size);
 		  strcpy(str_bufp, yytext);
 		  BEGIN(STRMODE); }
 

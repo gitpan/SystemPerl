@@ -1,4 +1,4 @@
-# $Id: Makefile.PL 49154 2008-01-02 14:22:02Z wsnyder $
+# $Id: Makefile.PL 55774 2008-06-12 14:15:21Z wsnyder $
 # DESCRIPTION: Perl ExtUtils: Type 'perl Makefile.PL' to create a Makefile for this package
 #
 # Copyright 2001-2008 by Wilson Snyder.  This program is free software;
@@ -27,18 +27,17 @@ sc_patch:
 
 ## Maintainer use:
 preexist:
-	test ! -r \$(HOME)/src/kits/\$(DISTVNAME).tar.gz
+	svnorcvs nexists \$(DISTNAME)_\$(VERSION_SYM)
 	test -s README
 
 tag:
 	svnorcvs tag  \$(DISTNAME)_\$(VERSION_SYM)
 
 maintainer-diff:
-	svnorcvs diff \$(DISTNAME)_\$(VERSION_SYM) 
+	svnorcvs diff \$(DISTNAME)_\$(VERSION_SYM)
 
 maintainer-dist: preexist dist tag
-	cp \$(DISTVNAME).tar.gz \$(HOME)/src/kits
-	mv \$(DISTVNAME).tar.gz \$(HOME)/backpack
+	svnorcvs release \$(DISTVNAME).tar.gz
 	echo \"NOTE: Did you try a test without SYSTEMC set?\"
 
 maintainer-clean: distclean
@@ -68,7 +67,7 @@ WriteMakefile(
 	      EXE_FILES => [qw( sp_preproc sp_includer sp_makecheck vcoverage )],
 	      'clean'	=> {FILES => qw ( ),},
 	      'dist'    => {COMPRESS => 'gzip -9f',
-			    SUFFIX   => '.gz', 
+			    SUFFIX   => '.gz',
 			    DIST_DEFAULT => 'README all tardist',
 			},
 	      );

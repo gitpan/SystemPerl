@@ -1,4 +1,4 @@
-// $Id: SpTraceVcdC.h 49154 2008-01-02 14:22:02Z wsnyder $ -*- SystemC -*-
+// $Id: SpTraceVcdC.h 49905 2008-01-22 15:52:23Z wsnyder $ -*- SystemC -*-
 //=============================================================================
 //
 // THIS MODULE IS PUBLICLY LICENSED
@@ -105,6 +105,7 @@ private:
 	}
     }
     void closePrev();
+    void closeErr();
     void openNext();
     void printIndent (int levelchange);
     void printStr (const char* str);

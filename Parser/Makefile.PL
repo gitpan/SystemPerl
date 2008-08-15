@@ -1,4 +1,4 @@
-# $Id: Makefile.PL 49154 2008-01-02 14:22:02Z wsnyder $
+# $Id: Makefile.PL 58970 2008-08-12 13:24:36Z wsnyder $
 # DESCRIPTION: Perl ExtUtils: Type 'perl Makefile.PL' to create a Makefile for this package
 #
 # Copyright 2001-2008 by Wilson Snyder.  This program is free software;
@@ -8,7 +8,16 @@
 use ExtUtils::MakeMaker;
 
 sub MY::postamble {
-'
+    my $out;
+    $out .= "CCFLAGS  += -Wall -Wno-unused -Werror\n" if $ENV{VERILATOR_AUTHOR_SITE};
+    $out .= '
+ifeq ($(OBJCACHE_HOSTS_DETERMINANT),)
+OBJCACHE :=
+else
+OBJCACHE := objcache --read --write
+endif
+
+CC = $(OBJCACHE) gcc
 LEX = flex
 YACC = bison
 CFLAGS += -Wall
@@ -28,6 +37,7 @@ scgrammer.c scgrammer.h:	scgrammer.y scparse.h
 clean::
 	-rm -rf test *.o sclex*.c scgrammer.h scgrammer.c *.output
 ';
+    return $out;
 }
 
 WriteMakefile(

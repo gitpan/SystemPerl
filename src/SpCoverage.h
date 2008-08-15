@@ -1,4 +1,4 @@
-// $Id: SpCoverage.h 49154 2008-01-02 14:22:02Z wsnyder $ -*- SystemC -*-
+// $Id: SpCoverage.h 55774 2008-06-12 14:15:21Z wsnyder $ -*- SystemC -*-
 //=============================================================================
 //
 // THIS MODULE IS PUBLICLY LICENSED
@@ -49,14 +49,14 @@
 ///			If unspecified, downstream tools will determine it.
 ///
 /// Examples:
-///	
+///
 ///	SpZeroed<uint32_t> m_cases[10];
 ///	for (int i=0; i<10; i++) {
 ///		SP_COVER_INSERT(&m_cases[i], "comment", "Coverage Case", "i", cvtToNumStr(i));
 ///	}
 #define SP_COVER_INSERT(countptr,args...) \
 	SpCoverage::insert(spCoverItemCreate(countptr), "filename",__FILE__,  "lineno",__LINE__, \
-  			   "hier", name(), args)
+			   "hier", name(), args)
 
 //=============================================================================
 //  SpCoverItem

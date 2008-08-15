@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# $Id: 44_makecheck.t 49154 2008-01-02 14:22:02Z wsnyder $
+# $Id: 44_makecheck.t 56252 2008-06-20 19:28:58Z wsnyder $
 # DESCRIPTION: Perl ExtUtils: Type 'make test' to test this package
 #
 # Copyright 2001-2008 by Wilson Snyder.  This program is free software;
@@ -12,7 +12,7 @@ use Test;
 BEGIN { plan tests => 4 }
 BEGIN { require "t/test_utils.pl"; }
 
-run_system("/bin/rm -rf test_dir");
+run_system("rm -rf test_dir");
 mkdir 'test_dir',0777;
 
 write_file ("test_dir/a", "#\n");

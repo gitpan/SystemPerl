@@ -1,4 +1,4 @@
-// $Id: sc_lite.cpp 49154 2008-01-02 14:22:02Z wsnyder $
+// $Id: sc_lite.cpp 55774 2008-06-12 14:15:21Z wsnyder $
 //********************************************************************
 //
 // Copyright 2001-2008 by Wilson Snyder.  This program is free software;
@@ -31,7 +31,7 @@ SclTfList	scl_tf_list;
 class SclContext {
 private:
     static void step();
-    
+
 public:
     static void start(double time);
 };
