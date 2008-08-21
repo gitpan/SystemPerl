@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Id: File.pm 59163 2008-08-15 01:15:56Z wsnyder $
+# $Id: File.pm 59485 2008-08-21 13:41:55Z wsnyder $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -23,7 +23,7 @@ use SystemC::Template;
 use Verilog::Netlist::Subclass;
 @ISA = qw(SystemC::Netlist::File::Struct
 	Verilog::Netlist::Subclass);
-$VERSION = '1.283';
+$VERSION = '1.284';
 use strict;
 
 structs('new',
@@ -79,6 +79,8 @@ sub new {
     $parser->read (filename=>$parser->{filename});
     return $parser;
 }
+
+sub logger { return $_[0]->netlist->logger; }
 
 sub netlist { return $_[0]->{netlist}; }
 
@@ -303,6 +305,7 @@ sub auto {
 	}
 	$modref->new_method(name=>$name,
 			    filename=>$self->filename, lineno=>$self->lineno,
+			    module=>$modref,
 			    sensitive=>$sense);
 	foreach my $symb (split /[^a-zA-Z0-9_]+/, $sense) {
 	    $self->_add_code_symbols({$symb=>1});  # Track that we consume the clock, etc
@@ -796,6 +799,7 @@ package SystemC::Netlist::File;
 
 sub filename { return $_[0]->name(); }
 sub lineno { return 0; }
+sub logger { return $_[0]->netlist->logger; }
 
 ######################################################################
 ######################################################################
@@ -927,6 +931,8 @@ sub write {
 
     my $tpl = new SystemC::Template (ppline=>($as_imp||$as_int),
 				     keep_timestamp=>$params{keep_timestamp},
+				     # Eval is to support pre-Verilog-Perl 3.041 w/o logger
+				     logger=>(eval { $self->logger } || undef),
 				     );
     foreach my $lref (@{$tpl->src_text()}) {
 	#print "GOT LINE $lref->[1], $lref->[2], $lref->[3]";

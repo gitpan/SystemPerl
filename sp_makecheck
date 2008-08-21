@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-#$Id: sp_makecheck 55774 2008-06-12 14:15:21Z wsnyder $
+#$Id: sp_makecheck 59485 2008-08-21 13:41:55Z wsnyder $
 ######################################################################
 #
 # Copyright 2001-2008 by Wilson Snyder.  This program is free software;
@@ -18,10 +18,9 @@ use Getopt::Long;
 use IO::File;
 use Pod::Usage;
 use strict;
-use vars qw ($Debug %Depend %Checked);
+use vars qw ($Debug %Depend %Checked $VERSION);
 
-#======================================================================
-
+$VERSION = '1.284';
 
 #======================================================================
 # main
@@ -36,6 +35,7 @@ if (! GetOptions (
 		  "help"	=> \&usage,
 		  "mtime!"	=> \$Opt_Mtime,
 		  "show!"	=> \$Opt_Show,
+		  "version"	=> sub { print "Version $VERSION\n"; exit(0); },
 		  # Debugging
 		  "debug"	=> \&debug,
 		  "verbose!"	=> \$Opt_Verbose,
@@ -61,7 +61,7 @@ Dependency::unlink_out_of_date();
 #----------------------------------------------------------------------
 
 sub usage {
-    print '$Id: sp_makecheck 55774 2008-06-12 14:15:21Z wsnyder $ ', "\n";
+    print "Version $VERSION\n";
     pod2usage(-verbose=>2, -exitval => 2);
     exit (1);
 }
@@ -235,13 +235,17 @@ simply removes all of the targets.
 
 Displays this message and program version and exits.
 
+=item --mtime
+
+Consider the modification time, removing any out of date files.
+
 =item --show
 
 Show each target and the tree of required dependencies.
 
-=item --mtime
+=item --version
 
-Consider the modification time, removing any out of date files.
+Displays program version and exits.
 
 =back
 

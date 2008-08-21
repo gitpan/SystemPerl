@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# $Id: 10_template.t 49154 2008-01-02 14:22:02Z wsnyder $
+# $Id: 10_template.t 59483 2008-08-21 13:32:59Z wsnyder $
 # DESCRIPTION: Perl ExtUtils: Type 'make test' to test this package
 #
 # Copyright 2001-2008 by Wilson Snyder.  This program is free software;
@@ -13,9 +13,12 @@ BEGIN { plan tests => 9 }
 BEGIN { require "t/test_utils.pl"; }
 
 use SystemC::Template;
+use SystemC::Netlist;
 ok(1);
 
-my $tpl = new SystemC::Template ();
+# Better written as, but not backward compatible:
+#my $tpl = new SystemC::Template (logger=>Verilog::Netlist::Logger->new());
+my $tpl = new SystemC::Template (logger=>SystemC::Netlist::new_logger());
 ok($tpl);
 
 $tpl->read (filename=>'t/10_template.in',);

@@ -2,6 +2,10 @@ Revision history for Perl extension SystemC::Netlist
 
 The contributors that suggested a given feature are shown in [].
 
+* SystemPerl 1.284 2008/8/21
+
+***	Support Verilog-Perl 3.041+'s Logger-based error handling.
+
 * SystemPerl 1.283 2008/8/14
 
 ***	Support SystemC 2.2.0 20070314 without warnings.
@@ -394,7 +398,7 @@ The contributors that suggested a given feature are shown in [].
 
 
 ----------------------------------------------------------------------
-$Id: Changes 59163 2008-08-15 01:15:56Z wsnyder $
+$Id: Changes 59485 2008-08-21 13:41:55Z wsnyder $
 DESCRIPTION: Documentation on change history for this package
 ----------------------------------------------------------------------
 

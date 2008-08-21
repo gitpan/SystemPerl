@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Id: Template.pm 59163 2008-08-15 01:15:56Z wsnyder $
+# $Id: Template.pm 59485 2008-08-21 13:41:55Z wsnyder $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -27,12 +27,14 @@ use Verilog::Netlist::Subclass;
 use strict;
 use vars qw ($Debug $Default_Self $VERSION);
 
-$VERSION = '1.283';
+$VERSION = '1.284';
 
 structs('_new_base',
 	'SystemC::Template::Struct'
 	=>[name		=> '$', #'	# Filename this came from
 	   lineno	=> '$', #'	# Line number (for warning messages)
+	   logger	=> '$', #'	# Error logger object
+	   #
 	   verbose	=> '$', #'	# If true, tell when the file is written
 	   ppline	=> '$', #'	# If true, put out #line directives
 	   keep_timestamp=> '$', #'	# If true, don't write the file if it didn't change
@@ -205,6 +207,8 @@ sub write {
 	|| (join ('',@old_text) ne join ('',@gen_text))) {
 	print "Write $filename\n" if $self->verbose;
 	my $fh = IO::File->new (">$filename.tmp") or die "%Error: $! $filename.tmp\n";
+	# When Verilog-Perl 3.041 is the minimum supported version,
+	# this should become $self->logger->unlink_if_error
         $self->unlink_if_error ("$filename.tmp");
 	print $fh @gen_text;
 	$fh->close();

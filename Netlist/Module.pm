@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Id: Module.pm 59163 2008-08-15 01:15:56Z wsnyder $
+# $Id: Module.pm 59485 2008-08-21 13:41:55Z wsnyder $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -28,7 +28,7 @@ use SystemC::Netlist::AutoCover;
 use SystemC::Netlist::AutoTrace;
 
 @ISA = qw(Verilog::Netlist::Module);
-$VERSION = '1.283';
+$VERSION = '1.284';
 use strict;
 
 # Some attributes we use:
@@ -68,7 +68,7 @@ sub new_pin_template {
     my $self = shift;
     # @_ params
     # Create a new pin template under this module
-    my $templref = new SystemC::Netlist::PinTemplate (@_,);
+    my $templref = new SystemC::Netlist::PinTemplate (@_, module=>$self,);
     push @{$self->_pintemplates}, $templref;
     return $templref;
 }

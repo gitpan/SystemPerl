@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Id: Pin.pm 59163 2008-08-15 01:15:56Z wsnyder $
+# $Id: Pin.pm 59485 2008-08-21 13:41:55Z wsnyder $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -24,7 +24,7 @@ use SystemC::Netlist::Net;
 use SystemC::Netlist::Cell;
 use SystemC::Netlist::Module;
 @ISA = qw(Verilog::Netlist::Pin);
-$VERSION = '1.283';
+$VERSION = '1.284';
 use strict;
 
 ######################################################################
@@ -84,6 +84,7 @@ structs('new',
 	=>[filename 	=> '$', #'	# Filename this came from
 	   lineno	=> '$', #'	# Linenumber this came from
 	   #
+	   module	=> '$', #'	# Module part of
 	   cellregexp	=> '$', #'	# Cell regular expression as string
 	   cellre	=> '$', #'	# Cell regular expression compiled
 	   pinregexp	=> '$', #'	# Pin regular expression as string
@@ -92,6 +93,8 @@ structs('new',
 	   typere	=> '$', #'	# Type regular expression compiled
 	   netregexp	=> '$', #'	# Net regular expression as string
 	   ]);
+
+sub logger { return $_[0]->module->logger; }
 
 ######################################################################
 #### Package return

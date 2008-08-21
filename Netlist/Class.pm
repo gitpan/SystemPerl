@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Id: Class.pm 59163 2008-08-15 01:15:56Z wsnyder $
+# $Id: Class.pm 59485 2008-08-21 13:41:55Z wsnyder $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -24,7 +24,7 @@ use SystemC::Template;
 use Verilog::Netlist::Subclass;
 @ISA = qw(SystemC::Netlist::Class::Struct
 	  Verilog::Netlist::Subclass);
-$VERSION = '1.283';
+$VERSION = '1.284';
 use strict;
 
 structs('new',
@@ -103,6 +103,8 @@ sub generate_class {
 ######################################################################
 ######################################################################
 #### Accessors
+
+sub logger { return $_[0]->netlist->logger; }
 
 sub sc_type { return $_[0]->convert_type || $_[0]->name; }
 

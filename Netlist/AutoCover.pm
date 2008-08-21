@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Id: AutoCover.pm 59163 2008-08-15 01:15:56Z wsnyder $
+# $Id: AutoCover.pm 59485 2008-08-21 13:41:55Z wsnyder $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -21,7 +21,7 @@ use Verilog::Netlist;
 use Verilog::Netlist::Subclass;
 @ISA = qw(SystemC::Netlist::AutoCover::Struct
 	Verilog::Netlist::Subclass);
-$VERSION = '1.283';
+$VERSION = '1.284';
 use strict;
 
 structs('new',
@@ -38,6 +38,8 @@ structs('new',
 
 ######################################################################
 #### Accessors
+
+sub logger { return $_[0]->module->logger; }
 
 ######################################################################
 #### Module additions

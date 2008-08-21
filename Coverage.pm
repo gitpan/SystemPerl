@@ -1,4 +1,4 @@
-# $Id: Coverage.pm 59163 2008-08-15 01:15:56Z wsnyder $
+# $Id: Coverage.pm 59485 2008-08-21 13:41:55Z wsnyder $
 ######################################################################
 #
 # Copyright 2001-2008 by Wilson Snyder.  This program is free software;
@@ -29,7 +29,7 @@ use vars qw($_Default_Self);
 ######################################################################
 #### Configuration Section
 
-$VERSION = '1.283';
+$VERSION = '1.284';
 
 use constant DEFAULT_FILENAME => 'logs/coverage.pl';
 

@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-#$Id: sp_preproc 55774 2008-06-12 14:15:21Z wsnyder $
+#$Id: sp_preproc 59485 2008-08-21 13:41:55Z wsnyder $
 ######################################################################
 #
 # Copyright 2001-2008 by Wilson Snyder.  This program is free software;
@@ -29,10 +29,13 @@ use lib "$RealBin/../Verilog/blib/arch";
 use Verilog::Getopt;
 use SystemC::Netlist;
 
-use vars qw ($Debug $opt_makedeps $Opt_Lint $Exit_Status %Error_Unlink);
+use vars qw ($Debug $VERSION $opt_makedeps $Opt_Lint $Exit_Status %Error_Unlink);
 
 #======================================================================
+
 $Opt_Lint = 1;
+
+$VERSION = '1.284';
 
 #======================================================================
 # main
@@ -63,6 +66,7 @@ if (! GetOptions (
 		  "help"	=> \&usage,
 		  "verbose"	=> \&verbose,
 		  "debug"	=> \&debug,
+		  "version"	=> sub { print "Version $VERSION\n"; exit(0); },
 		  "M:s"		=> \$opt_makedeps,
 		  "MMD:s"	=> \$opt_makedeps,
 		  "autos!"	=> \$opt_autos,
@@ -153,7 +157,7 @@ if ($opt_makedeps) {
 #----------------------------------------------------------------------
 
 sub usage {
-    print '$Id: sp_preproc 55774 2008-06-12 14:15:21Z wsnyder $ ', "\n";
+    print "Version $VERSION\n";
     pod2usage(-verbose=>2, -exitval => 2);
     exit (1);
 }
@@ -388,6 +392,10 @@ With --inline, remove any expanded automatics.
 =item --verbose
 
 Shows which files are being written, or are the same.
+
+=item --version
+
+Displays program version and exits.
 
 =item --write-verilog I<filename>
 

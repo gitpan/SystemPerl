@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-#$Id: vcoverage 55774 2008-06-12 14:15:21Z wsnyder $
+#$Id: vcoverage 59485 2008-08-21 13:41:55Z wsnyder $
 ######################################################################
 #
 # Copyright 2001-2008 by Wilson Snyder.  This program is free software;
@@ -32,6 +32,7 @@ use SystemC::Coverage;
 
 use strict;
 use vars qw ($Debug
+	     $VERSION
 	     $Opt
 	     $Opt_Min_Count
 	     $Opt_All_Files
@@ -42,6 +43,8 @@ use vars qw ($Debug
 	     );
 
 #@Opt_Write_Params  # Set by some wrapper scripts
+
+$VERSION = '1.284';
 
 #######################################################################
 # main
@@ -64,6 +67,7 @@ if (! GetOptions (
 		  # Major operating modes
 		  "help"	=> \&usage,
 		  "debug"	=> \&debug,
+		  "version"	=> sub { print "Version $VERSION\n"; exit(0); },
 		  # Switches
 		  "all-files!"	=> \$Opt_All_Files,
 		  "all-types!"	=> sub {},  # Depreciated, now always true
@@ -111,7 +115,7 @@ if ($opt_report) {
 #----------------------------------------------------------------------
 
 sub usage {
-    print '$Id: vcoverage 55774 2008-06-12 14:15:21Z wsnyder $ ', "\n";
+    print "Version $VERSION\n";
     pod2usage(-verbose=>2, -exitval => 2);
     exit (1);
 }
@@ -367,6 +371,10 @@ should be written to.
 
 When using --write to combine coverage data, unlink all input files after
 the output has been created.
+
+=item --version
+
+Displays program version and exits.
 
 =item --write I<filename>
 

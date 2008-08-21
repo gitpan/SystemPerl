@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-#$Id: sp_includer 55774 2008-06-12 14:15:21Z wsnyder $
+#$Id: sp_includer 59184 2008-08-15 14:47:22Z wsnyder $
 ######################################################################
 #
 # Copyright 2001-2008 by Wilson Snyder.  This program is free software;
@@ -19,7 +19,9 @@ use IO::File;
 use Pod::Usage;
 use strict;
 
-use vars qw ($Debug);
+use vars qw ($Debug $VERSION);
+
+$VERSION = '1.450';
 
 #======================================================================
 # main
@@ -29,6 +31,7 @@ my @params;
 if (! GetOptions (
 		  "help"	=> \&usage,
 		  "debug"	=> \&debug,
+		  "version"	=> sub { print "Version $VERSION\n"; exit(0); },
 		  "<>"		=> \&parameter,
 		  )) {
     die "%Error: Bad usage, try 'sp_includer --help'\n";
@@ -41,7 +44,7 @@ foreach my $param (@params) {
 #----------------------------------------------------------------------
 
 sub usage {
-    print '$Id: sp_includer 55774 2008-06-12 14:15:21Z wsnyder $ ', "\n";
+    print "Version $VERSION\n";
     pod2usage(-verbose=>2, -exitval => 2);
     exit (1);
 }
@@ -99,6 +102,10 @@ entire large project.
 =item --help
 
 Displays this message and program version and exits.
+
+=item --version
+
+Displays program version and exits.
 
 =back
 

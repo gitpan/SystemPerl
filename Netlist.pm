@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Id: Netlist.pm 59163 2008-08-15 01:15:56Z wsnyder $
+# $Id: Netlist.pm 59485 2008-08-21 13:41:55Z wsnyder $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -27,14 +27,7 @@ use Verilog::Netlist::Subclass;
 use strict;
 use vars qw($Debug $Verbose $VERSION);
 
-$VERSION = '1.283';
-
-######################################################################
-#### Error Handling
-
-# Netlist file & line numbers don't apply
-sub filename { return 'SystemC::Netlist'; }
-sub lineno { return ''; }
+$VERSION = '1.284';
 
 ######################################################################
 #### Creation
@@ -54,6 +47,22 @@ sub new {
     bless $self, $class;
     $self->_set_features();
     return $self;
+}
+
+######################################################################
+#### Error Handling
+
+# Netlist file & line numbers don't apply
+sub filename { return 'SystemC::Netlist'; }
+sub lineno { return ''; }
+
+sub new_logger {
+    # Undocumented, as only for backward compatibility before Verilog-Perl 3.041
+    if ($::Verilog::Netlist::Logger::{new}) {  # Function exists
+	return Verilog::Netlist::Logger->new(@_);
+    } else {
+	return undef;
+    }
 }
 
 ######################################################################
