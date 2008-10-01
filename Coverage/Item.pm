@@ -1,4 +1,4 @@
-# $Id: Item.pm 59485 2008-08-21 13:41:55Z wsnyder $
+# $Id: Item.pm 62129 2008-10-01 22:52:20Z wsnyder $
 ######################################################################
 #
 # Copyright 2001-2008 by Wilson Snyder.  This program is free software;
@@ -15,30 +15,14 @@
 package SystemC::Coverage::Item;
 use Carp;
 
+use SystemC::Coverage::ItemKey;
 use strict;
 use vars qw($VERSION $Debug $AUTOLOAD);
 
 ######################################################################
 #### Configuration Section
 
-$VERSION = '1.284';
-
-our %Keys =
-    (#     sorted by compressed----v
-     "count"	 => { compressed=>"c", default=>'0'},
-     "filename"	 => { compressed=>"f", default=>'undef',},
-     "hier"	 => { compressed=>"h", default=>'""',},
-     "lineno"	 => { compressed=>"l", default=>'0',},
-     "column"	 => { compressed=>"n", default=>'0'},
-     "comment"	 => { compressed=>"o", default=>'""',},
-     "type"	 => { compressed=>"t", default=>'""',},
-     "thresh"	 => { compressed=>"s", default=>'undef',},
-     );
-
-our %DecompressKey;
-while (my ($key, $val) = each %Keys) { $DecompressKey{$val->{compressed}}=$key; }
-our %CompressKey;
-while (my ($key, $val) = each %Keys) { $CompressKey{$key}=($val->{compressed}||$key); }
+$VERSION = '1.300';
 
 ######################################################################
 ######################################################################
@@ -67,7 +51,7 @@ sub _dehash {
 	    next;
 	}
 	# Compress keys
-	$key = $CompressKey{$key} || $key;
+	$key = $SystemC::Coverage::ItemKey::CompressKey{$key} || $key;
 	$keys{$key} = $val;
     }
 
@@ -97,7 +81,7 @@ sub hash {
     # Return hash of all keys and values
     my %hash;
     while ($_[0]->[0] =~ /\001([^\002]+)\002([^\001]+)/g) {
-	my $key=$DecompressKey{$1}||$1;
+	my $key=$SystemC::Coverage::ItemKey::DecompressKey{$1}||$1;
 	$hash{$key}=$2;
     }
     return \%hash;
@@ -133,8 +117,11 @@ sub write_string {
 sub AUTOLOAD {
     my $func = $AUTOLOAD;
     if ($func =~ s/^SystemC::Coverage::Item:://) {
-	my $key = $CompressKey{$func}||$func;
-	my $def = $Keys{$func}{default}; $def = 'undef' if !defined $def;
+	my $key = $SystemC::Coverage::ItemKey::CompressKey{$func}||$func;
+	my $def = SystemC::Coverage::ItemKey::default_value($func);
+	if (!defined $def) { $def = 'undef'; }
+	elsif ($def =~ /^\d+$/) { $def = $def; }
+	else { $def = "'$def'"; }
 	my $f = ("package SystemC::Coverage::Item;"
 		 ."sub $func {"
 		 ."  if (\$_[0]->[0] =~ /\\001${key}\\002([^\\001]+)/) {"
@@ -197,9 +184,18 @@ Return a key suitable for sorting.
 
 =over 4
 
+=item col[0-9]
+
+The (enumeration) value name for this column in a table cross.
+
+=item col[0-9]_name
+
+The column title for the header line of this column.
+
 =item column
 
-Column number for the item.
+Column number for the item.  Used to disambiguate multiple coverage points
+on the same line number.
 
 =item comment
 
@@ -207,11 +203,19 @@ Textual description for the item.
 
 =item count
 
-Return the count for this point.
+The numerical count for this point.
 
 =item filename
 
 Filename of the item.
+
+=item groupdesc
+
+Description of the covergroup this item belongs to.
+
+=item groupname
+
+Group name of the covergroup this item belongs to.
 
 =item hier
 
@@ -220,6 +224,23 @@ Hierarchy path name for the item.
 =item lineno
 
 Line number for the item.
+
+=item per_instance
+
+True if every hierarchy is independently counted; otherwise all hierarchies
+will be combined into a single count.
+
+=item row[0-9]
+
+The (enumeration) value name for this row in a table cross.
+
+=item row[0-9]_name
+
+The row title for the header line of this row.
+
+=item table
+
+The name of the table for automatically generated tables.
 
 =item type
 

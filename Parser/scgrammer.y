@@ -1,5 +1,5 @@
 %{
-/* $Id: scgrammer.y 55774 2008-06-12 14:15:21Z wsnyder $
+/* $Id: scgrammer.y 61953 2008-09-30 15:14:21Z rwoodscorwin $
  ******************************************************************************
  * DESCRIPTION: SystemC bison parser
  *
@@ -45,6 +45,15 @@ char *scstrjoin2si (char *a, const char *b) {
     char *cp=malloc(len+5);
     strcpy (cp,a); strcat(cp,b);
     SCFree (a); /*SCFree (b);*/
+    return (cp);
+}
+
+/* Join two strings, return result */
+char *scstrjoin2is (const char *a, char *b) {
+    int len = strlen(a)+strlen(b);
+    char *cp=malloc(len+5);
+    strcpy (cp,a); strcat(cp,b);
+    /*SCFree (a);*/ SCFree (b);
     return (cp);
 }
 
@@ -135,6 +144,21 @@ int scgrammerlex() {
 %token		SP_PIN
 %token		SP_TEMPLATE
 %token		SP_TRACED
+%token		SP_COVERGROUP
+%token		SP_COVER_SAMPLE
+%token		COVERPOINT
+%token		CG_PAGE
+%token		CG_DESCRIPTION
+%token		CG_PER_INSTANCE
+%token		CG_DEFAULT
+%token		CG_BINS
+%token		CG_ILLEGAL_BINS
+%token		CG_IGNORE_BINS
+%token		CG_AUTO_ENUM_BINS
+%token		CG_CROSS
+%token		CG_ROWS
+%token		CG_COLS
+%token		CG_TABLE
 %token		VL_SIG
 %token		VL_SIGW
 %token		VL_INOUT
@@ -164,6 +188,7 @@ int scgrammerlex() {
 %type<string>	enumAssign
 %type<string>	enumExpr
 %type<string>	enumFunParmList
+%type<string>	negNum
 
 %%
 //************************************
@@ -199,6 +224,20 @@ exp:		auto				{ }
 		| cell_decl			{ }
 		| pin				{ }
 		| pin_template			{ }
+		| covergroup			{ }
+		| CG_PAGE			{ }
+		| CG_DESCRIPTION		{ }
+		| CG_PER_INSTANCE		{ }
+		| CG_DEFAULT			{ }
+		| CG_BINS			{ }
+		| CG_ILLEGAL_BINS		{ }
+		| CG_IGNORE_BINS		{ }
+		| CG_AUTO_ENUM_BINS		{ }
+		| CG_CROSS			{ }
+		| CG_ROWS			{ }
+		| CG_COLS			{ }
+		| CG_TABLE			{ }
+		| coversample			{ }
 		| decl				{ }
 		| traceable			{ }
 		| inout				{ }
@@ -344,34 +383,122 @@ inst_clk:	SC_CLOCK '(' 			{ SCFree($1); }
 sp:		SP				{ scparser_call(1,"preproc_sp",sclextext);}
 		;
 
+cpBinValue :    NUMBER                          { scparser_call(2,"coverpoint","binval", $1); SCFree($1); }
+                | '[' NUMBER ':' NUMBER ']'     { scparser_call(3,"coverpoint","binrange", $2, $4); SCFree($2); SCFree($4); }
+                ;
+
+cpBinValueList: cpBinValue                      { }
+                | cpBinValueList ',' cpBinValue { }
+                ;
+
+cpBinType:      CG_BINS SYMBOL 			{ scparser_call(2,"coverpoint","normal", $2); SCFree($2); }
+                | CG_ILLEGAL_BINS SYMBOL 	{ scparser_call(2,"coverpoint","illegal", $2); SCFree($2); }
+                | CG_IGNORE_BINS SYMBOL 	{ scparser_call(2,"coverpoint","ignore", $2); SCFree($2); }
+                ;
+
+cpBinMulti:     '[' ']' '=' { scparser_call(1,"coverpoint","multi_begin"); }
+                ;
+
+cpDescription:  CG_DESCRIPTION '=' STRING ';' { scparser_call(2,"coverpoint","description",$3); SCFree($3);}
+                ;
+
+
+coverpointBin:  cpBinType '=' CG_DEFAULT ';'	{ scparser_call(1,"coverpoint","default"); }
+                | cpBinType '=' cpBinValue ';'  { scparser_call(1,"coverpoint","single"); }
+                | cpBinType  cpBinMulti '{' cpBinValueList '}' ';' { scparser_call(1,"coverpoint","multi_end"); }
+                | CG_AUTO_ENUM_BINS '=' SYMBOL ';' { scparser_call(2,"coverpoint","enum", $3); SCFree($3); }
+                | cpDescription                 { }
+                | CG_PAGE '=' STRING ';' 	{ scparser_call(2,"coverpoint","page",$3); SCFree($3);}
+                ;
+
+coverpointBinList: coverpointBin			{ }
+		| coverpointBinList coverpointBin	{ }
+		;
+
+coverpoint_desc:  ';'                           { scparser_call(1,"coverpoint","standard"); }
+                | '[' NUMBER ']' ';'            { scparser_call(2,"coverpoint","standard_bins", $2); SCFree($2); }
+                | '[' NUMBER ']' '=' '[' NUMBER ':' NUMBER ']' ';'            { scparser_call(4,"coverpoint","standard_bins_range", $2, $6, $8); SCFree($2); }
+                | '[' NUMBER ']' '=' '[' NUMBER ':' NUMBER ']' '{' cpDescription '}' ';'            { scparser_call(4,"coverpoint","standard_bins_range", $2, $6, $8); SCFree($2); }
+                | '{' coverpointBinList '}' ';'            { scparser_call(1,"coverpoint","bins"); }
+                ;
+
+cross_item:	SYMBOL	 { scparser_call(2,"cross","item",$1); SCFree($1); }
+		;
+
+cross_item_list: cross_item				{ }
+		| cross_item_list ',' cross_item	{ }
+		;
+
+cross_start:	CG_ROWS      { scparser_call(1,"cross","start_rows"); }
+                | CG_COLS    { scparser_call(1,"cross","start_cols"); }
+                | CG_TABLE   { scparser_call(1,"cross","start_table"); }
+		;
+
+cross_entry:	cross_start  '=' '{' cross_item_list '}' ';' {}
+                | CG_DESCRIPTION '=' STRING ';' { scparser_call(2,"coverpoint","description",$3); SCFree($3);}
+                | CG_PAGE '=' STRING ';' 	{ scparser_call(2,"coverpoint","page",$3); SCFree($3);}
+		;
+
+cross_desc_list: cross_entry			{ }
+		| cross_desc_list cross_entry	{ }
+		;
+
+coverpoint:	coverpoint_head coverpoint_desc { scparser_call(0,"coverpoint_end"); }
+                | CG_DESCRIPTION '=' STRING ';' { scparser_call(1,"covergroup_description",$3); SCFree($3);}
+                | CG_PAGE '=' STRING ';' 	{ scparser_call(1,"covergroup_page",$3); SCFree($3);}
+                | CG_PER_INSTANCE '=' NUMBER ';' { scparser_call(1,"covergroup_per_instance",$3); SCFree($3);}
+                | cross_head '{' cross_desc_list '}' ';' { scparser_call(0,"cross_end"); }
+		;
+
+coverpoint_head: COVERPOINT SYMBOL                  { scparser_call(2,"coverpoint_begin",$2,$2); SCFree($2); }
+		| COVERPOINT SYMBOL '(' SYMBOL ')'  { scparser_call(-2,"coverpoint_begin",$2,$4); }
+                ;
+
+cross_head:     CG_CROSS SYMBOL                  { scparser_call(2,"cross_begin",$2,$2); SCFree($2); }
+		| CG_CROSS SYMBOL '(' SYMBOL ')'  { scparser_call(-2,"cross_begin",$2,$4); }
+                ;
+
+coverpointList:	coverpoint			{ }
+		| coverpointList coverpoint	{ }
+		;
+
+covergroup:     covergroup_head '(' coverpointList ')' ';' { scparser_call(0,"covergroup_end"); }
+		;
+
+covergroup_head: SP_COVERGROUP SYMBOL { scparser_call(-1,"covergroup_begin",$2); }
+		;
+
+coversample:    SP_COVER_SAMPLE '(' SYMBOL  ')' ';' { scparser_call(-1,"coversample",$3); }
+		;
+
 //************************************
 // Tracables
 
 traceable:	SP_TRACED declType SYMBOL vector ';'
 			{ scparser_call(4,"signal","sp_traced",$2,$3,$4);
 			  SCFree($2); SCFree($3); SCFree($4)}
-		| VL_SIG '(' SYMBOL vectorsE ',' NUMBER ',' NUMBER ')' ';'
+		| VL_SIG '(' SYMBOL vectorsE ',' negNum ',' negNum ')' ';'
 			{ scparser_call(6,"signal","sp_traced_vl","uint32_t",$3,$4,$6,$8);
 			  SCFree($3); SCFree($4); SCFree($6); SCFree($8);}
-		| VL_SIGW '(' SYMBOL vectorsE ',' NUMBER ',' NUMBER ',' vectorNum ')' ';'
+		| VL_SIGW '(' SYMBOL vectorsE ',' negNum ',' negNum ',' vectorNum ')' ';'
 			{ scparser_call(6,"signal","sp_traced_vl","uint32_t",$3,$4,$6,$8);
 			  SCFree($3); SCFree($4); SCFree($6); SCFree($8); SCFree($10);}
-		| VL_INOUT '(' SYMBOL vectorsE ',' NUMBER ',' NUMBER ')' ';'
+		| VL_INOUT '(' SYMBOL vectorsE ',' negNum ',' negNum ')' ';'
 			{ scparser_call(6,"signal","vl_inout","uint32_t",$3,$4,$6,$8);
 			  SCFree($3); SCFree($4); SCFree($6); SCFree($8);}
-		| VL_INOUTW '(' SYMBOL vectorsE ',' NUMBER ',' NUMBER ',' vectorNum ')' ';'
+		| VL_INOUTW '(' SYMBOL vectorsE ',' negNum ',' negNum ',' vectorNum ')' ';'
 			{ scparser_call(6,"signal","vl_inout","uint32_t",$3,$4,$6,$8);
 			  SCFree($3); SCFree($4); SCFree($6); SCFree($8); SCFree($10);}
-		| VL_IN '(' SYMBOL vectorsE ',' NUMBER ',' NUMBER ')' ';'
+		| VL_IN '(' SYMBOL vectorsE ',' negNum ',' negNum ')' ';'
 			{ scparser_call(6,"signal","vl_in","uint32_t",$3,$4,$6,$8);
 			  SCFree($3); SCFree($4); SCFree($6); SCFree($8);}
-		| VL_INW '(' SYMBOL vectorsE ',' NUMBER ',' NUMBER ',' vectorNum ')' ';'
+		| VL_INW '(' SYMBOL vectorsE ',' negNum ',' negNum ',' vectorNum ')' ';'
 			{ scparser_call(6,"signal","vl_in","uint32_t",$3,$4,$6,$8);
 			  SCFree($3); SCFree($4); SCFree($6); SCFree($8); SCFree($10);}
-		| VL_OUT '(' SYMBOL vectorsE ',' NUMBER ',' NUMBER ')' ';'
+		| VL_OUT '(' SYMBOL vectorsE ',' negNum ',' negNum ')' ';'
 			{ scparser_call(6,"signal","vl_out","uint32_t",$3,$4,$6,$8);
 			  SCFree($3); SCFree($4); SCFree($6); SCFree($8);}
-		| VL_OUTW '(' SYMBOL vectorsE ',' NUMBER ',' NUMBER ',' vectorNum ')' ';'
+		| VL_OUTW '(' SYMBOL vectorsE ',' negNum ',' negNum ',' vectorNum ')' ';'
 			{ scparser_call(6,"signal","vl_out","uint32_t",$3,$4,$6,$8);
 			  SCFree($3); SCFree($4); SCFree($6); SCFree($8); SCFree($10);}
 		;
@@ -380,7 +507,7 @@ traceable:	SP_TRACED declType SYMBOL vector ';'
 // Enumerations
 
 enum:		ENUM enumSymbol '{' enumValList '}'	{ SCFree (scParserLex.enumname); }
-
+		| ENUM enumSymbol SYMBOL ';'            { SCFree (scParserLex.enumname); }
 		;
 enumSymbol:	SYMBOL				{ scParserLex.enumname = $1; }
 		|				{ scParserLex.enumname = NULL; }
@@ -429,8 +556,12 @@ vector:		/* empty */			{ $$ = strdup(""); }	/* Horrid */
 		;
 
 vectorNum:	SYMBOL				{ $$ = $1; }
-		| NUMBER			{ $$ = $1; }
+		| negNum			{ $$ = $1; }
 		| SYMBOL COLONCOLON SYMBOL	{ $$ = scstrjoin3sis ($1,":",$3); }
+		;
+
+negNum:		NUMBER				{ $$ = $1; }
+		| '-' NUMBER			{ $$ = scstrjoin2is ("-",$2); }
 		;
 
 %%

@@ -1,4 +1,4 @@
-# $Id: Makefile.PL 55774 2008-06-12 14:15:21Z wsnyder $
+# $Id: Makefile.PL 61336 2008-09-21 12:55:20Z wsnyder $
 # DESCRIPTION: Perl ExtUtils: Type 'perl Makefile.PL' to create a Makefile for this package
 #
 # Copyright 2001-2008 by Wilson Snyder.  This program is free software;
@@ -48,9 +48,17 @@ clean::
 ";
 }
 
+my $fail;
 local $! = undef;
-`flex --version`; ($?==0) or die "\n%Error: 'flex' must be installed to build\n";
-`bison --version`; ($?==0) or die "\n%Error: 'bison' must be installed to build\n";
+`flex --version`; if ($?) { $fail=1; warn "\n%Error: 'flex' must be installed to build\n"; }
+`bison --version`; if ($?) { $fail=1; warn "\n%Error: 'bison' must be installed to build\n"; }
+if ($fail) {
+    if ($ENV{AUTOMATED_TESTING}) {
+	exit(0);
+    } else {
+	die "%Error: Exiting due to above missing dependencies.\n";
+    }
+}
 
 WriteMakefile(
 	      DISTNAME  => 'SystemPerl',

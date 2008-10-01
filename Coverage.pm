@@ -1,4 +1,4 @@
-# $Id: Coverage.pm 59485 2008-08-21 13:41:55Z wsnyder $
+# $Id: Coverage.pm 62129 2008-10-01 22:52:20Z wsnyder $
 ######################################################################
 #
 # Copyright 2001-2008 by Wilson Snyder.  This program is free software;
@@ -29,7 +29,7 @@ use vars qw($_Default_Self);
 ######################################################################
 #### Configuration Section
 
-$VERSION = '1.284';
+$VERSION = '1.300';
 
 use constant DEFAULT_FILENAME => 'logs/coverage.pl';
 
@@ -122,7 +122,6 @@ sub write {
 	}
     } else {
 	print $fh "# SystemC::Coverage-2 -*- Mode:perl -*-\n";
-	print $fh "package SystemC::Coverage;\n";
 	foreach my $key (sort keys %{$self->{coverage}}) {
 	    my $nkey = $key;
 	    if ($params{edit_key_cb}) {

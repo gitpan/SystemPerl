@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Id: Class.pm 59485 2008-08-21 13:41:55Z wsnyder $
+# $Id: Class.pm 62129 2008-10-01 22:52:20Z wsnyder $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -24,7 +24,7 @@ use SystemC::Template;
 use Verilog::Netlist::Subclass;
 @ISA = qw(SystemC::Netlist::Class::Struct
 	  Verilog::Netlist::Subclass);
-$VERSION = '1.284';
+$VERSION = '1.300';
 use strict;
 
 structs('new',
@@ -84,14 +84,20 @@ sub generate_class {
 	return $netlist->new_class(name=>$name,
 				   msb=>($1-1), lsb=>0, cast_type=>undef);
     }
-    elsif ($name =~ /^sp_ui<(\d+),(\d+)>$/) {
+    elsif ($name =~ /^sp_ui<(-?\d+),(-?\d+)>$/) {
 	my $msb = $1;  my $lsb = $2;
-	my $out = ((($msb==0 && $lsb==0) && "bool")
-		   || (($msb<=31) && "uint32_t")
-		   || (($msb<=63) && "uint64_t")
-		   || "sc_bv<".($msb+1).">");
+	# sp_ui<10,1> means we store bits 10:0,
+	# and trace 10:0 (as VCD format doesn't allow otherwise)
+	my $stored_lsb = ($lsb<0 ? $lsb : 0);
+	my $size = $msb-$stored_lsb+1;
+	my $out = ((($size==1) && "bool")
+		   || (($size<=32) && "uint32_t")
+		   || (($size<=64) && "uint64_t")
+		   || "sc_bv<".$size.">");
 	return $netlist->new_class(name=>$name, convert_type=>$out,
-				   msb=>$msb, lsb=>$lsb, stored_lsb=>0, cast_type=>undef);
+				   msb=>$msb, lsb=>$lsb,
+				   stored_lsb=>$stored_lsb,
+				   cast_type=>undef);
     }
     elsif ($netlist->{_enum_classes}{$name}) {
 	return $netlist->new_class(name=>$name, is_enum=>1,
@@ -182,61 +188,12 @@ __END__
 
 =head1 NAME
 
-SystemC::Netlist::Class - File containing SystemC code
-
-=head1 SYNOPSIS
-
-  use SystemC::Netlist;
-
-  my $nl = new SystemC::Netlist;
-  my $fileref = $nl->read_file (filename=>'filename');
-  $fileref->write (filename=>'new_filename',
-		   expand_autos=>1,);
+SystemC::Netlist::Class - Class (type) information
 
 =head1 DESCRIPTION
 
-SystemC::Netlist::Class allows SystemC files to be read and written.
-
-=head1 ACCESSORS
-
-=over 4
-
-=item $self->basename
-
-The filename of the file with any path and . suffix stripped off.
-
-=item $self->name
-
-The filename of the file.
-
-=back
-
-=head1 MEMBER FUNCTIONS
-
-=over 4
-
-=item $self->read
-
-Generally called as $netlist->read_file.  Pass a hash of parameters.  Reads
-the filename=> parameter, parsing all instantiations, ports, and signals,
-and creating SystemC::Netlist::Module structures.  The optional
-preserve_autos=> parameter prevents default ripping of /*AUTOS*/ out for
-later recomputation.
-
-=item $self->write
-
-Pass a hash of parameters.  Writes the filename=> parameter with the
-contents of the previously read file.  If the expand_autos=> parameter is
-set, /*AUTO*/ comments will be expanded in the output.  If the
-as_implementation=> parameter is set, only implementation code (.cpp) will
-be written.  If the as_interface=> parameter is set, only interface code
-(.h) will be written.
-
-=item $self->dump
-
-Prints debugging information for this file.
-
-=back
+SystemC::Netlist::Class contains type information.  It is called from
+SystemC::Netlist.
 
 =head1 DISTRIBUTION
 

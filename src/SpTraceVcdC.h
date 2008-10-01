@@ -1,4 +1,4 @@
-// $Id: SpTraceVcdC.h 49905 2008-01-22 15:52:23Z wsnyder $ -*- SystemC -*-
+// $Id: SpTraceVcdC.h 61048 2008-09-18 00:45:49Z wsnyder $ -*- SystemC -*-
 //=============================================================================
 //
 // THIS MODULE IS PUBLICLY LICENSED
@@ -111,7 +111,7 @@ private:
     void printStr (const char* str);
     void printQuad (uint64_t n);
     void printTime (uint64_t timeui);
-    void declare (uint32_t code, const char* name, int arraynum, int msb, int lsb);
+    void declare (uint32_t code, const char* name, int arraynum, bool bussed, int msb, int lsb);
 
     void dumpHeader();
     void dumpPrep (uint64_t timeui);

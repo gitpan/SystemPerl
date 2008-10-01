@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# $Id: 9x_common_build.pl 49154 2008-01-02 14:22:02Z wsnyder $
+# $Id: 9x_common_build.pl 60993 2008-09-17 16:58:23Z wsnyder $
 # DESCRIPTION: Perl ExtUtils: Type 'make test' to test this package
 #
 # Copyright 2001-2008 by Wilson Snyder.  This program is free software;
@@ -20,7 +20,8 @@ if ($Config{archname} !~ /linux/
     || !$ENV{SYSTEMC}) {
     skip("skip Harmless; Not linux or missing SystemC",1);
 } else {
-    run_system ("cd $dir && make -j 3 -f ../example/Makefile_obj");
+    run_system ("cd $dir && make -j 3 -f ../example/Makefile_obj preproc");
+    run_system ("cd $dir && make -j 3 -f ../example/Makefile_obj compile");
     ok(-x "$dir/ex_main");
 }
 

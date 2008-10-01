@@ -1,4 +1,4 @@
-#$Id: Parser.pm 59485 2008-08-21 13:41:55Z wsnyder $
+#$Id: Parser.pm 62129 2008-10-01 22:52:20Z wsnyder $
 ######################################################################
 #
 # Copyright 2001-2008 by Wilson Snyder.  This program is free software;
@@ -21,7 +21,7 @@ require DynaLoader;
 use strict;
 use vars qw($VERSION);
 
-$VERSION = '1.284';
+$VERSION = '1.300';
 
 ######################################################################
 #### Configuration Section
@@ -75,6 +75,19 @@ sub pin_template {}
 sub preproc_sp {}
 sub signal {}
 sub text {}
+sub covergroup_begin {}
+sub covergroup_page {}
+sub covergroup_description {}
+sub covergroup_per_instance {}
+sub covergroup_end {}
+sub coversample {}
+sub coverpoint_begin {}
+sub coverpoint {}
+sub coverpoint_end {}
+sub cross_begin {}
+sub cross {}
+sub cross_end {}
+
 
 sub fileline {
     my $self = shift;

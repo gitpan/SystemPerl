@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Id: File.pm 59485 2008-08-21 13:41:55Z wsnyder $
+# $Id: File.pm 62129 2008-10-01 22:52:20Z wsnyder $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -23,7 +23,7 @@ use SystemC::Template;
 use Verilog::Netlist::Subclass;
 @ISA = qw(SystemC::Netlist::File::Struct
 	Verilog::Netlist::Subclass);
-$VERSION = '1.284';
+$VERSION = '1.300';
 use strict;
 
 structs('new',
@@ -36,6 +36,7 @@ structs('new',
 	   #
 	   text		=> '$',	#'	# ARRAYREF: Lines of text
 	   is_libcell	=> '$',	#'	# True if is a library cell
+	   has_slow	=> '$',	#'	# True if has #sp slow
 	   # For special procedures
 	   _write_var	=> '%',		# For write() function info passing
 	   _enums	=> '$', #'	# For autoenums, hash{class}{en}{def} = value
@@ -92,6 +93,13 @@ sub text {
     my $self = shift;
     my $line = shift;
     return if $self->{_ifdef_off};
+
+    # comment lines while inside a covergroup
+    if (defined $self->{parsing_covergroup} &&
+       ($self->{parsing_covergroup} == 1)) {
+	print "\"$line\"\n" if (defined $line && $SystemC::Netlist::Debug);
+	$line =~ s#\n#\n//#g if defined $line;
+    }
 
     push_text($self, [ 0, $self->filename, $self->lineno,
 		       $line ]);
@@ -352,6 +360,7 @@ sub auto {
 			 \s* , \s* ([^;]+)	  # Enable (should check for matching parens...)
 			 \s* \) \s* ;/x
 	   ) {
+
 	my ($prefix,$what,$file,$line,$cmt,$enable) = ($1,$2,$3,$4,$5,$6);
 	$what = 'line' if !defined $what;
 	$enable = 1 if (!defined $enable || $enable eq "");
@@ -624,6 +633,183 @@ sub signal {
     }
 }
 
+sub covergroup_begin {
+    my $self = shift;
+    my $name = shift;
+
+    return if !$self->{need_covergroup};
+
+    print "Netlist::File: covergroup_begin parsed with name: $name\n" if $SystemC::Netlist::Debug;
+
+    my $modref = $self->{modref};
+    # make a new covergroup
+    my $covergroupref = $modref->current_covergroup();
+    # name it
+    $covergroupref->name($name);
+    $covergroupref->page("\"$name\""); # default page = name with quotes
+    # add it to this module's list
+    $modref->_covergroups($name,$covergroupref);
+
+    $self->{parsing_covergroup} = 1;
+
+    my $last = pop @Text;
+    # comment the initial SP_COVERGROUP line
+    $last->[3] =~ s/(SP_COVERGROUP)/\/\/SP_COVERGROUP/ if defined $last->[3];
+    push_text($self, [ 0, $self->filename, $self->lineno, "\n//SP_COVERGROUP Begin of SystemPerl coverage group\n"]);
+    push_text($self, $last);
+
+}
+
+sub covergroup_end {
+    my $self = shift;
+
+    return if !$self->{need_covergroup};
+
+    print "Netlist::File: covergroup_end parsed\n" if $SystemC::Netlist::Debug;
+
+    $self->{parsing_covergroup} = 0;
+
+    my $modref = $self->{modref};
+    $modref->close_new_covergroup ();
+
+    push_text($self, [ 0, $self->filename, $self->lineno, "\n//SP_COVERGROUP End of SystemPerl coverage group\n"]);
+}
+sub covergroup_per_instance {
+    my $self = shift;
+    my $val = shift;
+
+    return if !$self->{need_covergroup};
+
+    print "Netlist::File: covergroup_per_instance parsed with value: $val\n" if $SystemC::Netlist::Debug;
+    my $modref = $self->{modref};
+    my $currentCovergroup = $modref->current_covergroup();
+    $currentCovergroup->set_per_instance($val);
+}
+
+sub covergroup_description {
+    my $self = shift;
+    my $desc = shift;
+
+    return if !$self->{need_covergroup};
+
+    print "Netlist::File: covergroup_description parsed with name: $desc\n" if $SystemC::Netlist::Debug;
+    my $modref = $self->{modref};
+    my $currentCovergroup = $modref->current_covergroup();
+    $currentCovergroup->add_desc($desc);
+}
+
+sub covergroup_page {
+    my $self = shift;
+    my $page = shift;
+
+    return if !$self->{need_covergroup};
+
+    print "Netlist::File: covergroup_page parsed with name: $page\n" if $SystemC::Netlist::Debug;
+    my $modref = $self->{modref};
+    my $currentCovergroup = $modref->current_covergroup();
+    $currentCovergroup->add_page($page);
+}
+
+sub coversample {
+    my $self = shift;
+    my $name = shift;
+
+    return if !$self->{need_covergroup};
+
+    print "Netlist::File: coversample parsed with name: $name\n" if $SystemC::Netlist::Debug;
+
+    my $modref = $self->{modref};
+
+    my %cgh = %{$modref->_covergroups};
+    my $covergroupref = $cgh{$name}; # look up by name
+    $covergroupref || $self->error("SP_COVER_SAMPLE($name) but no SP_COVERGROUP found with that name!\n");
+
+    push_text($self, [ 0, $self->filename, $self->lineno, "\n//SP_COVER_SAMPLE Begin of SystemPerl coverage sample\n"]);
+    push_text($self, [ 0, $self->filename, $self->lineno,
+		       SystemC::Netlist::CoverGroup::covergroup_sample_text($covergroupref,"\n" )]);
+    push_text($self, [ 0, $self->filename, $self->lineno, "//SP_COVER_SAMPLE End of SystemPerl coverage sample\n"]);
+}
+
+sub cross_begin {
+    my $self = shift;
+    my $connection = shift;
+    my $name = shift;
+
+    return if !$self->{need_covergroup};
+
+    print "Netlist::File: parsed cross name: $name, connecting to $connection\n" if $SystemC::Netlist::Debug;
+
+    my $modref = $self->{modref};
+    my $point = $modref->current_coverpoint();
+
+    $point->isCross(1);
+    $point->name($name);
+    $point->connection($connection);
+}
+
+sub cross {
+    my $self = shift;
+
+    return if !$self->{need_covergroup};
+
+    my $modref = $self->{modref};
+    my $point = $modref->current_coverpoint();
+
+    # pass the rest of the args on down, with fileref added at the front
+    unshift @_, $self->{fileref};
+    $point->cross_build(@_);
+}
+
+sub cross_end {
+    my $self = shift;
+
+    return if !$self->{need_covergroup};
+
+    my $modref = $self->{modref};
+    # close this one out
+    $modref->close_new_coverpoint();
+}
+
+sub coverpoint_begin {
+    my $self = shift;
+    my $connection = shift;
+    my $name = shift;
+
+    return if !$self->{need_covergroup};
+
+    print "Netlist::File: coverpoint parsed point name: $name, connecting to $connection\n" if $SystemC::Netlist::Debug;
+
+    my $modref = $self->{modref};
+    my $point = $modref->current_coverpoint();
+
+    $point->name($name);
+    $point->connection($connection);
+    $point->isCross(0);
+}
+
+sub coverpoint {
+    my $self = shift;
+
+    return if !$self->{need_covergroup};
+
+    my $modref = $self->{modref};
+    my $point = $modref->current_coverpoint();
+
+    # pass the rest of the args on down, with fileref added at the front
+    unshift @_, $self->{fileref};
+    $point->coverpoint_build(@_);
+}
+
+sub coverpoint_end {
+    my $self = shift;
+
+    return if !$self->{need_covergroup};
+
+    my $modref = $self->{modref};
+    # close this one out
+    $modref->close_new_coverpoint();
+}
+
 sub preproc_sp {
     my $self = shift;
     my $line = shift;
@@ -667,13 +853,20 @@ sub preproc_sp {
 	elsif ($cmd =~ /^implementation$/) {
 	    return if $self->{_ifdef_off};
 	    push_text($self, [ 0, $self->filename, $self->lineno,
-			       \&SystemC::Netlist::File::_write_implementation,
+			       \&SystemC::Netlist::File::_start_implementation,
 			       $self->{fileref}, $line]);
 	}
 	elsif ($cmd =~ /^interface$/) {
 	    return if $self->{_ifdef_off};
 	    push_text($self, [ 0, $self->filename, $self->lineno,
-			       \&SystemC::Netlist::File::_write_interface,
+			       \&SystemC::Netlist::File::_start_interface,
+			       $self->{fileref}, $line]);
+	}
+	elsif ($cmd =~ /^slow$/) {
+	    return if $self->{_ifdef_off};
+	    $self->{fileref}->has_slow(1);
+	    push_text($self, [ 0, $self->filename, $self->lineno,
+			       \&SystemC::Netlist::File::_start_slow,
 			       $self->{fileref}, $line]);
 	}
 	elsif ($cmd =~ /^use/) {
@@ -760,6 +953,12 @@ sub enum_value {
     my $enum = shift;
     my $def = shift;
     my $value = shift;
+
+    if ($value =~ /^0x[0-9a-fA-F]+$/) { # convert hex number
+	#print "recognized hex $str as ". (hex $str)."\n";
+	$value = hex $value;
+    }
+
     # We haven't defined a class for enums... Presume others won't use them(?)
     return if $self->{_ifdef_off};
     my $fileref = $self->{fileref};
@@ -777,6 +976,10 @@ sub enum_value {
 
     $href->{$class}{$enum}{$def} = $value;
     $fileref->_enums($href);
+
+    # write this to the netlist too
+    my $netlist = $fileref->netlist();
+    $netlist->{_enums}{$class} = $href->{$class};
 }
 
 sub error {
@@ -833,6 +1036,7 @@ sub read {
 
     $params{need_text} = $netlist->{need_text} if !defined $params{need_text};
     $params{need_signals} = $netlist->{need_signals} if !defined $params{need_signals};
+    $params{need_covergroup} = $netlist->{need_covergroup} if !defined $params{need_covergroup};
     $params{strip_autos} = $netlist->{strip_autos} if !defined $params{strip_autos};
 
     my $parser = SystemC::Netlist::File::Parser->new
@@ -841,6 +1045,7 @@ sub read {
 	  strip_autos=>$params{strip_autos}||0,		# for ->read
 	  need_text=>$params{need_text},		# for ->read
 	  need_signals=>$params{need_signals},		# for ->read
+	  need_covergroup=>$params{need_covergroup},	# for ->read
 	  );
     foreach my $addfile (@{$params{append_filenames}}) {
 	$parser->read(filename=>$addfile);
@@ -901,7 +1106,7 @@ sub uses_sorted {
 # WRITING
 
 # _write locals
-use vars qw($as_imp $as_int $outputting);
+use vars qw($_Write_Type $outputting);
 
 sub print {
     shift if ref $_[0];
@@ -919,8 +1124,7 @@ sub write {
     $SystemC::Netlist::Verbose = 1 if $SystemC::Netlist::Debug;
 
     my $filename = $params{filename} or croak "%Error: ".__PACKAGE__."::write (filename=>) parameter required, stopped";
-    local $as_imp = $params{as_implementation};
-    local $as_int = $params{as_interface};
+    local $_Write_Type = $params{type} || "";
     my $autos  = $params{expand_autos};
     my $program = $params{program} || __PACKAGE__;	# Allow user to override it
     foreach my $var (keys %params) {
@@ -929,7 +1133,7 @@ sub write {
     }
 
 
-    my $tpl = new SystemC::Template (ppline=>($as_imp||$as_int),
+    my $tpl = new SystemC::Template (ppline=>($_Write_Type),
 				     keep_timestamp=>$params{keep_timestamp},
 				     # Eval is to support pre-Verilog-Perl 3.041 w/o logger
 				     logger=>(eval { $self->logger } || undef),
@@ -941,11 +1145,13 @@ sub write {
 
     local $outputting = 1;
 
-    if ($as_imp || $as_int) {
-	my $hc = ($as_int)?"H":"CPP";
-	$tpl->printf("#ifndef _%s_${hc}_\n#define _%s_${hc}_ 1\n", uc $self->basename, uc $self->basename);
+    if ($_Write_Type) {
+	my $hc = (($_Write_Type eq 'interface') && "_H"
+		  || ($_Write_Type eq 'slow') && "SLOW_CPP"
+		  || "_CPP");
+	$tpl->printf("#ifndef _%s${hc}_\n#define _%s${hc}_ 1\n", uc $self->basename, uc $self->basename);
 	$tpl->print("// This file generated automatically by $program\n");
-	$tpl->printf("#include \"%s.h\"\n", $self->basename) if $as_imp;
+	$tpl->printf("#include \"%s.h\"\n", $self->basename) if ($_Write_Type ne 'interface');
     }
 
     my $module_exp = $self->module_exp;
@@ -975,14 +1181,14 @@ sub write {
 
     # Automatic AUTOIMPLEMENTATION/AUTOINTERFACE at end of each file
     $outputting = 1;
-    if (0&&$autos && $as_int && !$self->_intf_done) {
+    if (0&&$autos && $_Write_Type eq 'interface' && !$self->_intf_done) {
 	$self->_write_autointf("");
     }
-    if ($autos && $as_imp && !$self->_impl_done) {
+    if ($autos && $_Write_Type eq 'implementation' && !$self->_impl_done) {
 	$self->_write_autoimpl("");
     }
 
-    if ($as_imp || $as_int) {
+    if ($_Write_Type) {
 	$tpl->print ("// This file generated automatically by $program\n");
 	$tpl->printf ("#endif /*guard*/\n");
     }
@@ -995,27 +1201,45 @@ sub write {
 		 );
 }
 
-sub _write_implementation {
+sub _start_implementation {
     my $self = shift;
     my $line = shift;
-    if ($as_imp || $as_int) {
+    if ($_Write_Type) {
 	$self->print ("//$line");
-	$outputting = 0 if ($as_int);
-	$outputting = 1 if ($as_imp);
+	$outputting = ($_Write_Type eq 'implementation');
     } else {
 	$self->print ($line);
     }
 }
-sub _write_interface {
+sub _start_interface {
     my $self = shift;
     my $line = shift;
-    if ($as_imp || $as_int) {
+    if ($_Write_Type) {
 	$self->print ("//$line");
-	$outputting = 1 if ($as_int);
-	$outputting = 0 if ($as_imp);
+	$outputting = ($_Write_Type eq 'interface');
     } else {
         $self->print ($line);
     }
+}
+sub _start_slow {
+    my $self = shift;
+    my $line = shift;
+    if ($_Write_Type) {
+	$self->print ("//$line");
+	$outputting = ($_Write_Type eq 'slow');
+    } else {
+	$self->print ($line);
+    }
+}
+
+sub _write_in_slow {
+    my $self = shift;
+    return ($_Write_Type eq 'slow'
+	    || (!$self->has_slow && $_Write_Type eq 'implementation'));
+}
+sub _write_in_fast {
+    my $self = shift;
+    return ($_Write_Type eq 'implementation');
 }
 
 our $_Write_Use_Last_Filename = "";
@@ -1043,7 +1267,7 @@ sub _write_use {
     $_Write_Use_Last_Lineno = $src_lineno;
 
     # Output it
-    if ($as_imp || $as_int) {
+    if ($_Write_Type) {
 	if ($incname =~ /^\./) {
 	    my $line = $incname;
 	    my $curmodref = (values %{$self->_modules})[0];
@@ -1098,6 +1322,7 @@ sub _write_autoctor {
     return if !$SystemC::Netlist::File::outputting;
     $self->print ("${prefix}// Beginning of SystemPerl automatic constructors\n");
     SystemC::Netlist::AutoCover::_write_autocover_ctor($self,$prefix,$modref);
+    SystemC::Netlist::CoverGroup::_write_covergroup_ctor($self,$prefix,$modref);
 
     my $last_meth = "";
     foreach my $meth ($modref->methods_sorted) {
@@ -1124,6 +1349,7 @@ sub _write_autoimpl {
     }
     foreach my $modref (values %{$self->_modules}) {
 	SystemC::Netlist::AutoCover::_write_autocover_impl($self,$prefix,$modref);
+	SystemC::Netlist::CoverGroup::_write_covergroup_impl($self,$prefix,$modref);
     }
     $self->print ("${prefix}// End of SystemPerl automatic implementation\n");
 }
@@ -1385,6 +1611,10 @@ The filename of the file.
 
 =over 4
 
+=item $self->dump
+
+Prints debugging information for this file.
+
 =item $self->read
 
 Generally called as $netlist->read_file.  Pass a hash of parameters.  Reads
@@ -1397,14 +1627,9 @@ later recomputation.
 
 Pass a hash of parameters.  Writes the filename=> parameter with the
 contents of the previously read file.  If the expand_autos=> parameter is
-set, /*AUTO*/ comments will be expanded in the output.  If the
-as_implementation=> parameter is set, only implementation code (.cpp) will
-be written.  If the as_interface=> parameter is set, only interface code
-(.h) will be written.
-
-=item $self->dump
-
-Prints debugging information for this file.
+set, /*AUTO*/ comments will be expanded in the output.  If the type=>
+parameter is set to 'implementation', 'interface' or 'slow', only that type
+of code will be written.
 
 =back
 

@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# $Id: 90_ncsc_run.t 56252 2008-06-20 19:28:58Z wsnyder $
+# $Id: 90_ncsc_run.t 61216 2008-09-19 14:06:23Z wsnyder $
 # DESCRIPTION: Perl ExtUtils: Type 'make test' to test this package
 #
 # Copyright 2001-2008 by Wilson Snyder.  This program is free software;
@@ -26,8 +26,9 @@ print "Building example...\n";
 if (!ncsc_ok()) {
     skip("skip Harmless; Not linux or missing NC-SC",1);
 } else {
-    run_system ("cd test_dir && make -f ../example/Makefile_ncsc");
-    ok(-x "test_dir/ncsim_sc");
+    run_system ("cd test_dir && make -f ../example/Makefile_ncsc preproc");
+    run_system ("cd test_dir && make -f ../example/Makefile_ncsc ncall");
+    ok(-e "test_dir/logs/coverage.pl");
 }
 
 1;

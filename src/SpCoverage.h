@@ -1,4 +1,4 @@
-// $Id: SpCoverage.h 55774 2008-06-12 14:15:21Z wsnyder $ -*- SystemC -*-
+// $Id: SpCoverage.h 61112 2008-09-18 19:13:56Z wsnyder $ -*- SystemC -*-
 //=============================================================================
 //
 // THIS MODULE IS PUBLICLY LICENSED
@@ -29,6 +29,7 @@
 #include <iostream>
 #include <sstream>
 #include <string>
+#include "SpCommon.h"
 
 //=============================================================================
 /// Insert a item for coverage analysis.
@@ -55,8 +56,8 @@
 ///		SP_COVER_INSERT(&m_cases[i], "comment", "Coverage Case", "i", cvtToNumStr(i));
 ///	}
 #define SP_COVER_INSERT(countptr,args...) \
-	SpCoverage::insert(spCoverItemCreate(countptr), "filename",__FILE__,  "lineno",__LINE__, \
-			   "hier", name(), args)
+    SP_IF_COVER(SpCoverage::insert(spCoverItemCreate(countptr), "filename",__FILE__,  "lineno",__LINE__, \
+				   "hier", name(), args))
 
 //=============================================================================
 //  SpCoverItem
@@ -70,7 +71,7 @@ class SpCoverageImpItem;
 class SpCoverItem {
 public:
     // METHODS
-    virtual void dumpCount(std::ostream& os) const = 0;
+    virtual uint64_t count() const = 0;
 protected:
     friend class SpCoverageImpItem;
     // CONSTRUCTORS
@@ -87,7 +88,7 @@ private:
     const T*	m_countp;	///< Count value
 public:
     // METHODS
-    virtual void dumpCount(std::ostream& os) const { os<<*m_countp; }
+    virtual uint64_t count() const { return *m_countp; }
     // CONSRUCTORS
     SpCoverItemSpec(const T* countp) : m_countp(countp) {}
     virtual ~SpCoverItemSpec() {}
@@ -95,7 +96,7 @@ public:
 
 /// Template class to auto-construct SpCoverItem for passed type
 template <class T>
-inline const SpCoverItem* spCoverItemCreate(T* value) { return new SpCoverItemSpec<T>(value); }
+const SpCoverItem* spCoverItemCreate(T* value) { return new SpCoverItemSpec<T>(value); }
 
 //=============================================================================
 //  SpCoverValue
@@ -106,7 +107,7 @@ private:
     std::string m_s;
 public:
     // Implicit conversion operators:
-    template <class T> inline SpCoverValue (const T& t) {
+    template <class T> SpCoverValue (const T& t) {
 	ostringstream os; os<<t; m_s = os.str();
     };
     inline SpCoverValue (const string& t) : m_s(t) {}
@@ -130,23 +131,29 @@ public:
     /// Write all coverage data to a file
     static void write (const char* filename = "logs/coverage.pl");
 #define A(n) const SpCoverKey& key ## n, const SpCoverValue& val ## n	// Argument list
-#define C(n) key ## n, val ## n		// Calling argument list
-#define N(n) "",SpCoverValue("")	// Null argument list
     /// Insert a coverage item
     /// We accept from 1-10 key/value pairs, all as strings.
-    static void insert (const SpCoverItem* itemp, A(0))							{ insert(itemp,C(0),N(1),N(2),N(3),N(4),N(5),N(6),N(7),N(8),N(9)); }
-    static void insert (const SpCoverItem* itemp, A(0),A(1))					  	{ insert(itemp,C(0),C(1),N(2),N(3),N(4),N(5),N(6),N(7),N(8),N(9)); }
-    static void insert (const SpCoverItem* itemp, A(0),A(1),A(2))					{ insert(itemp,C(0),C(1),C(2),N(3),N(4),N(5),N(6),N(7),N(8),N(9)); }
-    static void insert (const SpCoverItem* itemp, A(0),A(1),A(2),A(3))				  	{ insert(itemp,C(0),C(1),C(2),C(3),N(4),N(5),N(6),N(7),N(8),N(9)); }
-    static void insert (const SpCoverItem* itemp, A(0),A(1),A(2),A(3),A(4))				{ insert(itemp,C(0),C(1),C(2),C(3),C(4),N(5),N(6),N(7),N(8),N(9)); }
-    static void insert (const SpCoverItem* itemp, A(0),A(1),A(2),A(3),A(4),A(5))			{ insert(itemp,C(0),C(1),C(2),C(3),C(4),C(5),N(6),N(7),N(8),N(9)); }
-    static void insert (const SpCoverItem* itemp, A(0),A(1),A(2),A(3),A(4),A(5),A(6))		  	{ insert(itemp,C(0),C(1),C(2),C(3),C(4),C(5),C(6),N(7),N(8),N(9)); }
-    static void insert (const SpCoverItem* itemp, A(0),A(1),A(2),A(3),A(4),A(5),A(6),A(7))		{ insert(itemp,C(0),C(1),C(2),C(3),C(4),C(5),C(6),C(7),N(8),N(9)); }
-    static void insert (const SpCoverItem* itemp, A(0),A(1),A(2),A(3),A(4),A(5),A(6),A(7),A(8))	 	{ insert(itemp,C(0),C(1),C(2),C(3),C(4),C(5),C(6),C(7),C(8),N(9)); }
+    static void insert (const SpCoverItem* itemp, A(0));
+    static void insert (const SpCoverItem* itemp, A(0),A(1));
+    static void insert (const SpCoverItem* itemp, A(0),A(1),A(2));
+    static void insert (const SpCoverItem* itemp, A(0),A(1),A(2),A(3));
+    static void insert (const SpCoverItem* itemp, A(0),A(1),A(2),A(3),A(4));
+    static void insert (const SpCoverItem* itemp, A(0),A(1),A(2),A(3),A(4),A(5));
+    static void insert (const SpCoverItem* itemp, A(0),A(1),A(2),A(3),A(4),A(5),A(6));
+    static void insert (const SpCoverItem* itemp, A(0),A(1),A(2),A(3),A(4),A(5),A(6),A(7));
+    static void insert (const SpCoverItem* itemp, A(0),A(1),A(2),A(3),A(4),A(5),A(6),A(7),A(8));
     static void insert (const SpCoverItem* itemp, A(0),A(1),A(2),A(3),A(4),A(5),A(6),A(7),A(8),A(9));
+    static void insert (const SpCoverItem* itemp, A(0),A(1),A(2),A(3),A(4),A(5),A(6),A(7),A(8),A(9),A(10));
+    static void insert (const SpCoverItem* itemp, A(0),A(1),A(2),A(3),A(4),A(5),A(6),A(7),A(8),A(9),A(10),A(11));
+    static void insert (const SpCoverItem* itemp, A(0),A(1),A(2),A(3),A(4),A(5),A(6),A(7),A(8),A(9),A(10),A(11),A(12));
+    static void insert (const SpCoverItem* itemp, A(0),A(1),A(2),A(3),A(4),A(5),A(6),A(7),A(8),A(9),A(10),A(11),A(12),A(13));
+    static void insert (const SpCoverItem* itemp, A(0),A(1),A(2),A(3),A(4),A(5),A(6),A(7),A(8),A(9),A(10),A(11),A(12),A(13),A(14));
+    static void insert (const SpCoverItem* itemp, A(0),A(1),A(2),A(3),A(4),A(5),A(6),A(7),A(8),A(9),A(10),A(11),A(12),A(13),A(14),A(15));
+    static void insert (const SpCoverItem* itemp, A(0),A(1),A(2),A(3),A(4),A(5),A(6),A(7),A(8),A(9),A(10),A(11),A(12),A(13),A(14),A(15),A(16));
+    static void insert (const SpCoverItem* itemp, A(0),A(1),A(2),A(3),A(4),A(5),A(6),A(7),A(8),A(9),A(10),A(11),A(12),A(13),A(14),A(15),A(16),A(17));
+    static void insert (const SpCoverItem* itemp, A(0),A(1),A(2),A(3),A(4),A(5),A(6),A(7),A(8),A(9),A(10),A(11),A(12),A(13),A(14),A(15),A(16),A(17),A(18));
+    static void insert (const SpCoverItem* itemp, A(0),A(1),A(2),A(3),A(4),A(5),A(6),A(7),A(8),A(9),A(10),A(11),A(12),A(13),A(14),A(15),A(16),A(17),A(18),A(19));
 #undef A
-#undef C
-#undef N
     /// Clear coverage points (and call delete on all items)
     static void clear();
 };

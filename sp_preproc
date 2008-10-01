@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-#$Id: sp_preproc 59485 2008-08-21 13:41:55Z wsnyder $
+#$Id: sp_preproc 62129 2008-10-01 22:52:20Z wsnyder $
 ######################################################################
 #
 # Copyright 2001-2008 by Wilson Snyder.  This program is free software;
@@ -35,7 +35,7 @@ use vars qw ($Debug $VERSION $opt_makedeps $Opt_Lint $Exit_Status %Error_Unlink)
 
 $Opt_Lint = 1;
 
-$VERSION = '1.284';
+$VERSION = '1.300';
 
 #======================================================================
 # main
@@ -102,6 +102,7 @@ my $nl = new SystemC::Netlist (options=>$opt,
 			       lint_checking => $opt_lint,
 			       need_text=>($opt_preproc||$opt_inline),
 			       need_signals=>!$opt_hier_only,
+			       need_covergroup=>!$opt_hier_only,
 			       );
 
 foreach my $file (@sp_files_nolib) {
@@ -132,14 +133,20 @@ $nl->exit_if_error();
 if ($opt_preproc) {
     foreach my $fileref ($nl->files()) {
 	next if $fileref->is_libcell();
-	my $filename_c = $fileref->basename() . ".cpp";
-	my $filename_h = $fileref->basename() . ".h";
-	$fileref->write( filename=> $filename_c,
-			 as_implementation=>1, expand_autos=>1,
-			 keep_timestamp=>1,);
+	my $filename_h = $fileref->basename .".h";
+	my $filename_c = $fileref->basename .".cpp";
+	my $filename_slow_c = $fileref->basename ."__Slow.cpp";
 	$fileref->write( filename=> $filename_h,
-			 as_interface=>1, expand_autos=>1,
+			 type=>'interface', expand_autos=>1,
 			 keep_timestamp=>1,);
+	$fileref->write( filename=> $filename_c,
+			 type=>'implementation', expand_autos=>1,
+			 keep_timestamp=>1,);
+	if ($fileref->has_slow) {
+	    $fileref->write( filename=> $filename_slow_c,
+			     type=>'slow', expand_autos=>1,
+			     keep_timestamp=>1,);
+	}
     }
 }
 if ($opt_inline) {
@@ -153,6 +160,8 @@ if ($opt_inline) {
 if ($opt_makedeps) {
     $nl->dependency_write($opt_makedeps);
 }
+
+$nl->exit_if_error();
 
 #----------------------------------------------------------------------
 

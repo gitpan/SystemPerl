@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Id: Module.pm 59485 2008-08-21 13:41:55Z wsnyder $
+# $Id: Module.pm 62129 2008-10-01 22:52:20Z wsnyder $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -26,9 +26,11 @@ use SystemC::Netlist::Cell;
 use SystemC::Netlist::Pin;
 use SystemC::Netlist::AutoCover;
 use SystemC::Netlist::AutoTrace;
+use SystemC::Netlist::CoverGroup;
+use SystemC::Netlist::CoverPoint;
 
 @ISA = qw(Verilog::Netlist::Module);
-$VERSION = '1.284';
+$VERSION = '1.300';
 use strict;
 
 # Some attributes we use:
@@ -115,7 +117,9 @@ sub autos1 {
 	    $fromref = $self->netlist->find_module ($frommodname);
 	}
 	if (!$fromref) {
+	    my $filename = $self->netlist->resolve_filename($frommodname);
 	    $self->warn ("AUTOINOUT_MODULE not found: $frommodname\n");
+	    $self->warn ("   Note file exists but doesn't contain module: $filename\n") if $filename;
 	} else {
 	    # Make sure we did autos on the referenced module
 	    $fromref->autos1();
@@ -317,6 +321,7 @@ sub _write_autodecls {
 	     "#endif\n");
     }
     SystemC::Netlist::AutoCover::_write_autocover_decl($fileref,$prefix,$self);
+    SystemC::Netlist::CoverGroup::_write_covergroup_decl($fileref,$prefix,$self);
     $fileref->print ("${prefix}// End of SystemPerl automatic declarations\n");
 }
 

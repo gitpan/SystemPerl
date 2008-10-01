@@ -1,4 +1,4 @@
-// $Id: SpTraceVcdC.cpp 55129 2008-05-28 19:44:59Z wsnyder $ -*- SystemC -*-
+// $Id: SpTraceVcdC.cpp 61048 2008-09-18 00:45:49Z wsnyder $ -*- SystemC -*-
 //=============================================================================
 //
 // THIS MODULE IS PUBLICLY LICENSED
@@ -28,6 +28,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <string.h>
 #if defined(_WIN32) && !defined(__MINGW32__) && !defined(__CYGWIN__)
 # include <io.h>
 #else
@@ -389,7 +390,7 @@ void SpTraceVcd::module (string name) {
 }
 
 void SpTraceVcd::declare (uint32_t code, const char* name, int arraynum,
-			  int msb, int lsb) {	// -1 = is boolean
+			  bool bussed, int msb, int lsb) {
     if (!code) { SP_ABORT("%Error: internal trace problem, code 0 is illegal\n"); }
 
     // Make sure array is large enough
@@ -427,29 +428,29 @@ void SpTraceVcd::declare (uint32_t code, const char* name, int arraynum,
     } else {
 	decl += stringCode(code);
     }
-    decl += (string(" "))+basename;
+    decl += " ";
+    decl += basename;
     if (arraynum>=0) {
 	sprintf(buf, "(%d)", arraynum);
 	decl += buf;
 	hiername += buf;
     }
-    if (msb<0) {
-	decl += " $end\n";
-    } else {
-	sprintf(buf, " [%d:%d] $end\n", msb, lsb);
+    if (bussed) {
+	sprintf(buf, " [%d:%d]", msb, lsb);
 	decl += buf;
     }
+    decl += " $end\n";
     m_namemapp->insert(make_pair(hiername,decl));
 }
 
 void SpTraceVcd::declBit (uint32_t code, const char* name, int arraynum)
-{  declare (code, name, arraynum, -1, -1); }
+{  declare (code, name, arraynum, false, 0, 0); }
 void SpTraceVcd::declBus (uint32_t code, const char* name, int arraynum, int msb, int lsb)
-{  declare (code, name, arraynum, msb, lsb); }
+{  declare (code, name, arraynum, true, msb, lsb); }
 void SpTraceVcd::declQuad  (uint32_t code, const char* name, int arraynum, int msb, int lsb)
-{  declare (code, name, arraynum, msb, lsb); }
+{  declare (code, name, arraynum, true, msb, lsb); }
 void SpTraceVcd::declArray (uint32_t code, const char* name, int arraynum, int msb, int lsb)
-{  declare (code, name, arraynum, msb, lsb); }
+{  declare (code, name, arraynum, true, msb, lsb); }
 
 //=============================================================================
 // Callbacks

@@ -1,4 +1,4 @@
-// $Id: ExBench.sp 49154 2008-01-02 14:22:02Z wsnyder $
+// $Id: ExBench.sp 61048 2008-09-18 00:45:49Z wsnyder $
 // DESCRIPTION: SystemPerl: Example main()
 //
 // Copyright 2001-2008 by Wilson Snyder.  This program is free software;
@@ -27,7 +27,7 @@ SC_MODULE (__MODULE__) {
     SP_TRACED uint32_t  m_array[ARRAYSIZE];
     SP_TRACED MyENumClass m_enumVal;
     // Note verilator now emits it's own tracing; this is just for back compatibility
-    VL_SIG(m_unusedok1,  5,1);		// From Verilator: reg [5:1]  m_unusedok1
+    VL_SIG(m_unusedok1,  5,-1);		// From Verilator: reg [5:-1] m_unusedok1
     VL_SIGW(m_unusedok2, 73,1,2);	// From Verilator: reg [74:1] m_unusedok2
     VL_SIGW(m_unusedok3[10], 73,1,2);	// From Verilator: reg [74:1] m_unusedok3[10]
 
@@ -41,10 +41,8 @@ SC_MODULE (__MODULE__) {
 /*AUTOINTERFACE*/
 
 //######################################################################
-#sp implementation
+#sp slow
 /*AUTOSUBCELL_INCLUDE*/
-# sp use  .mod.suba
-# sp use  .ExBench.mod.suba	// Same thing...
 
 SP_CTOR_IMP(__MODULE__) /*AUTOINIT*/ {
     SP_AUTO_CTOR;
@@ -70,6 +68,12 @@ SP_CTOR_IMP(__MODULE__) /*AUTOINIT*/ {
 
     for (int i=0; i<ARRAYSIZE; i++) m_array[i] = i;
 }
+
+//######################################################################
+#sp implementation
+/*AUTOSUBCELL_INCLUDE*/
+# sp use  .mod.suba
+# sp use  .ExBench.mod.suba	// Same thing...
 
 void __MODULE__::clock() {
     SP_AUTO_METHOD(clock, clk.pos());

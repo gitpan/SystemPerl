@@ -1,4 +1,4 @@
-#$Id: SystemPerl.pod 59047 2008-08-13 18:33:27Z wsnyder $
+#$Id: SystemPerl.pod 61648 2008-09-24 18:09:46Z rwoodscorwin $
 ######################################################################
 #
 # Copyright 2001-2008 by Wilson Snyder.  This program is free software;
@@ -105,6 +105,51 @@ For example:
 
     // Wherever you need to increment:
     ++m_fcCases[oldstate][newstate];
+
+=item SP_COVERGROUP I<groupname> (I<coverpoints>...])
+
+For example:
+
+SC_MODULE(__MODULE__) {
+
+  EnumType var1;
+  EnumType var2;
+  uint32_t var3;
+  ...
+
+  SP_COVERGROUP name (
+    description = "a bunch of text that will appear next to the HTML table; what's this covergroup all about?";
+    coverpoint      var3[16] = [0:0x1000];       // 16 evenly space buckets dividing [0:0x1000]
+    coverpoint      var3_alt(var3) {             // alternate name
+      bins sizes[] = {0, 1, [2:5], [8:100]};     // 4 buckets as specified
+      bins other = default;
+    }
+    coverpoint var1 {                            // automatic enum buckets
+	auto_enum_bins = EnumType;
+    };
+    coverpoint var3 {                       // illegal and ignored bins
+      illegal_bins banish_bad_luck = 13;
+      ignore_bins  ignore_zero = 0;
+    };
+    cross myCross {                              // 2-dimensional cross
+      rows = {var1};
+      cols = {var3_alt};
+    };
+  );
+  ...
+  /*AUTOMETHODS*/
+}
+
+SP_CTOR_IMP(__MODULE__) /*AUTOINIT*/ {
+    SP_AUTO_CTOR;
+    ...
+}
+
+void __MODULE__::foo() {
+    ...
+    SP_COVER_SAMPLE(name);
+    ...
+}
 
 =item SP_CLASS (I<class>)
 
@@ -608,8 +653,15 @@ to protect against multiple inclusion.
 
 =item #sp implementation
 
-The Interface specifies the following code should be part of the cpp file.
+Specifies the following code should be part of the cpp file.
 This allows a common .sp file to contain both .h and .cpp information.
+
+=item #sp slow
+
+Specifies the following code should be part of a slow cpp file, compiled
+with minimal optimization because the functions contained within are only
+executed once.  This allows a common .sp file to contain both .h, fast .cpp,
+and slow .cpp information.
 
 =item #sp use
 

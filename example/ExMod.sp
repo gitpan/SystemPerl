@@ -1,4 +1,4 @@
-// $Id: ExMod.sp 55774 2008-06-12 14:15:21Z wsnyder $
+// $Id: ExMod.sp 60993 2008-09-17 16:58:23Z wsnyder $
 // DESCRIPTION: SystemPerl: Example source module
 //
 // Copyright 2001-2008 by Wilson Snyder.  This program is free software;
@@ -37,7 +37,7 @@ SC_MODULE (__MODULE__) {
 };
 
 //######################################################################
-#sp implementation
+#sp slow
 /*AUTOSUBCELL_INCLUDE*/
 
 SP_CTOR_IMP(__MODULE__) /*AUTOINIT*/ {
@@ -72,5 +72,9 @@ SP_CTOR_IMP(__MODULE__) /*AUTOINIT*/ {
     out.write(0);
 #endif
 }
+
+//######################################################################
+#sp implementation
+/*AUTOSUBCELL_INCLUDE*/
 
 /*AUTOTRACE(__MODULE__,recurse)*/

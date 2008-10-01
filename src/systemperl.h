@@ -1,4 +1,4 @@
-// $Id: systemperl.h 55129 2008-05-28 19:44:59Z wsnyder $ -*- SystemC -*-
+// $Id: systemperl.h 61046 2008-09-17 23:49:49Z wsnyder $ -*- SystemC -*-
 //********************************************************************
 //
 // THIS MODULE IS PUBLICLY LICENSED
@@ -47,10 +47,6 @@ using namespace std;
 
 //********************************************************************
 // Switches
-
-#if VM_TRACE		// Verilator tracing requested
-# define WAVES 1	// So, trace in SystemC too
-#endif
 
 #ifndef SYSTEMPERL
 # define SYSTEMPERL 1
@@ -111,8 +107,6 @@ typedef sc_string sp_string;	///< sc_string or std::string compatible across SC 
 # define VL_OUT64(name, msb,lsb)	uint64_t  name
 # define VL_OUT(name, msb,lsb)		uint32_t name
 # define VL_OUTW(name, msb,lsb, words)	uint32_t name[words]
-# define VL_PORT(name, msb,lsb)		uint32_t name		// Depreciated
-# define VL_PORTW(name, msb,lsb, words)	uint32_t name[words]	// Depreciated
 # define VL_PIN_NOP(instname,pin,port)
 # define VL_CELL(instname,type)
 # define VL_MODULE(modname)		struct modname : public VerilatedModule
@@ -187,8 +181,15 @@ extern "C" {
 /// Coverage, with the comment specified.  Only enable the point if expression
 /// is true; note this must be evaluatable in the constructor also.
 #define SP_AUTO_COVER_CMT_IF(cmt,enablestmt)
+
+/// Coverage group declaration
+#define SP_COVERGROUP(...)
+
+/// Coverage group sample
+#define SP_COVER_SAMPLE(name)
+
 // Below inserted by preprocessor, not for internal use
-#define SP_AUTO_COVERinc(id,type,file,line,cmt) {++(this->_sp_coverage[(id)]);}
+#define SP_AUTO_COVERinc(id,type,file,line,cmt) {SP_IF_COVER(++(this->_sp_coverage[(id)]));}
 
 //********************************************************************
 

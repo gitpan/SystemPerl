@@ -1,6 +1,6 @@
 %option noyywrap align never-interactive prefix="sclex"
 %{
-/* $Id: sclex.l 58970 2008-08-12 13:24:36Z wsnyder $
+/* $Id: sclex.l 61793 2008-09-26 13:19:21Z rwoodscorwin $
  ******************************************************************************
  * DESCRIPTION: SystemC lexer
  *
@@ -67,7 +67,7 @@ SYMBOL		[a-zA-Z_][a-zA-Z0-9_$]*
 Z9		[0-9]*
 DECNUM		[0-9]+U?L?L?
 BASENUM		0x[0-9a-fA-F_]+U?L?L?
-FLOATNUM	[0-9]+"."*[0-9]*[eE][0-9]+
+FLOATNUM	[0-9]+"."*[0-9]*[eE]-?[0-9]+
 
 	/**************************************************************/
 %%
@@ -86,14 +86,14 @@ FLOATNUM	[0-9]+"."*[0-9]*[eE][0-9]+
 [S][PC]"_CELL_DECL"	{ return(SP_CELL_DECL); }
 [S][PC]"_PIN"		{ return(SP_PIN); }
 [S][PC]"_TRACED"	{ return(SP_TRACED); }
+[S][PC]"_COVERGROUP"	{ return(SP_COVERGROUP); }
+[S][PC]"_COVER_SAMPLE"	{ return(SP_COVER_SAMPLE); }
 "SP_TEMPLATE"	{ return(SP_TEMPLATE); }
 "SC_CTOR"	{ return(SC_CTOR); }
 "VL_CTOR"	{ return(SC_CTOR); }
 "VL_CELL"	{ return(SP_CELL); }
 "VL_SIG"{Z9}	{ return(VL_SIG); }
 "VL_SIGW"	{ return(VL_SIGW); }
-"VL_PORT"{Z9}	{ return(VL_INOUT); }
-"VL_PORTW"	{ return(VL_INOUTW); }
 "VL_INOUT"{Z9}	{ return(VL_INOUT); }
 "VL_INOUTW"	{ return(VL_INOUTW); }
 "VL_IN"{Z9}	{ return(VL_IN); }
@@ -101,6 +101,20 @@ FLOATNUM	[0-9]+"."*[0-9]*[eE][0-9]+
 "VL_OUT"{Z9}	{ return(VL_OUT); }
 "VL_OUTW"	{ return(VL_OUTW); }
 "VL_PIN_NOP"	{ return(SP_PIN); }
+
+"coverpoint"	{ return(COVERPOINT); }
+"default"	{ return(CG_DEFAULT); }
+"description"   { return(CG_DESCRIPTION); }
+"page"		{ return(CG_PAGE); }
+"option.per_instance" { return(CG_PER_INSTANCE); }
+"bins"          { return(CG_BINS); }
+"illegal_bins"  { return(CG_ILLEGAL_BINS); }
+"ignore_bins"   { return(CG_IGNORE_BINS); }
+"auto_enum_bins" { return(CG_AUTO_ENUM_BINS); }
+"cross"         { return(CG_CROSS); }
+"rows"          { return(CG_ROWS); }
+"cols"          { return(CG_COLS); }
+"table"         { return(CG_TABLE); }
 
 "class"		{ return(CLASS); }
 "const"		{ return(CONST); }

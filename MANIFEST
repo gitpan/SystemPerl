@@ -3,6 +3,7 @@ Changes
 COPYING
 Coverage.pm
 Coverage/Item.pm
+Coverage/ItemKey.pm
 example/ExBench.sp
 example/ExEnum.sp
 example/ExInclude.spinc
@@ -22,6 +23,8 @@ Netlist/AutoCover.pm
 Netlist/AutoTrace.pm
 Netlist/Cell.pm
 Netlist/Class.pm
+Netlist/CoverGroup.pm
+Netlist/CoverPoint.pm
 Netlist/File.pm
 Netlist/Method.pm
 Netlist/Module.pm
@@ -85,6 +88,7 @@ t/32_example.t
 t/34_notfound.sp
 t/34_notfound.t
 t/40_coverage.t
+t/42_itemkey.t
 t/44_makecheck.t
 t/60_spp_pre.t
 t/62_spp_inline.t

@@ -1,4 +1,4 @@
-// $Id: ExModSub.sp 49154 2008-01-02 14:22:02Z wsnyder $
+// $Id: ExModSub.sp 61953 2008-09-30 15:14:21Z rwoodscorwin $
 // DESCRIPTION: SystemPerl: Example source module
 //
 // Copyright 2001-2008 by Wilson Snyder.  This program is free software;
@@ -9,6 +9,59 @@
 #include <systemperl.h>
 #include <iostream>
 /*AUTOSUBCELL_CLASS*/
+
+class ExModSubEnum {
+public:
+    enum en {
+	ONE=1,
+	TWO,
+	THREE=3, NINE=9, TWENTYSEVEN=27
+    };
+    /*AUTOENUM_CLASS(ExModSubEnum.en)*/
+};
+/*AUTOENUM_GLOBAL(ExModSubEnum.en)*/
+
+#include <iostream>
+#include <stdint.h>
+
+// Vregs-style enum class:
+class ExModSubVregsEnum {
+public:
+    enum en {
+	INV           = 0x0,
+	EXCLUSIVE     = 0x4,
+	MODIFIED      = 0x5,
+	SHARED        = 0x6,
+	OWNED         = 0x7,
+	MAX           = 0x8	///< MAXIMUM+1
+    };
+    enum en m_e;
+    inline ExModSubVregsEnum () {}
+    inline ExModSubVregsEnum (en _e) : m_e(_e) {}
+    explicit inline ExModSubVregsEnum (int _e) : m_e(static_cast<en>(_e)) {}
+    operator const char* () const { return ascii(); }
+    operator en () const { return m_e; }
+    const char* ascii() const;
+    inline bool valid() const { return *ascii()!='?'; };
+    class iterator {
+	en m_e; public:
+	inline iterator(en item) : m_e(item) {};
+	iterator operator++();
+	inline operator ExModSubVregsEnum () const { return ExModSubVregsEnum(m_e); }
+	inline ExModSubVregsEnum operator*() const { return ExModSubVregsEnum(m_e); }
+    };
+    static iterator begin() { return iterator(INV); }
+    static iterator end()   { return iterator(MAX); }
+  };
+  inline bool operator== (ExModSubVregsEnum lhs, ExModSubVregsEnum rhs) { return (lhs.m_e == rhs.m_e); }
+  inline bool operator== (ExModSubVregsEnum lhs, ExModSubVregsEnum::en rhs) { return (lhs.m_e == rhs); }
+  inline bool operator== (ExModSubVregsEnum::en lhs, ExModSubVregsEnum rhs) { return (lhs == rhs.m_e); }
+  inline bool operator!= (ExModSubVregsEnum lhs, ExModSubVregsEnum rhs) { return (lhs.m_e != rhs.m_e); }
+  inline bool operator!= (ExModSubVregsEnum lhs, ExModSubVregsEnum::en rhs) { return (lhs.m_e != rhs); }
+  inline bool operator!= (ExModSubVregsEnum::en lhs, ExModSubVregsEnum rhs) { return (lhs != rhs.m_e); }
+  inline bool operator< (ExModSubVregsEnum lhs, ExModSubVregsEnum rhs) { return lhs.m_e < rhs.m_e; }
+  inline ostream& operator<< (ostream& lhs, const ExModSubVregsEnum& rhs) { return lhs << rhs.ascii(); }
+
 
 class MySigStruct {
 public:
@@ -33,8 +86,80 @@ SC_MODULE (__MODULE__) {
     SP_TRACED MySigStruct	m_sigstr2;
 
     sc_signal<sp_ui<96,5> >	m_sigstr3;	// becomes sc_bv
-    SP_TRACED sp_ui<39,1>	m_sigstr4;	// becomes uint64_t
+    SP_TRACED sp_ui<31,-1>	m_sigstr4;	// becomes uint64_t
     SP_TRACED sp_ui<10,1>	m_sigstr5;	// becomes uint32_t
+
+    sc_signal<sp_ui<31,0> >     m_var32;
+    sc_signal<sp_ui<63,0> >     m_var64;
+
+    ExModSubEnum m_autoEnumVar;
+    ExModSubVregsEnum m_vregsEnumVar;
+
+    SP_COVERGROUP example_group (
+	page = "my example coverage group";
+	option.per_instance = 1; // this group is covered separately per instance
+	coverpoint in;
+	);
+
+    SP_COVERGROUP example_group2 (
+	description = "2nd example group, \"with backslashed quotes\"";
+	coverpoint in;
+	coverpoint in(in_alternate_name);
+	coverpoint out;
+	coverpoint out(out_alt_name)[16] = [0:0x7ff] { // hex is supported
+	    description = "comments for a range";
+	};
+	coverpoint m_var64[0x10];
+	coverpoint m_var32 {
+	    bins zero = 0;
+	    bins few = [3:5];
+	    bins scatter[] = {6,9,[11:15]};     // list multiple bins
+	    illegal_bins ill = 16;              // illegal bins
+	    illegal_bins ill2[] = {17,[19:24]};
+	    ignore_bins ign = 0xffc0;           // ignore bins
+	    bins other = default;               // named default
+	};
+	);
+
+    SP_COVERGROUP vregs_enum_example (
+	description = "vregs-style enum";
+	coverpoint m_vregsEnumVar {
+	    auto_enum_bins = ExModSubVregsEnum; // make a bin for each enum value
+	};
+	);
+    SP_COVERGROUP autoenum_example (
+	description = "enumerated type coverage";
+	// both of these coverpoints are the same; the latter is automatic
+	coverpoint m_autoEnumVar {
+	    description = "points can have descriptions too";
+	    bins ONE = 1;
+	    bins TWO = 2;
+	    bins THREE = 3;
+	    bins NINE = 9;
+	    bins TWENTYSEVEN = 27;
+	};
+	coverpoint m_autoEnumVar(automatic_autoEnumVar) {
+	    auto_enum_bins = ExModSubEnum; // make a bin for each enum value
+	};
+	);
+
+    SP_COVERGROUP cross_example (
+	description = "cross coverage";
+	coverpoint m_vregsEnumVar {
+	    auto_enum_bins = ExModSubVregsEnum; // make a bin for each enum value
+	};
+	coverpoint m_autoEnumVar {
+	    auto_enum_bins = ExModSubEnum; // make a bin for each enum value
+	    description = "this text goes above the point table";
+	    page = "put this table on a separate page";
+	};
+	cross myCross {
+	    description = "this text goes above the cross table";
+	    page = "put this table on a separate page";
+	    rows = {m_autoEnumVar};
+	    cols = {m_vregsEnumVar};
+	};
+	);
 
   private:
     /*AUTOSUBCELL_DECL*/
@@ -45,13 +170,16 @@ SC_MODULE (__MODULE__) {
 };
 
 //######################################################################
-#sp implementation
+#sp slow
 /*AUTOSUBCELL_INCLUDE*/
-
 SP_CTOR_IMP(__MODULE__) /*AUTOINIT*/ {
     SP_AUTO_CTOR;
 
     SP_AUTO_COVER(); // only once
+
+    m_var64 = 0;
+    m_var32 = 0;
+    m_autoEnumVar = ExModSubEnum::ONE;
 
 #sp ifdef NEVER
     // We ignore this
@@ -86,7 +214,33 @@ SP_CTOR_IMP(__MODULE__) /*AUTOINIT*/ {
     SP_AUTO_COVER_CMT_IF("Always_Occurs",1||1);  // If was just '1' SP would short-circuit the eval
     for (int i=0; i<3; i++) {
 	static uint32_t coverValue = 100;
-	SP_COVER_INSERT(&coverValue, "comment","Hello World",  "instance",i);
+	SP_COVER_INSERT(&coverValue, "comment","Hello World",  "instance",i, "per_instance",1 );
+    }
+}
+
+//######################################################################
+#sp implementation
+/*AUTOSUBCELL_INCLUDE*/
+
+//ExModSubVregsEnum
+const char* ExModSubVregsEnum::ascii () const {
+    switch (m_e) {
+	case INV: return("INV");
+	case EXCLUSIVE: return("EXCLUSIVE");
+	case MODIFIED: return("MODIFIED");
+	case SHARED: return("SHARED");
+	case OWNED: return("OWNED");
+	default: return ("?E");
+    }
+}
+
+ExModSubVregsEnum::iterator ExModSubVregsEnum::iterator::operator++() {
+    switch (m_e) {
+	case EXCLUSIVE: /*FALLTHRU*/
+	case MODIFIED: /*FALLTHRU*/
+	case SHARED: m_e=ExModSubVregsEnum(m_e + 1); return *this;
+	case INV: m_e=EXCLUSIVE; return *this;
+	default: m_e=MAX; return *this;
     }
 }
 
@@ -99,7 +253,25 @@ void __MODULE__::clock() {
     outbx.write(in.read());
     m_sigstr1.write(MySigStruct(in,out,outbx));
     m_sigstr2 = MySigStruct(in,out,outbx);
+    m_var64 = m_var64 + (1 << 28);
+    m_var32 = m_var32 + (10);
+
+    if (m_autoEnumVar != ExModSubEnum::NINE)
+	m_autoEnumVar = ExModSubEnum((int)m_autoEnumVar + 1);
+
+    if (m_autoEnumVar == ExModSubEnum::TWO)
+	m_vregsEnumVar = ExModSubVregsEnum::MODIFIED;
+    else
+	m_vregsEnumVar = ExModSubVregsEnum::SHARED;
+
     SP_AUTO_COVER();
+
+    SP_COVER_SAMPLE(cross_example);
+
+    SP_COVER_SAMPLE(example_group);
+    if (in.read()) {
+	SP_COVER_SAMPLE(example_group2);
+    }
 }
 
 /*AUTOTRACE(__MODULE__)*/

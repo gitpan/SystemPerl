@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Id: Netlist.pm 59485 2008-08-21 13:41:55Z wsnyder $
+# $Id: Netlist.pm 62129 2008-10-01 22:52:20Z wsnyder $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -27,7 +27,7 @@ use Verilog::Netlist::Subclass;
 use strict;
 use vars qw($Debug $Verbose $VERSION);
 
-$VERSION = '1.284';
+$VERSION = '1.300';
 
 ######################################################################
 #### Creation
@@ -42,6 +42,7 @@ sub new {
 	 ncsc => undef,
 	 lint_checking => 1,
 	 _enum_classes => {},
+	 _enums => {},
 	 _classes => {},
 	 @_);
     bless $self, $class;
@@ -394,6 +395,7 @@ Wilson Snyder <wsnyder@wsnyder.org>
 
 L<SystemC::Netlist::Cell>,
 L<SystemC::Netlist::Class>,
+L<SystemC::Netlist::CoverGroup>,
 L<SystemC::Netlist::File>,
 L<SystemC::Netlist::Module>,
 L<SystemC::Netlist::Net>,

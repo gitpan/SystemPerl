@@ -1,5 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Id: AutoTrace.pm 59485 2008-08-21 13:41:55Z wsnyder $
+# $Id: AutoTrace.pm 62129 2008-10-01 22:52:20Z wsnyder $
 # Author: Wilson Snyder <wsnyder@wsnyder.org>
 ######################################################################
 #
@@ -18,7 +18,7 @@ package SystemC::Netlist::AutoTrace;
 use File::Basename;
 
 use SystemC::Netlist::Module;
-$VERSION = '1.284';
+$VERSION = '1.300';
 use strict;
 
 use vars qw ($Debug_Check_Code);
@@ -31,9 +31,10 @@ sub _write_autotrace {
     my $self = shift;
     my $fileref = shift;
     my $prefix = shift;
-    return if !$SystemC::Netlist::File::outputting;
+
     return if !($self->netlist->tracing || $self->_autotrace('standalone'));
-    if ($self->_autotrace('manual')) {
+    if ($SystemC::Netlist::File::outputting
+	&& $self->_autotrace('manual')) {
 	$fileref->print
 	    ("${prefix}// Beginning of SystemPerl automatic trace file routine\n",
 	     "${prefix}// *MANUALLY CREATED*\n",
@@ -41,43 +42,53 @@ sub _write_autotrace {
 	return;
     }
 
-    # State common to all routines
-    my $trinfo = {
-	ident_code => 0,	# Next code to assign
-	tracesref => {},	# Top of hierarchy of traces for each cell
-	dupsref => {},		# Hash of {signal} = orig signal
-	dupscoderef => {},	# Hash of {signal} = code#
-	recurse => ($self->_autotrace('recurse')),
-    };
+    my $trinfo = $self->_autotrace('trinfo_hashref');
+    if (!$trinfo) {
+	# Compute state only once - we may print twice if under SLOW block.
 
-    # Detect duplicate signal information
-    if ($self->_autotrace('recurse') && !$self->netlist->{sp_trace_duplicates}) {
-	_tracer_dups_recurse($self,$trinfo);
-	_tracer_dups_show($self,$trinfo) if $Debug_Check_Code;
+	# State common to all routines
+	my $trinfo = {
+	    ident_code => 0,	# Next code to assign
+	    tracesref => {},	# Top of hierarchy of traces for each cell
+	    dupsref => {},		# Hash of {signal} = orig signal
+	    dupscoderef => {},	# Hash of {signal} = code#
+	    recurse => ($self->_autotrace('recurse')),
+	};
+	$self->_autotrace('trinfo_hashref', $trinfo);
+
+	# Detect duplicate signal information
+	if ($self->_autotrace('recurse') && !$self->netlist->{sp_trace_duplicates}) {
+	    _tracer_dups_recurse($self,$trinfo);
+	    _tracer_dups_show($self,$trinfo) if $Debug_Check_Code;
+	}
+
+	# Flatten out all hierarchy under this into a array of signal information
+	_tracer_setup($self, $trinfo, $trinfo->{tracesref});
     }
-
-    # Flatten out all hierarchy under this into a array of signal information
-    _tracer_setup($self,
-		  $trinfo,
-		  $trinfo->{tracesref},
-		  );
 
     # Output the data
-    $fileref->print ("${prefix}// Beginning of SystemPerl automatic trace file routine\n");
+    if ($fileref->SystemC::Netlist::File::_write_in_slow
+	|| $fileref->SystemC::Netlist::File::_write_in_fast) {
 
-    if ($self->_autotrace('exists')) {
-	$fileref->print ("${prefix}// Exists switch: predeclared tracing routine\n");
-    } else {
-	$fileref->print ("#if WAVES\n",
-			 "# include \"SpTraceVcd.h\"\n",);
-	_tracer_include_recurse($self,$trinfo, $fileref,$trinfo->{tracesref});
-	_write_tracer_trace ($self, $trinfo, $fileref, $trinfo->{tracesref});
-	_write_tracer_init  ($self, $trinfo, $fileref, $trinfo->{tracesref});
-	_write_tracer_change($self, $trinfo, $fileref, $trinfo->{tracesref}, "full");
-	_write_tracer_change($self, $trinfo, $fileref, $trinfo->{tracesref}, "chg");
-	$fileref->print ("#endif // WAVES\n");
+	$fileref->print ("${prefix}// Beginning of SystemPerl automatic trace file routine\n");
+	if ($self->_autotrace('exists')) {
+	    $fileref->print ("${prefix}// Exists switch: predeclared tracing routine\n");
+	} else {
+	    $fileref->print ("#if WAVES\n",
+			     "# include \"SpTraceVcd.h\"\n",);
+	    if ($fileref->SystemC::Netlist::File::_write_in_slow) {
+		_tracer_include_recurse($self,$trinfo, $fileref,$trinfo->{tracesref});
+		_write_tracer_trace ($self, $trinfo, $fileref, $trinfo->{tracesref});
+		_write_tracer_init  ($self, $trinfo, $fileref, $trinfo->{tracesref});
+		_write_tracer_change($self, $trinfo, $fileref, $trinfo->{tracesref}, "full");
+	    }
+	    if ($fileref->SystemC::Netlist::File::_write_in_fast) {
+		_write_tracer_change($self, $trinfo, $fileref, $trinfo->{tracesref}, "chg");
+	    }
+	    $fileref->print ("#endif // WAVES\n");
+	}
+	$fileref->print ("${prefix}// End of SystemPerl automatic trace file routine\n"),
     }
-    $fileref->print ("${prefix}// End of SystemPerl automatic trace file routine\n"),
 }
 
 sub _tracer_dups_recurse {

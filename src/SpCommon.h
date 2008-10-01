@@ -1,4 +1,4 @@
-// $Id: SpCommon.h 49154 2008-01-02 14:22:02Z wsnyder $ -*- SystemC -*-
+// $Id: SpCommon.h 60123 2008-09-04 15:23:30Z wsnyder $ -*- SystemC -*-
 //=============================================================================
 //
 // THIS MODULE IS PUBLICLY LICENSED
@@ -25,6 +25,19 @@
 #define _SPCOMMON_H_ 1
 
 // Utilities here must NOT require SystemC headers!
+
+//=============================================================================
+// Switches
+
+//#define WAVES		// Must be defined to do waveform tracing
+#if VM_TRACE		// Verilator tracing requested
+# define WAVES 1	// So, trace in SystemC too
+#endif
+
+//#define SP_COVERAGE	// Must be defined to do coverage analysis
+#if VM_COVERAGE		// Verilator coverage requested
+# define SP_COVERAGE 1	// So, coverage in SystemC too
+#endif
 
 //=============================================================================
 // Compiler pragma abstraction
@@ -60,6 +73,15 @@
 #ifndef SP_NOTICE_LN
 /// Print notice message and non-exit, redefine if you want something else...
 # define SP_NOTICE_LN(file,line,stmsg) { cout<<"%Notice:"<<file<<":"<<dec<<line<<": "<<stmsg<<endl; }
+#endif
+
+//=============================================================================
+/// Conditionally compile coverage code
+
+#ifdef SP_COVERAGE
+# define SP_IF_COVER(stmts) do { stmts ; } while(0)
+#else
+# define SP_IF_COVER(stmts) do { if(0) { stmts ; } } while(0)
 #endif
 
 //=============================================================================
