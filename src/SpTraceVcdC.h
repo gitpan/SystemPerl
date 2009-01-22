@@ -1,11 +1,11 @@
-// $Id: SpTraceVcdC.h 61048 2008-09-18 00:45:49Z wsnyder $ -*- SystemC -*-
+// -*- SystemC -*-
 //=============================================================================
 //
 // THIS MODULE IS PUBLICLY LICENSED
 //
-// Copyright 2001-2008 by Wilson Snyder.  This program is free software;
+// Copyright 2001-2009 by Wilson Snyder.  This program is free software;
 // you can redistribute it and/or modify it under the terms of either the GNU
-// General Public License or the Perl Artistic License.
+// Lesser General Public License or the Perl Artistic License.
 //
 // This is distributed in the hope that it will be useful, but WITHOUT ANY
 // WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -111,7 +111,7 @@ private:
     void printStr (const char* str);
     void printQuad (uint64_t n);
     void printTime (uint64_t timeui);
-    void declare (uint32_t code, const char* name, int arraynum, bool bussed, int msb, int lsb);
+    void declare (uint32_t code, const char* name, int arraynum, bool tri, bool bussed, int msb, int lsb);
 
     void dumpHeader();
     void dumpPrep (uint64_t timeui);
@@ -185,20 +185,24 @@ public:
     /// Inside dumping routines, declare a module
     void module (const string name);
     /// Inside dumping routines, declare a signal
-    void declBit   (uint32_t code, const char* name, int arraynum);
-    void declBus   (uint32_t code, const char* name, int arraynum, int msb, int lsb);
-    void declQuad  (uint32_t code, const char* name, int arraynum, int msb, int lsb);
-    void declArray (uint32_t code, const char* name, int arraynum, int msb, int lsb);
+    void declBit      (uint32_t code, const char* name, int arraynum);
+    void declBus      (uint32_t code, const char* name, int arraynum, int msb, int lsb);
+    void declQuad     (uint32_t code, const char* name, int arraynum, int msb, int lsb);
+    void declArray    (uint32_t code, const char* name, int arraynum, int msb, int lsb);
+    void declTriBit   (uint32_t code, const char* name, int arraynum);
+    void declTriBus   (uint32_t code, const char* name, int arraynum, int msb, int lsb);
+    void declTriQuad  (uint32_t code, const char* name, int arraynum, int msb, int lsb);
+    void declTriArray (uint32_t code, const char* name, int arraynum, int msb, int lsb);
     //	... other module_start for submodules (based on cell name)
 
     /// Inside dumping routines, dump one signal
-    inline void fullBit (uint32_t code, const uint32_t newval) {
+    void fullBit (uint32_t code, const uint32_t newval) {
 	// Note the &1, so we don't require clean input -- makes more common no change case faster
 	m_sigs_oldvalp[code] = newval;
 	*m_writep++=('0'+(char)(newval&1)); printCode(code); *m_writep++='\n';
 	bufferCheck();
     }
-    inline void fullBus (uint32_t code, const uint32_t newval, int bits) {
+    void fullBus (uint32_t code, const uint32_t newval, int bits) {
 	m_sigs_oldvalp[code] = newval;
 	*m_writep++='b';
 	for (int bit=bits-1; bit>=0; --bit) {
@@ -207,7 +211,7 @@ public:
 	*m_writep++=' '; printCode(code); *m_writep++='\n';
 	bufferCheck();
     }
-    inline void fullQuad (uint32_t code, const uint64_t newval, int bits) {
+    void fullQuad (uint32_t code, const uint64_t newval, int bits) {
 	(*((uint64_t*)&m_sigs_oldvalp[code])) = newval;
 	*m_writep++='b';
 	for (int bit=bits-1; bit>=0; --bit) {
@@ -216,13 +220,57 @@ public:
 	*m_writep++=' '; printCode(code); *m_writep++='\n';
 	bufferCheck();
     }
-    inline void fullArray (uint32_t code, const uint32_t* newval, int bits) {
+    void fullArray (uint32_t code, const uint32_t* newval, int bits) {
 	for (int word=0; word<(((bits-1)/32)+1); ++word) {
 	    m_sigs_oldvalp[code+word] = newval[word];
 	}
 	*m_writep++='b';
 	for (int bit=bits-1; bit>=0; --bit) {
 	    *m_writep++=((newval[(bit/32)]&(1L<<(bit&0x1f)))?'1':'0');
+	}
+	*m_writep++=' '; printCode(code); *m_writep++='\n';
+	bufferCheck();
+    }
+    void fullTriBit (uint32_t code, const uint32_t newval, const uint32_t newtri) {
+	m_sigs_oldvalp[code]   = newval;
+	m_sigs_oldvalp[code+1] = newtri;
+	*m_writep++ = "01zz"[m_sigs_oldvalp[code]
+			     | (m_sigs_oldvalp[code+1]<<1)];
+	printCode(code); *m_writep++='\n';
+	bufferCheck();
+    }
+    void fullTriBus (uint32_t code, const uint32_t newval, const uint32_t newtri, int bits) {
+	m_sigs_oldvalp[code] = newval;
+	m_sigs_oldvalp[code+1] = newtri;
+	*m_writep++='b';
+	for (int bit=bits-1; bit>=0; --bit) {
+	    *m_writep++ = "01zz"[((newval >> bit)&1)
+				 | (((newtri >> bit)&1)<<1)];
+	}
+	*m_writep++=' '; printCode(code); *m_writep++='\n';
+	bufferCheck();
+    }
+    void fullTriQuad (uint32_t code, const uint64_t newval, const uint32_t newtri, int bits) {
+	(*((uint64_t*)&m_sigs_oldvalp[code])) = newval;
+	(*((uint64_t*)&m_sigs_oldvalp[code+1])) = newtri;
+	*m_writep++='b';
+	for (int bit=bits-1; bit>=0; --bit) {
+	    *m_writep++ = "01zz"[((newval >> bit)&1ULL)
+				 | (((newtri >> bit)&1ULL)<<1ULL)];
+	}
+	*m_writep++=' '; printCode(code); *m_writep++='\n';
+	bufferCheck();
+    }
+    void fullTriArray (uint32_t code, const uint32_t* newvalp, const uint32_t* newtrip, int bits) {
+	for (int word=0; word<(((bits-1)/32)+1); ++word) {
+	    m_sigs_oldvalp[code+word*2]   = newvalp[word];
+	    m_sigs_oldvalp[code+word*2+1] = newtrip[word];
+	}
+	*m_writep++='b';
+	for (int bit=bits-1; bit>=0; --bit) {
+	    uint32_t valbit = (newvalp[(bit/32)]>>(bit&0x1f)) & 1;
+	    uint32_t tribit = (newtrip[(bit/32)]>>(bit&0x1f)) & 1;
+	    *m_writep++ = "01zz"[valbit | (tribit<<1)];
 	}
 	*m_writep++=' '; printCode(code); *m_writep++='\n';
 	bufferCheck();
@@ -277,6 +325,43 @@ public:
 	for (int word=0; word<(((bits-1)/32)+1); ++word) {
 	    if (SP_UNLIKELY(m_sigs_oldvalp[code+word] ^ newval[word])) {
 		fullArray (code,newval,bits);
+		return;
+	    }
+	}
+    }
+    inline void chgTriBit (uint32_t code, const uint32_t newval, const uint32_t newtri) {
+	uint32_t diff = (m_sigs_oldvalp[code] ^ newval
+			 | m_sigs_oldvalp[code+1] ^ newtri);
+	if (SP_UNLIKELY(diff)) {
+	    // Verilator 3.510 and newer provide clean input, so the below is only for back compatibility
+	    if (SP_UNLIKELY(diff & 1)) {   // Change after clean?
+		fullTriBit (code, newval, newtri);
+	    }
+	}
+    }
+    inline void chgTriBus (uint32_t code, const uint32_t newval, const uint32_t newtri, int bits) {
+	uint32_t diff = (m_sigs_oldvalp[code] ^ newval
+			 | m_sigs_oldvalp[code+1] ^ newtri);
+	if (SP_UNLIKELY(diff)) {
+	    if (SP_UNLIKELY(bits==32 || (diff & ((1U<<bits)-1) ))) {
+		fullTriBus (code, newval, newtri, bits);
+	    }
+	}
+    }
+    inline void chgTriQuad (uint32_t code, const uint64_t newval, const uint32_t newtri, int bits) {
+	uint64_t diff = ( ((*((uint64_t*)&m_sigs_oldvalp[code])) ^ newval)
+			  | ((*((uint64_t*)&m_sigs_oldvalp[code+1])) ^ newtri));
+	if (SP_UNLIKELY(diff)) {
+	    if (SP_UNLIKELY(bits==64 || (diff & ((1ULL<<bits)-1) ))) {
+		fullTriQuad(code, newval, newtri, bits);
+	    }
+	}
+    }
+    inline void chgTriArray (uint32_t code, const uint32_t* newvalp, const uint32_t* newtrip, int bits) {
+	for (int word=0; word<(((bits-1)/32)+1); ++word) {
+	    if (SP_UNLIKELY(m_sigs_oldvalp[code+word*2] ^ newvalp[word]
+			    | m_sigs_oldvalp[code+word*2+1] ^ newtrip[word])) {
+		fullTriArray (code,newvalp,newtrip,bits);
 		return;
 	    }
 	}

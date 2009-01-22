@@ -1,11 +1,10 @@
-// $Id: ExModSub.sp 61953 2008-09-30 15:14:21Z rwoodscorwin $
 // DESCRIPTION: SystemPerl: Example source module
 //
-// Copyright 2001-2008 by Wilson Snyder.  This program is free software;
+// Copyright 2001-2009 by Wilson Snyder.  This program is free software;
 // you can redistribute it and/or modify it under the terms of either the GNU
-// General Public License or the Perl Artistic License.
+// Lesser General Public License or the Perl Artistic License.
 
-#sp interface
+#sp interface  // Comment
 #include <systemperl.h>
 #include <iostream>
 /*AUTOSUBCELL_CLASS*/
@@ -89,6 +88,10 @@ SC_MODULE (__MODULE__) {
     SP_TRACED sp_ui<31,-1>	m_sigstr4;	// becomes uint64_t
     SP_TRACED sp_ui<10,1>	m_sigstr5;	// becomes uint32_t
 
+    sp_ui<96,5>		m_member3;
+    sp_ui<31,-1>	m_member4;
+    sp_ui<10,1>		m_member5;
+
     sc_signal<sp_ui<31,0> >     m_var32;
     sc_signal<sp_ui<63,0> >     m_var64;
 
@@ -97,7 +100,7 @@ SC_MODULE (__MODULE__) {
 
     SP_COVERGROUP example_group (
 	page = "my example coverage group";
-	option.per_instance = 1; // this group is covered separately per instance
+	option per_instance = 1; // this group is covered separately per instance
 	coverpoint in;
 	);
 
@@ -108,15 +111,27 @@ SC_MODULE (__MODULE__) {
 	coverpoint out;
 	coverpoint out(out_alt_name)[16] = [0:0x7ff] { // hex is supported
 	    description = "comments for a range";
+	    option radix = 16; // name the bins in hex
+	};
+	coverpoint out(out_alt_name2)[16] = [0:0xf] {
+	    // if size is exact, bin names are truncated to just the number
+	    option radix = 2; // name the bins in binary
 	};
 	coverpoint m_var64[0x10];
+	coverpoint m_var64(bigaddr)[16] = [0:0xffffffffffff]; // more than 32 bits
+	coverpoint m_var64(verybigaddr)[16] = [0:0xffffffffffffffff]; // all fs
 	coverpoint m_var32 {
 	    bins zero = 0;
+	    bins few = [ExModSubEnum::ONE:ExModSubEnum::TWO];  // can use enums on the RHS in ranges
 	    bins few = [3:5];
 	    bins scatter[] = {6,9,[11:15]};     // list multiple bins
 	    illegal_bins ill = 16;              // illegal bins
 	    illegal_bins ill2[] = {17,[19:24]};
+	    bins several[] = [90:105];     	// a bin per value in a range
+	    bins dist_ranges[4] = [200:299];   	// 4 bins spread over a range
 	    ignore_bins ign = 0xffc0;           // ignore bins
+	    ignore_bins_func = var32_ignore_func();  // ignore bins by function
+	    illegal_bins_func = var32_illegal_func();  // illegal bins by function
 	    bins other = default;               // named default
 	};
 	);
@@ -134,7 +149,7 @@ SC_MODULE (__MODULE__) {
 	    description = "points can have descriptions too";
 	    bins ONE = 1;
 	    bins TWO = 2;
-	    bins THREE = 3;
+	    bins THREE = ExModSubEnum::THREE; // can use enums on the RHS
 	    bins NINE = 9;
 	    bins TWENTYSEVEN = 27;
 	};
@@ -158,6 +173,8 @@ SC_MODULE (__MODULE__) {
 	    page = "put this table on a separate page";
 	    rows = {m_autoEnumVar};
 	    cols = {m_vregsEnumVar};
+	    ignore_bins_func = cross_ignore_func();  // ignore bins by function
+	    illegal_bins_func = cross_illegal_func();  // illegal bins by function
 	};
 	);
 
@@ -167,10 +184,14 @@ SC_MODULE (__MODULE__) {
 
   public:
     /*AUTOMETHODS*/
+    bool var32_ignore_func(uint64_t var32) { return (var32 % 5 == 3); } // ignore all values 3 mod 5
+    bool var32_illegal_func(uint64_t var32) { return (var32 == 1000); } // illegal 1000
+    bool cross_ignore_func(uint64_t autoenum, uint64_t vregsenum) { return (autoenum == vregsenum); }
+    bool cross_illegal_func(uint64_t autoenum, uint64_t vregsenum) { return (autoenum == vregsenum+1); }
 };
 
 //######################################################################
-#sp slow
+#sp slow  // Comment
 /*AUTOSUBCELL_INCLUDE*/
 SP_CTOR_IMP(__MODULE__) /*AUTOINIT*/ {
     SP_AUTO_CTOR;
@@ -181,16 +202,16 @@ SP_CTOR_IMP(__MODULE__) /*AUTOINIT*/ {
     m_var32 = 0;
     m_autoEnumVar = ExModSubEnum::ONE;
 
-#sp ifdef NEVER
+#sp ifdef NEVER  // Comment
     // We ignore this
     SP_CELL(ignored,IGNORED_CELL);
     SP_PIN (ignored,ignore_pin,ignore_pin);
     /*AUTO_IGNORED_IF_OFF*/
-# sp ifdef NEVER_ALSO
+# sp ifdef NEVER_ALSO  /*Comment*/
        SP_CELL(ignored2,IGNORED2_CELL);
-# sp else
+# sp else // Comment
        SP_CELL(ignored3,IGNORED2_CELL);
-# sp endif
+# sp endif // Comment
 
 #sp else
 
@@ -214,12 +235,14 @@ SP_CTOR_IMP(__MODULE__) /*AUTOINIT*/ {
     SP_AUTO_COVER_CMT_IF("Always_Occurs",1||1);  // If was just '1' SP would short-circuit the eval
     for (int i=0; i<3; i++) {
 	static uint32_t coverValue = 100;
-	SP_COVER_INSERT(&coverValue, "comment","Hello World",  "instance",i, "per_instance",1 );
+	SP_COVER_INSERT(&coverValue, "comment","Hello World",
+			"instance",SpCvtToCStr(i),
+			"per_instance","1" );
     }
 }
 
 //######################################################################
-#sp implementation
+#sp implementation // Comment
 /*AUTOSUBCELL_INCLUDE*/
 
 //ExModSubVregsEnum

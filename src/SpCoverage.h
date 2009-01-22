@@ -1,11 +1,11 @@
-// $Id: SpCoverage.h 61112 2008-09-18 19:13:56Z wsnyder $ -*- SystemC -*-
+// -*- SystemC -*-
 //=============================================================================
 //
 // THIS MODULE IS PUBLICLY LICENSED
 //
-// Copyright 2001-2008 by Wilson Snyder.  This program is free software;
+// Copyright 2001-2009 by Wilson Snyder.  This program is free software;
 // you can redistribute it and/or modify it under the terms of either the GNU
-// General Public License or the Perl Artistic License.
+// Lesser General Public License or the Perl Artistic License.
 //
 // This is distributed in the hope that it will be useful, but WITHOUT ANY
 // WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -55,69 +55,33 @@
 ///	for (int i=0; i<10; i++) {
 ///		SP_COVER_INSERT(&m_cases[i], "comment", "Coverage Case", "i", cvtToNumStr(i));
 ///	}
-#define SP_COVER_INSERT(countptr,args...) \
-    SP_IF_COVER(SpCoverage::insert(spCoverItemCreate(countptr), "filename",__FILE__,  "lineno",__LINE__, \
-				   "hier", name(), args))
+
+#define _SP_STRINGIFY(x) (# x)
+#define _SP_STRINGIFY2(x) (_SP_STRINGIFY(x))
+#define SP_COVER_INSERT(countp,args...) \
+    SP_IF_COVER(SpCoverage::_inserti(countp);	\
+		SpCoverage::_insertf(__FILE__,__LINE__);	\
+		SpCoverage::_insertp("hier", name(), args))
 
 //=============================================================================
-//  SpCoverItem
-///  SystemPerl coverage item base class
-////
-/// A single coverage statistic; template base class.
-/// Users may derived from this, but it is generally used only by the SpCoverItem class.
+/// Convert SP_COVER_INSERT value arguments to strings
 
-class SpCoverageImpItem;
+template< class T> std::string spCvtToStr (const T& t) {
+    ostringstream os; os<<t; return os.str();
+}
 
-class SpCoverItem {
-public:
-    // METHODS
-    virtual uint64_t count() const = 0;
-protected:
-    friend class SpCoverageImpItem;
-    // CONSTRUCTORS
-    SpCoverItem() {}
-    virtual ~SpCoverItem() {}
+/// Usage: something(SpCvtToCStr(i))
+/// Note the pointer will only be valid for as long as the object remains
+/// in scope!
+struct SpCvtToCStr {
+    string m_str;
+    // Casters
+    template< class T> SpCvtToCStr (const T& t) {
+	ostringstream os; os<<t; m_str=os.str();
+    }
+    ~SpCvtToCStr() {}
+    operator const char* () const { return m_str.c_str(); };
 };
-
-/// SpCoverItem templated for a specific class
-/// Creates a new coverage item for the specified type.
-/// Generally, you'd use the SP_COVER_INSERT macro below, instead.
-template <class T> class SpCoverItemSpec : public SpCoverItem {
-private:
-    // MEMBERS
-    const T*	m_countp;	///< Count value
-public:
-    // METHODS
-    virtual uint64_t count() const { return *m_countp; }
-    // CONSRUCTORS
-    SpCoverItemSpec(const T* countp) : m_countp(countp) {}
-    virtual ~SpCoverItemSpec() {}
-};
-
-/// Template class to auto-construct SpCoverItem for passed type
-template <class T>
-const SpCoverItem* spCoverItemCreate(T* value) { return new SpCoverItemSpec<T>(value); }
-
-//=============================================================================
-//  SpCoverValue
-/// Auto-convert SP_COVER_INSERT value arguments to strings
-
-class SpCoverValue {
-private:
-    std::string m_s;
-public:
-    // Implicit conversion operators:
-    template <class T> SpCoverValue (const T& t) {
-	ostringstream os; os<<t; m_s = os.str();
-    };
-    inline SpCoverValue (const string& t) : m_s(t) {}
-    inline SpCoverValue (const char* t) : m_s(t) {}
-    ~SpCoverValue() {}
-    // ACCESSORS
-    const string* sp() const { return &m_s; }
-};
-
-typedef std::string SpCoverKey;
 
 //=============================================================================
 //  SpCoverage
@@ -130,32 +94,41 @@ public:
     // GLOBAL METHODS
     /// Write all coverage data to a file
     static void write (const char* filename = "logs/coverage.pl");
-#define A(n) const SpCoverKey& key ## n, const SpCoverValue& val ## n	// Argument list
     /// Insert a coverage item
-    /// We accept from 1-10 key/value pairs, all as strings.
-    static void insert (const SpCoverItem* itemp, A(0));
-    static void insert (const SpCoverItem* itemp, A(0),A(1));
-    static void insert (const SpCoverItem* itemp, A(0),A(1),A(2));
-    static void insert (const SpCoverItem* itemp, A(0),A(1),A(2),A(3));
-    static void insert (const SpCoverItem* itemp, A(0),A(1),A(2),A(3),A(4));
-    static void insert (const SpCoverItem* itemp, A(0),A(1),A(2),A(3),A(4),A(5));
-    static void insert (const SpCoverItem* itemp, A(0),A(1),A(2),A(3),A(4),A(5),A(6));
-    static void insert (const SpCoverItem* itemp, A(0),A(1),A(2),A(3),A(4),A(5),A(6),A(7));
-    static void insert (const SpCoverItem* itemp, A(0),A(1),A(2),A(3),A(4),A(5),A(6),A(7),A(8));
-    static void insert (const SpCoverItem* itemp, A(0),A(1),A(2),A(3),A(4),A(5),A(6),A(7),A(8),A(9));
-    static void insert (const SpCoverItem* itemp, A(0),A(1),A(2),A(3),A(4),A(5),A(6),A(7),A(8),A(9),A(10));
-    static void insert (const SpCoverItem* itemp, A(0),A(1),A(2),A(3),A(4),A(5),A(6),A(7),A(8),A(9),A(10),A(11));
-    static void insert (const SpCoverItem* itemp, A(0),A(1),A(2),A(3),A(4),A(5),A(6),A(7),A(8),A(9),A(10),A(11),A(12));
-    static void insert (const SpCoverItem* itemp, A(0),A(1),A(2),A(3),A(4),A(5),A(6),A(7),A(8),A(9),A(10),A(11),A(12),A(13));
-    static void insert (const SpCoverItem* itemp, A(0),A(1),A(2),A(3),A(4),A(5),A(6),A(7),A(8),A(9),A(10),A(11),A(12),A(13),A(14));
-    static void insert (const SpCoverItem* itemp, A(0),A(1),A(2),A(3),A(4),A(5),A(6),A(7),A(8),A(9),A(10),A(11),A(12),A(13),A(14),A(15));
-    static void insert (const SpCoverItem* itemp, A(0),A(1),A(2),A(3),A(4),A(5),A(6),A(7),A(8),A(9),A(10),A(11),A(12),A(13),A(14),A(15),A(16));
-    static void insert (const SpCoverItem* itemp, A(0),A(1),A(2),A(3),A(4),A(5),A(6),A(7),A(8),A(9),A(10),A(11),A(12),A(13),A(14),A(15),A(16),A(17));
-    static void insert (const SpCoverItem* itemp, A(0),A(1),A(2),A(3),A(4),A(5),A(6),A(7),A(8),A(9),A(10),A(11),A(12),A(13),A(14),A(15),A(16),A(17),A(18));
-    static void insert (const SpCoverItem* itemp, A(0),A(1),A(2),A(3),A(4),A(5),A(6),A(7),A(8),A(9),A(10),A(11),A(12),A(13),A(14),A(15),A(16),A(17),A(18),A(19));
+    /// We accept from 1-30 key/value pairs, all as strings.
+    /// Call _insert1, followed by _insert2 and _insert3
+    /// Do not call directly; use SP_COVER_INSERT or higher level macros instead
+    // _insert1: Remember item pointer with count.  (Not const, as may add zeroing function)
+    static void _inserti (uint32_t* itemp);
+    static void _inserti (uint64_t* itemp);
+    static void _inserti (SpZeroed<uint32_t>* itemp);
+    static void _inserti (SpZeroed<uint64_t>* itemp);
+    // _insert2: Set default filename and line number
+    static void _insertf (const char* filename, int lineno);
+    // _insert3: Set parameters
+    // We could have just the maximum argument version, but this compiles
+    // much slower (nearly 2x) than having smaller versions also.  However
+    // there's not much more gain in having a version for each number of args.
+#define K(n) const char* key ## n
+#define A(n) const char* key ## n, const char* valp ## n	// Argument list
+#define D(n) const char* key ## n = NULL, const char* valp ## n = NULL	// Argument list
+    static void _insertp (D(0),D(1),D(2),D(3),D(4),D(5),D(6),D(7),D(8),D(9));
+    static void _insertp (A(0),A(1),A(2),A(3),A(4),A(5),A(6),A(7),A(8),A(9)
+			  ,A(10),D(11),D(12),D(13),D(14),D(15),D(16),D(17),D(18),D(19));
+    static void _insertp (A(0),A(1),A(2),A(3),A(4),A(5),A(6),A(7),A(8),A(9)
+			  ,A(10),A(11),A(12),A(13),A(14),A(15),A(16),A(17),A(18),A(19)
+			  ,A(20),D(21),D(22),D(23),D(24),D(25),D(26),D(27),D(28),D(29));
+    // Backward compatibility for Verilator
+    static void _insertp (A(0), A(1),  K(2),int val2,  K(3),int val3,
+			  K(4),const string& val4,  A(5),A(6));
+
+#undef K
 #undef A
+#undef D
     /// Clear coverage points (and call delete on all items)
     static void clear();
+    /// Zero coverage points
+    static void zero();
 };
 
 #endif // guard

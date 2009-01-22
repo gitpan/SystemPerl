@@ -1,6 +1,5 @@
 %{
-/* $Id: scgrammer.y 61953 2008-09-30 15:14:21Z rwoodscorwin $
- ******************************************************************************
+/******************************************************************************
  * DESCRIPTION: SystemC bison parser
  *
  * This file is part of SystemC-Perl.
@@ -11,9 +10,9 @@
  *
  ******************************************************************************
  *
- * Copyright 2001-2008 by Wilson Snyder.  This program is free software;
+ * Copyright 2001-2009 by Wilson Snyder.  This program is free software;
  * you can redistribute it and/or modify it under the terms of either the GNU
- * General Public License or the Perl Artistic License.
+ * Lesser General Public License or the Perl Artistic License.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -144,16 +143,19 @@ int scgrammerlex() {
 %token		SP_PIN
 %token		SP_TEMPLATE
 %token		SP_TRACED
+%token		SP_UI
 %token		SP_COVERGROUP
 %token		SP_COVER_SAMPLE
 %token		COVERPOINT
 %token		CG_PAGE
 %token		CG_DESCRIPTION
-%token		CG_PER_INSTANCE
+%token		CG_OPTION
 %token		CG_DEFAULT
 %token		CG_BINS
 %token		CG_ILLEGAL_BINS
+%token		CG_ILLEGAL_BINS_FUNC
 %token		CG_IGNORE_BINS
+%token		CG_IGNORE_BINS_FUNC
 %token		CG_AUTO_ENUM_BINS
 %token		CG_CROSS
 %token		CG_ROWS
@@ -184,11 +186,13 @@ int scgrammerlex() {
 %type<string>	declType
 %type<string>	declType1
 %type<string>	declTypeBase
+%type<string>	type_sp_ui
 %type<string>	enumVal
 %type<string>	enumAssign
 %type<string>	enumExpr
 %type<string>	enumFunParmList
 %type<string>	negNum
+%type<string>	cpBinNumber
 
 %%
 //************************************
@@ -227,11 +231,13 @@ exp:		auto				{ }
 		| covergroup			{ }
 		| CG_PAGE			{ }
 		| CG_DESCRIPTION		{ }
-		| CG_PER_INSTANCE		{ }
+		| CG_OPTION			{ }
 		| CG_DEFAULT			{ }
 		| CG_BINS			{ }
 		| CG_ILLEGAL_BINS		{ }
+		| CG_ILLEGAL_BINS_FUNC		{ }
 		| CG_IGNORE_BINS		{ }
+		| CG_IGNORE_BINS_FUNC		{ }
 		| CG_AUTO_ENUM_BINS		{ }
 		| CG_CROSS			{ }
 		| CG_ROWS			{ }
@@ -244,6 +250,7 @@ exp:		auto				{ }
 		| inout_clk			{ }
 		| inst_clk			{ }
 		| sp				{ }
+		| decl_sp_ui			{ }
 		| class				{ }
 		| enum				{ }
 		| STRING			{ SCFree($1); }
@@ -351,6 +358,7 @@ declType1:	declTypeBase			{ $$ = $1; }
 
 //		uint32_t | sc_bit<4> | unsigned int
 declTypeBase:	SYMBOL				{ $$ = $1; }
+		| type_sp_ui			{ $$ = $1; }
 		| SYMBOL '<' vectorNum '>'	{ char *cp=malloc(strlen($1)+strlen($3)+5);
 						  strcpy(cp,$1); strcat(cp,"<");strcat(cp,$3);strcat(cp,">");
 						  SCFree ($1); SCFree ($3);
@@ -360,6 +368,18 @@ declTypeBase:	SYMBOL				{ $$ = $1; }
 						  strcpy(cp,$1);  strcat(cp,"<"); strcat(cp,$3);
 						  strcat(cp,","); strcat(cp,$5);  strcat(cp,">");
 						  SCFree ($1); SCFree ($3); SCFree ($5);
+						  $$=cp; }
+		;
+
+//		sp_ui outside of another declaration we understand
+decl_sp_ui:	type_sp_ui			{ scparser_call(-1,"var_decl",$1); }
+		;
+
+type_sp_ui:	SP_UI '<' vectorNum ',' vectorNum '>' 	{
+						  char *cp=malloc(6+strlen($3)+strlen($5)+6);
+						  strcpy(cp,"sp_ui<");  strcat(cp,$3);
+						  strcat(cp,","); strcat(cp,$5);  strcat(cp,">");
+						  SCFree ($3); SCFree ($5);
 						  $$=cp; }
 		;
 
@@ -383,8 +403,16 @@ inst_clk:	SC_CLOCK '(' 			{ SCFree($1); }
 sp:		SP				{ scparser_call(1,"preproc_sp",sclextext);}
 		;
 
-cpBinValue :    NUMBER                          { scparser_call(2,"coverpoint","binval", $1); SCFree($1); }
-                | '[' NUMBER ':' NUMBER ']'     { scparser_call(3,"coverpoint","binrange", $2, $4); SCFree($2); SCFree($4); }
+// recognize enums
+cpBinNumber :   NUMBER				{ $$ = $1; }
+                | SYMBOL COLONCOLON SYMBOL	{ $$ = scstrjoin3sis ($1,"::",$3); }
+                ;
+
+cpBinRange:      '[' cpBinNumber ':' cpBinNumber ']'     { scparser_call(3,"coverpoint","binrange", $2, $4); SCFree($2); SCFree($4); }
+                ;
+
+cpBinValue :    cpBinNumber                     { scparser_call(2,"coverpoint","binval", $1); SCFree($1); }
+                | cpBinRange                    { }
                 ;
 
 cpBinValueList: cpBinValue                      { }
@@ -399,15 +427,32 @@ cpBinType:      CG_BINS SYMBOL 			{ scparser_call(2,"coverpoint","normal", $2); 
 cpBinMulti:     '[' ']' '=' { scparser_call(1,"coverpoint","multi_begin"); }
                 ;
 
+cpBinMultiNum:  '[' NUMBER ']' '=' { scparser_call(2,"coverpoint","multi_begin_num",$2); SCFree($2);}
+                ;
+
 cpDescription:  CG_DESCRIPTION '=' STRING ';' { scparser_call(2,"coverpoint","description",$3); SCFree($3);}
                 ;
 
+cpOption:       CG_OPTION SYMBOL '=' NUMBER ';' { scparser_call(3,"coverpoint", "option",$2,$4); SCFree($2); SCFree($4);}
+                ;
+
+cpDescOrOpt:    cpDescription                 { }
+                | cpOption                    { }
+                ;
+
+cpDescOrOptList: cpDescOrOpt			{ }
+		| cpDescOrOptList cpDescOrOpt	{ }
+		;
 
 coverpointBin:  cpBinType '=' CG_DEFAULT ';'	{ scparser_call(1,"coverpoint","default"); }
                 | cpBinType '=' cpBinValue ';'  { scparser_call(1,"coverpoint","single"); }
-                | cpBinType  cpBinMulti '{' cpBinValueList '}' ';' { scparser_call(1,"coverpoint","multi_end"); }
+                | cpBinType cpBinMulti '{' cpBinValueList '}' ';' { scparser_call(1,"coverpoint","multi_end"); }
+                | cpBinType cpBinMulti cpBinRange ';' { scparser_call(1,"coverpoint","multi_auto_end"); }
+                | cpBinType cpBinMultiNum cpBinRange ';' { scparser_call(1,"coverpoint","multi_auto_end"); }
                 | CG_AUTO_ENUM_BINS '=' SYMBOL ';' { scparser_call(2,"coverpoint","enum", $3); SCFree($3); }
-                | cpDescription                 { }
+                | CG_IGNORE_BINS_FUNC '=' SYMBOL '(' ')' ';' { scparser_call(2,"coverpoint","ignore_func", $3); SCFree($3); }
+                | CG_ILLEGAL_BINS_FUNC '=' SYMBOL '(' ')' ';' { scparser_call(2,"coverpoint","illegal_func", $3); SCFree($3); }
+                | cpDescOrOpt                   { }
                 | CG_PAGE '=' STRING ';' 	{ scparser_call(2,"coverpoint","page",$3); SCFree($3);}
                 ;
 
@@ -418,7 +463,7 @@ coverpointBinList: coverpointBin			{ }
 coverpoint_desc:  ';'                           { scparser_call(1,"coverpoint","standard"); }
                 | '[' NUMBER ']' ';'            { scparser_call(2,"coverpoint","standard_bins", $2); SCFree($2); }
                 | '[' NUMBER ']' '=' '[' NUMBER ':' NUMBER ']' ';'            { scparser_call(4,"coverpoint","standard_bins_range", $2, $6, $8); SCFree($2); }
-                | '[' NUMBER ']' '=' '[' NUMBER ':' NUMBER ']' '{' cpDescription '}' ';'            { scparser_call(4,"coverpoint","standard_bins_range", $2, $6, $8); SCFree($2); }
+                | '[' NUMBER ']' '=' '[' NUMBER ':' NUMBER ']' '{' cpDescOrOptList '}' ';'            { scparser_call(4,"coverpoint","standard_bins_range", $2, $6, $8); SCFree($2); }
                 | '{' coverpointBinList '}' ';'            { scparser_call(1,"coverpoint","bins"); }
                 ;
 
@@ -435,7 +480,9 @@ cross_start:	CG_ROWS      { scparser_call(1,"cross","start_rows"); }
 		;
 
 cross_entry:	cross_start  '=' '{' cross_item_list '}' ';' {}
-                | CG_DESCRIPTION '=' STRING ';' { scparser_call(2,"coverpoint","description",$3); SCFree($3);}
+                | cpDescOrOpt                   { }
+                | CG_IGNORE_BINS_FUNC '=' SYMBOL '(' ')' ';' { scparser_call(2,"coverpoint","ignore_func", $3); SCFree($3); }
+                | CG_ILLEGAL_BINS_FUNC '=' SYMBOL '(' ')' ';' { scparser_call(2,"coverpoint","illegal_func", $3); SCFree($3); }
                 | CG_PAGE '=' STRING ';' 	{ scparser_call(2,"coverpoint","page",$3); SCFree($3);}
 		;
 
@@ -444,9 +491,9 @@ cross_desc_list: cross_entry			{ }
 		;
 
 coverpoint:	coverpoint_head coverpoint_desc { scparser_call(0,"coverpoint_end"); }
-                | CG_DESCRIPTION '=' STRING ';' { scparser_call(1,"covergroup_description",$3); SCFree($3);}
                 | CG_PAGE '=' STRING ';' 	{ scparser_call(1,"covergroup_page",$3); SCFree($3);}
-                | CG_PER_INSTANCE '=' NUMBER ';' { scparser_call(1,"covergroup_per_instance",$3); SCFree($3);}
+                | CG_DESCRIPTION '=' STRING ';' { scparser_call(1,"covergroup_description",$3); SCFree($3);}
+                | CG_OPTION SYMBOL '=' NUMBER ';' { scparser_call(2,"covergroup_option",$2,$4); SCFree($2); SCFree($4);}
                 | cross_head '{' cross_desc_list '}' ';' { scparser_call(0,"cross_end"); }
 		;
 

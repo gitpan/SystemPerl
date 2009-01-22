@@ -1,11 +1,11 @@
-// $Id: SpTraceVcdC.cpp 61048 2008-09-18 00:45:49Z wsnyder $ -*- SystemC -*-
+// -*- SystemC -*-
 //=============================================================================
 //
 // THIS MODULE IS PUBLICLY LICENSED
 //
-// Copyright 2001-2008 by Wilson Snyder.  This program is free software;
+// Copyright 2001-2009 by Wilson Snyder.  This program is free software;
 // you can redistribute it and/or modify it under the terms of either the GNU
-// General Public License or the Perl Artistic License.
+// Lesser General Public License or the Perl Artistic License.
 //
 // This is distributed in the hope that it will be useful, but WITHOUT ANY
 // WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -151,7 +151,7 @@ void SpTraceVcd::openNext (bool incFilename) {
 }
 
 SpTraceVcd::~SpTraceVcd() {
-    closePrev();
+    close();
     if (m_wrBufp) { delete[] m_wrBufp; m_wrBufp=NULL; }
     if (m_sigs_oldvalp) { delete[] m_sigs_oldvalp; m_sigs_oldvalp=NULL; }
     // Remove from list of traces
@@ -390,11 +390,14 @@ void SpTraceVcd::module (string name) {
 }
 
 void SpTraceVcd::declare (uint32_t code, const char* name, int arraynum,
-			  bool bussed, int msb, int lsb) {
+			  bool tri, bool bussed, int msb, int lsb) {
     if (!code) { SP_ABORT("%Error: internal trace problem, code 0 is illegal\n"); }
 
+    int codesNeeded = 1+int((msb-lsb+1)/32);
+    if (tri) codesNeeded *= 2;   // Space in change array for __en signals
+
     // Make sure array is large enough
-    m_nextCode = max(nextCode(), code+1+int((msb-lsb+1)/32));
+    m_nextCode = max(nextCode(), code+codesNeeded);
     if (m_sigs.capacity() <= m_nextCode) {
 	m_sigs.reserve(m_nextCode*2);	// Power-of-2 allocation speeds things up
     }
@@ -443,14 +446,22 @@ void SpTraceVcd::declare (uint32_t code, const char* name, int arraynum,
     m_namemapp->insert(make_pair(hiername,decl));
 }
 
-void SpTraceVcd::declBit (uint32_t code, const char* name, int arraynum)
-{  declare (code, name, arraynum, false, 0, 0); }
-void SpTraceVcd::declBus (uint32_t code, const char* name, int arraynum, int msb, int lsb)
-{  declare (code, name, arraynum, true, msb, lsb); }
-void SpTraceVcd::declQuad  (uint32_t code, const char* name, int arraynum, int msb, int lsb)
-{  declare (code, name, arraynum, true, msb, lsb); }
-void SpTraceVcd::declArray (uint32_t code, const char* name, int arraynum, int msb, int lsb)
-{  declare (code, name, arraynum, true, msb, lsb); }
+void SpTraceVcd::declBit      (uint32_t code, const char* name, int arraynum)
+{  declare (code, name, arraynum, false, false, 0, 0); }
+void SpTraceVcd::declBus      (uint32_t code, const char* name, int arraynum, int msb, int lsb)
+{  declare (code, name, arraynum, false, true, msb, lsb); }
+void SpTraceVcd::declQuad     (uint32_t code, const char* name, int arraynum, int msb, int lsb)
+{  declare (code, name, arraynum, false, true, msb, lsb); }
+void SpTraceVcd::declArray    (uint32_t code, const char* name, int arraynum, int msb, int lsb)
+{  declare (code, name, arraynum, false, true, msb, lsb); }
+void SpTraceVcd::declTriBit   (uint32_t code, const char* name, int arraynum)
+{  declare (code, name, arraynum, true, false, 0, 0); }
+void SpTraceVcd::declTriBus   (uint32_t code, const char* name, int arraynum, int msb, int lsb)
+{  declare (code, name, arraynum, true, true, msb, lsb); }
+void SpTraceVcd::declTriQuad  (uint32_t code, const char* name, int arraynum, int msb, int lsb)
+{  declare (code, name, arraynum, true, true, msb, lsb); }
+void SpTraceVcd::declTriArray (uint32_t code, const char* name, int arraynum, int msb, int lsb)
+{  declare (code, name, arraynum, true, true, msb, lsb); }
 
 //=============================================================================
 // Callbacks
@@ -522,6 +533,8 @@ void SpTraceVcd::flush_all() {
 
 #if SPTRACEVCD_TEST
 uint32_t v1, v2, s1, s2[3];
+uint32_t tri96[3];
+uint32_t tri96__tri[3];
 uint8_t ch;
 uint64_t timestamp = 1;
 
@@ -534,8 +547,13 @@ void vcdInit (SpTraceVcd* vcdp, void* userthis, uint32_t code) {
       vcdp->declBit (0x5, "ch",-1);
      vcdp->module ("top.sub2");
       vcdp->declArray (0x6, "s2",-1, 40,3);
+    // Note need to add 3 for next code.
     vcdp->module ("top2");
-     vcdp->declBus (0x2, "t2v1",-1,5,1);
+     vcdp->declBus (0x2, "t2v1",-1,4,1);
+     vcdp->declTriBit   (0x10, "io1", -1);
+     vcdp->declTriBus   (0x12, "io5", -1,4,0);
+     vcdp->declTriArray (0x16, "io96",-1,95,0);
+    // Note need to add 6 for next code.
 }
 
 void vcdFull (SpTraceVcd* vcdp, void* userthis, uint32_t code) {
@@ -544,6 +562,9 @@ void vcdFull (SpTraceVcd* vcdp, void* userthis, uint32_t code) {
     vcdp->fullBit  (0x4, s1);
     vcdp->fullBus  (0x5, ch,2);
     vcdp->fullArray(0x6, &s2[0], 38);
+    vcdp->fullTriBit   (0x10, tri96[0]&1,    tri96__tri[0]&1);
+    vcdp->fullTriBus   (0x12, tri96[0]&0x1f, tri96__tri[0]&0x1f,  5);
+    vcdp->fullTriArray (0x16, tri96,         tri96__tri,          96);
 }
 
 void vcdChange (SpTraceVcd* vcdp, void* userthis, uint32_t code) {
@@ -552,7 +573,9 @@ void vcdChange (SpTraceVcd* vcdp, void* userthis, uint32_t code) {
     vcdp->chgBit  (0x4, s1);
     vcdp->chgBus  (0x5, ch,2);
     vcdp->chgArray(0x6, &s2[0], 38);
-    // Note need to add 3 for next code.
+    vcdp->chgTriBit   (0x10, tri96[0]&1,   tri96__tri[0]&1);
+    vcdp->chgTriBus   (0x12, tri96[0]&0x1f, tri96__tri[0]&0x1f, 5);
+    vcdp->chgTriArray (0x16, tri96,         tri96__tri,         96);
 }
 
 main() {
@@ -560,6 +583,8 @@ main() {
 
     v1 = v2 = s1 = 0;
     s2[0] = s2[1] = s2[2] = 0;
+    tri96[2] = tri96[1] = tri96[0] = 0;
+    tri96__tri[2] = tri96__tri[1] = tri96__tri[0] = ~0;
     ch = 0;
     {
 	SpTraceVcdCFile* vcdp = new SpTraceVcdCFile;
@@ -568,11 +593,16 @@ main() {
 	// Dumping
 	vcdp->dump(timestamp++);
 	v1 = 0xfff;
+	tri96[2] = 4; tri96[1] = 2; tri96[0] = 1;
+	tri96__tri[2] = tri96__tri[1] = tri96__tri[0] = ~0;  // Still tri
 	vcdp->dump(timestamp++);
 	v2 = 0x1;
 	s2[1] = 2;
+	tri96__tri[2] = tri96__tri[1] = tri96__tri[0] = 0; // enable w/o data change
 	vcdp->dump(timestamp++);
 	ch = 2;
+	tri96[2] = ~4; tri96[1] = ~2; tri96[0] = ~1;
+	vcdp->dump(timestamp++);
 	vcdp->dump(timestamp++);
 # if SPTRACEVCD_TEST_64BIT
 	uint64_t bytesPerDump = 15ULL;

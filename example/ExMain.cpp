@@ -1,9 +1,8 @@
-// $Id: ExMain.cpp 58966 2008-08-12 12:57:16Z wsnyder $
 // DESCRIPTION: SystemPerl: Example main()
 //
-// Copyright 2001-2008 by Wilson Snyder.  This program is free software;
+// Copyright 2001-2009 by Wilson Snyder.  This program is free software;
 // you can redistribute it and/or modify it under the terms of either the GNU
-// General Public License or the Perl Artistic License.
+// Lesser General Public License or the Perl Artistic License.
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -32,7 +31,7 @@ int sc_main (int argc, char *argv[]) {
 #else
     sc_time dut(1.0, sc_ns);
     sc_set_default_time_unit(dut);
-#endif
+#endif // SYSTEMC_VERSION
 
 #ifndef NC_SYSTEMC
     // Simulation logfile
@@ -46,7 +45,7 @@ int sc_main (int argc, char *argv[]) {
     sc_clock clk("clk",5,SC_NS);  // We want a non-integer half period to prove VCD works
 #else
     sc_clock clk("clk",5);
-#endif
+#endif // SYSTEMC_VERSION
 
     ExBench* bench;
     SP_CELL (bench,ExBench);
@@ -74,7 +73,7 @@ int sc_main (int argc, char *argv[]) {
     sc_trace_file *tf = sc_create_vcd_trace_file("sim_sc" );
 # ifndef _SC_LITE_
     sc_trace(tf, clk, "clk");
-# endif
+# endif // NC_SYSTEMC
 
 #if SYSTEMC_VERSION >= 20070314
     tf->set_time_unit(1, SC_NS);
@@ -91,20 +90,20 @@ int sc_main (int argc, char *argv[]) {
     stp2->rolloverMB(1);	// Rollover logfiles when size > 1MB
     bench->trace(stp2,999);
     stp2->open("sim_sp2.vcd");
-#endif
+#endif // NC_SYSTEMC
 
     cout << "Starting\n";
 #if SYSTEMC_VERSION >= 20060505
     sc_start();
 #else
     sc_start(-1);
-#endif
+#endif // SYSTEMC_VERSION
     cout << "Done\n";
 
 #ifndef NC_SYSTEMC
     sc_close_vcd_trace_file(tf);
     SpTraceVcd::flush_all();
-#endif
+#endif // NC_SYSTEMC
 
     // Coverage
     mkdir("logs", 0777);

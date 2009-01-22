@@ -1,10 +1,9 @@
 #!/usr/bin/perl -w
-# $Id: 90_ncsc_run.t 61216 2008-09-19 14:06:23Z wsnyder $
 # DESCRIPTION: Perl ExtUtils: Type 'make test' to test this package
 #
-# Copyright 2001-2008 by Wilson Snyder.  This program is free software;
+# Copyright 2001-2009 by Wilson Snyder.  This program is free software;
 # you can redistribute it and/or modify it under the terms of either the GNU
-# General Public License or the Perl Artistic License.
+# Lesser General Public License or the Perl Artistic License.
 
 use strict;
 use Test;

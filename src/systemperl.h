@@ -1,11 +1,11 @@
-// $Id: systemperl.h 61046 2008-09-17 23:49:49Z wsnyder $ -*- SystemC -*-
+// -*- SystemC -*-
 //********************************************************************
 //
 // THIS MODULE IS PUBLICLY LICENSED
 //
-// Copyright 2001-2008 by Wilson Snyder.  This program is free software;
+// Copyright 2001-2009 by Wilson Snyder.  This program is free software;
 // you can redistribute it and/or modify it under the terms of either the GNU
-// General Public License or the Perl Artistic License.
+// Lesser General Public License or the Perl Artistic License.
 //
 // This is distributed in the hope that it will be useful, but WITHOUT ANY
 // WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -131,21 +131,6 @@ inline const char *sp_cell_sprintf(const char *fmt...) {
 class SpTraceVcd;
 class SpTraceVcdCFile;
 class SpTraceFile;
-
-//********************************************************************
-// Simple classes.  If get bigger, move to optional include
-
-/// Templated class which constructs to zero.
-template <class T> class SpZeroed { public:
-    T m_v;
-    SpZeroed(): m_v(0) {};
-    inline operator const T () const { return m_v; };
-    inline SpZeroed& operator++() {++m_v; return *this;};	// prefix
-    // There is no post-increment; pre-increment may be faster.
-};
-
-/// Uint32_t which constructs to zero.  (Backward compatible)
-typedef SpZeroed<uint32_t> SpUInt32Zeroed;
 
 //********************************************************************
 // sp_log.h has whole thing... This one function may be used everywhere

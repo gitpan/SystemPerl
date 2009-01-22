@@ -1,11 +1,11 @@
-// $Id: SpCoverage.cpp 61600 2008-09-24 13:36:36Z wsnyder $ -*- SystemC -*-
+// -*- SystemC -*-
 //=============================================================================
 //
 // THIS MODULE IS PUBLICLY LICENSED
 //
-// Copyright 2001-2008 by Wilson Snyder.  This program is free software;
+// Copyright 2001-2009 by Wilson Snyder.  This program is free software;
 // you can redistribute it and/or modify it under the terms of either the GNU
-// General Public License or the Perl Artistic License.
+// Lesser General Public License or the Perl Artistic License.
 //
 // This is distributed in the hope that it will be useful, but WITHOUT ANY
 // WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -34,31 +34,51 @@
 #include <fstream>
 
 //=============================================================================
-// SpCoverageImplBase
+// SpCoverageImpBase
 /// Implementation base class for constants
 
 struct SpCoverageImpBase {
     // TYPES
-    enum { MAX_KEYS = 20 };		/// Maximum user arguments
+    enum { MAX_KEYS = 33 };		/// Maximum user arguments + filename+lineno
     enum { KEY_UNDEF = 0 };		/// Magic key # for unspecified values
 };
 
 //=============================================================================
-// SpCoverageImplItem
+// SpCoverageImpItem
 /// Implementation class for a SpCoverage item
 
 class SpCoverageImpItem : SpCoverageImpBase {
-public:
+public:  // But only local to this file
     // MEMBERS
-    const SpCoverItem* m_itemp; 	///< Item containing count value
     int	m_keys[MAX_KEYS];		///< Key
     int	m_vals[MAX_KEYS];		///< Value for specified key
     // CONSTRUCTORS
-    SpCoverageImpItem(const SpCoverItem* itemp) : m_itemp(itemp) {
+    // Derived classes should call zero() in their constructor
+    SpCoverageImpItem() {
 	for (int i=0; i<MAX_KEYS; i++) m_keys[i]=KEY_UNDEF;
     }
-    ~SpCoverageImpItem() {}
-    void deleteItem() { if (m_itemp) { delete m_itemp; m_itemp=NULL; } }
+    virtual ~SpCoverageImpItem() {}
+    virtual uint64_t count() const = 0;
+    virtual void zero() const = 0;
+};
+
+//=============================================================================
+/// SpCoverItem templated for a specific class
+/// Creates a new coverage item for the specified type.
+/// This isn't in the header file for auto-magic conversion because it
+/// inlines to too much code and makes compilation too slow.
+
+template <class T> class SpCoverItemSpec : public SpCoverageImpItem {
+private:
+    // MEMBERS
+    T*	m_countp;	///< Count value
+public:
+    // METHODS
+    virtual uint64_t count() const { return *m_countp; }
+    virtual void zero() const { *m_countp = 0; }
+    // CONSTRUCTORS
+    SpCoverItemSpec(T* countp) : m_countp(countp) { zero(); }
+    virtual ~SpCoverItemSpec() {}
 };
 
 //=============================================================================
@@ -72,7 +92,7 @@ private:
     // TYPES
     typedef map<string,int> ValueIndexMap;
     typedef map<int,string> IndexValueMap;
-    typedef deque<SpCoverageImpItem> ItemList;
+    typedef deque<SpCoverageImpItem*> ItemList;
 
 private:
     // MEMBERS
@@ -80,8 +100,16 @@ private:
     IndexValueMap	m_indexValues;		///< For each key/value a unique arbitrary index value
     ItemList		m_items;		///< List of all items
 
+    SpCoverageImpItem*	m_insertp;		///< Item about to insert
+    const char*		m_insertFilenamep;	///< Filename about to insert
+    int			m_insertLineno;		///< Line number about to insert
+
     // CONSTRUCTORS
-    SpCoverageImp() {}
+    SpCoverageImp() {
+	m_insertp = NULL;
+	m_insertFilenamep = NULL;
+	m_insertLineno = 0;
+    }
 public:
     ~SpCoverageImp() { clear(); }
     static SpCoverageImp& imp() {
@@ -142,6 +170,7 @@ private:
 	if (key == "comment") return "o";
 	if (key == "count") return "c";
 	if (key == "filename") return "f";
+	if (key == "groupcmt") return "O";
 	if (key == "groupdesc") return "d";
 	if (key == "groupname") return "g";
 	if (key == "hier") return "h";
@@ -170,6 +199,7 @@ private:
 #define SP_CIK_COMMENT "o"
 #define SP_CIK_COUNT "c"
 #define SP_CIK_FILENAME "f"
+#define SP_CIK_GROUPCMT "O"
 #define SP_CIK_GROUPDESC "d"
 #define SP_CIK_GROUPNAME "g"
 #define SP_CIK_HIER "h"
@@ -193,15 +223,11 @@ private:
     string keyValueFormatter (const string& key, const string& value) {
 	string name;
 	if (key.length()==1 && isalpha(key[0])) {
-	    name += key;
+	    name += string("\001")+key;
 	} else {
-	    name += string("'")+dequote(key)+"'";
+	    name += string("\001")+dequote(key);
 	}
-	if (numeric(value)) {
-	    name += string("=>")+value+",";
-	} else {
-	    name += string("=>'")+dequote(value)+"',";
-	}
+	name += string("\002")+dequote(value);
 	return name;
     }
 
@@ -256,27 +282,57 @@ public:
     // PUBLIC METHODS
     void clear() {
 	for (ItemList::iterator it=m_items.begin(); it!=m_items.end(); ++it) {
-	    SpCoverageImpItem& item = *(it);
-	    item.deleteItem();
+	    SpCoverageImpItem* itemp = *(it);
+	    delete itemp;
 	}
-	m_items.clear();  // Also deletes m_itemp's via ~SpCoverageImpItem
+	m_items.clear();
 	m_indexValues.clear();
 	m_valueIndexes.clear();
     }
+    void zero() {
+	for (ItemList::iterator it=m_items.begin(); it!=m_items.end(); ++it) {
+	    (*it)->zero();
+	}
+    }
 
-    void insert (const SpCoverItem* itemp,
-		 const string* keyps[MAX_KEYS],
-		 const string* valps[MAX_KEYS]) {
-	SpCoverageImpItem item (itemp);
+    // We assume there's always call to i/f/p in that order
+    void inserti (SpCoverageImpItem* itemp) {
+	assert(!m_insertp);
+ 	m_insertp = itemp;
+    }
+    void insertf (const char* filenamep, int lineno) {
+	m_insertFilenamep = filenamep;
+	m_insertLineno = lineno;
+    }
+    void insertp (const char* ckeyps[MAX_KEYS],
+		  const char* valps[MAX_KEYS]) {
+	assert(m_insertp);
+	// First two key/vals are filename
+	ckeyps[0]="filename";	valps[0]=m_insertFilenamep;
+	SpCvtToCStr linestrp (m_insertLineno);
+	ckeyps[1]="lineno";	valps[1]=linestrp;
+	// Default page if not specified
+	const char* fnstartp = m_insertFilenamep;
+	while (const char* foundp = strchr(fnstartp,'/')) fnstartp=foundp+1;
+	const char* fnendp = fnstartp;
+	while (*fnendp && *fnendp!='.') fnendp++;
+	string page_default = "sp_user/"+string(fnstartp,fnendp-fnstartp);
+	ckeyps[2]="page";	valps[2]=page_default.c_str();
 
-	// Zero out empty keys and discover if there's a column field
-	string empty; // Note take pointer to this, though finished with it at end of function
+	// Keys -> strings
+	string keys[MAX_KEYS];
 	for (int i=0; i<MAX_KEYS; i++) {
-	    const string& key = *keyps[i];
-	    if (key!="") {
+	    if (ckeyps[i] && ckeyps[i][0]) {
+		keys[i] = ckeyps[i];
+	    }
+	}
+
+	// Ignore empty keys
+	for (int i=0; i<MAX_KEYS; i++) {
+	    if (keys[i]!="") {
 		for (int j=i+1; j<MAX_KEYS; j++) {
-		    if (key == *keyps[j]) {  // Duplicate key.  Keep the last one
-			keyps[i] = &empty;
+		    if (keys[i] == keys[j]) {  // Duplicate key.  Keep the last one
+			keys[i] = "";
 			break;
 		    }
 		}
@@ -286,11 +342,12 @@ public:
 	// Insert the values
 	int addKeynum=0;
 	for (int i=0; i<MAX_KEYS; i++) {
-	    const string& key = *keyps[i];
-	    const string& val = *valps[i];
-	    if (key!="") {
-		item.m_keys[addKeynum] = valueIndex(key);
-		item.m_vals[addKeynum] = valueIndex(val);
+	    const string key = keys[i];
+	    if (keys[i]!="") {
+		const string val = valps[i];
+		//cout<<"   "<<__FUNCTION__<<"  "<<key<<" = "<<val<<endl;
+		m_insertp->m_keys[addKeynum] = valueIndex(key);
+		m_insertp->m_vals[addKeynum] = valueIndex(val);
 		addKeynum++;
 		if (!legalKey(key)) {
 		    SP_ABORT("%Error: Coverage keys of one character, or letter+digit are illegal: "<<key);
@@ -298,7 +355,9 @@ public:
 	    }
 	}
 
-	m_items.push_back(item);
+	m_items.push_back(m_insertp);
+	// Prepare for next
+	m_insertp = NULL;
     }
 
     void write (const char* filename) {
@@ -312,21 +371,21 @@ public:
 	    SP_ABORT("%Error: Can't Write "<<filename<<endl);
 	    return;
 	}
-	os << "# SystemC::Coverage-1 -*- Mode:perl -*-\n";
+	os << "# SystemC::Coverage-3\n";
 
 	// Build list of events; totalize if collapsing hierarchy
 	typedef map<string,pair<string,uint64_t> >	EventMap;
 	EventMap	eventCounts;
 	for (ItemList::iterator it=m_items.begin(); it!=m_items.end(); ++it) {
-	    SpCoverageImpItem& item = *(it);
+	    SpCoverageImpItem* itemp = *(it);
 	    string name;
 	    string hier;
 	    bool per_instance = false;
 
 	    for (int i=0; i<MAX_KEYS; i++) {
-		if (item.m_keys[i] != KEY_UNDEF) {
-		    string key = shortKey(m_indexValues[item.m_keys[i]]);
-		    string val = m_indexValues[item.m_vals[i]];
+		if (itemp->m_keys[i] != KEY_UNDEF) {
+		    string key = shortKey(m_indexValues[itemp->m_keys[i]]);
+		    string val = m_indexValues[itemp->m_vals[i]];
 		    if (key == SP_CIK_PER_INSTANCE) {
 			if (val != "0") per_instance = true;
 		    }
@@ -343,31 +402,32 @@ public:
 		hier = "";
 	    }
 
-	    // Group versus point labels don't matter here, downstream deals with it.
-	    // Seems bad for sizing though and doesn't allow easy addition of new group codes (would be inefficient)
+	    // Group versus point labels don't matter here, downstream
+	    // deals with it.  Seems bad for sizing though and doesn't
+	    // allow easy addition of new group codes (would be
+	    // inefficient)
 
 	    // Find or insert the named event
 	    EventMap::iterator cit = eventCounts.find(name);
 	    if (cit != eventCounts.end()) {
 		const string& oldhier = cit->second.first;
-		cit->second.second += item.m_itemp->count();
+		cit->second.second += itemp->count();
 		cit->second.first  = combineHier(oldhier, hier);
 	    } else {
-		eventCounts.insert(make_pair(name, make_pair(hier,item.m_itemp->count())));
+		eventCounts.insert(make_pair(name, make_pair(hier,itemp->count())));
 	    }
 	}
 
 	// Output body
 	for (EventMap::iterator it=eventCounts.begin(); it!=eventCounts.end(); ++it) {
-	    os<<"inc("<<dec;
+	    os<<"C '"<<dec;
 	    os<<it->first;
 	    if (it->second.first != "") os<<keyValueFormatter(SP_CIK_HIER,it->second.first);
-	    os<<"c=>"<<it->second.second;
-	    os<<");"<<endl;
+	    os<<"' "<<it->second.second;
+	    os<<endl;
 	}
 
 	// End
-	os << "\n1;\n";	// OK exit status for perl
     }
 };
 
@@ -378,85 +438,76 @@ void SpCoverage::clear() {
     SpCoverageImp::imp().clear();
 }
 
-void SpCoverage::write (const char* filename) {
-    SpCoverageImp::imp().write(filename);
+void SpCoverage::zero() {
+    SpCoverageImp::imp().zero();
 }
 
-#define A(n) const SpCoverKey& key ## n, const SpCoverValue& val ## n	// Argument list
+void SpCoverage::write (const char* filenamep) {
+    SpCoverageImp::imp().write(filenamep);
+}
+
+void SpCoverage::_inserti (uint32_t* itemp) {
+    SpCoverageImp::imp().inserti(new SpCoverItemSpec<uint32_t>(itemp));
+}
+void SpCoverage::_inserti (uint64_t* itemp) {
+    SpCoverageImp::imp().inserti(new SpCoverItemSpec<uint64_t>(itemp));
+}
+void SpCoverage::_inserti (SpZeroed<uint32_t>* itemp) {
+    // We can ignore the fact that it is a pre-zeroed class; same layout as base type
+    _inserti((uint32_t*)itemp);
+}
+void SpCoverage::_inserti (SpZeroed<uint64_t>* itemp) {
+    // We can ignore the fact that it is a pre-zeroed class; same layout as base type
+    _inserti((uint64_t*)itemp);
+}
+void SpCoverage::_insertf (const char* filename, int lineno) {
+    SpCoverageImp::imp().insertf(filename,lineno);
+}
+
+#define K(n) const char* key ## n
+#define A(n) const char* key ## n, const char* val ## n		// Argument list
 #define C(n) key ## n, val ## n	// Calling argument list
-#define N(n) "",SpCoverValue("")	// Null argument list
-void SpCoverage::insert (const SpCoverItem* itemp,
-			 A(0),A(1),A(2),A(3),A(4),A(5),A(6),A(7),A(8),A(9),
-			 A(10),A(11),A(12),A(13),A(14),A(15),A(16),A(17),A(18),A(19)) {
-    // We add one extra slot to the below so we can insert a string for the column number
-    string empty;
-    const string* keyps[SpCoverageImpBase::MAX_KEYS]
-	= {&key0,&key1,&key2,&key3,&key4,&key5,&key6,&key7,&key8,&key9,
-	   &key10,&key11,&key12,&key13,&key14,&key15,&key16,&key17,&key18,&key19};
-    const string* valps[SpCoverageImpBase::MAX_KEYS]
-	= {val0.sp(),val1.sp(),val2.sp(),val3.sp(),val4.sp(),val5.sp(),val6.sp(),val7.sp(),val8.sp(),val9.sp(),
-	   val10.sp(),val11.sp(),val12.sp(),val13.sp(),val14.sp(),val15.sp(),val16.sp(),val17.sp(),val18.sp(),val19.sp()};
-    SpCoverageImp::imp().insert(itemp, keyps, valps);
+#define N(n) "",""	// Null argument list
+void SpCoverage::_insertp (A(0),A(1),A(2),A(3),A(4),A(5),A(6),A(7),A(8),A(9),
+			   A(10),A(11),A(12),A(13),A(14),A(15),A(16),A(17),A(18),A(19),
+			   A(20),A(21),A(22),A(23),A(24),A(25),A(26),A(27),A(28),A(29)) {
+    const char* keyps[SpCoverageImpBase::MAX_KEYS]
+	= {NULL,NULL,NULL,	// filename,lineno,page
+	   key0,key1,key2,key3,key4,key5,key6,key7,key8,key9,
+	   key10,key11,key12,key13,key14,key15,key16,key17,key18,key19,
+	   key20,key21,key22,key23,key24,key25,key26,key27,key28,key29};
+    const char* valps[SpCoverageImpBase::MAX_KEYS]
+	= {NULL,NULL,NULL,	// filename,lineno,page
+	   val0,val1,val2,val3,val4,val5,val6,val7,val8,val9,
+	   val10,val11,val12,val13,val14,val15,val16,val17,val18,val19,
+	   val20,val21,val22,val23,val24,val25,val26,val27,val28,val29};
+    SpCoverageImp::imp().insertp(keyps, valps);
 }
 
 // And versions with fewer arguments  (oh for a language with named parameters!)
-void SpCoverage::insert (const SpCoverItem* itemp, A(0))
-{ insert(itemp,C(0),N(1),N(2),N(3),N(4),N(5),N(6),N(7),N(8),N(9),
-	 N(10),N(11),N(12),N(13),N(14),N(15),N(16),N(17),N(18),N(19)); }
-void SpCoverage::insert (const SpCoverItem* itemp, A(0),A(1))
-{ insert(itemp,C(0),C(1),N(2),N(3),N(4),N(5),N(6),N(7),N(8),N(9),
-	 N(10),N(11),N(12),N(13),N(14),N(15),N(16),N(17),N(18),N(19)); }
-void SpCoverage::insert (const SpCoverItem* itemp, A(0),A(1),A(2))
-{ insert(itemp,C(0),C(1),C(2),N(3),N(4),N(5),N(6),N(7),N(8),N(9),
-	 N(10),N(11),N(12),N(13),N(14),N(15),N(16),N(17),N(18),N(19)); }
-void SpCoverage::insert (const SpCoverItem* itemp, A(0),A(1),A(2),A(3))
-{ insert(itemp,C(0),C(1),C(2),C(3),N(4),N(5),N(6),N(7),N(8),N(9),
-	 N(10),N(11),N(12),N(13),N(14),N(15),N(16),N(17),N(18),N(19)); }
-void SpCoverage::insert (const SpCoverItem* itemp, A(0),A(1),A(2),A(3),A(4))
-{ insert(itemp,C(0),C(1),C(2),C(3),C(4),N(5),N(6),N(7),N(8),N(9),
-	 N(10),N(11),N(12),N(13),N(14),N(15),N(16),N(17),N(18),N(19)); }
-void SpCoverage::insert (const SpCoverItem* itemp, A(0),A(1),A(2),A(3),A(4),A(5))
-{ insert(itemp,C(0),C(1),C(2),C(3),C(4),C(5),N(6),N(7),N(8),N(9),
-	 N(10),N(11),N(12),N(13),N(14),N(15),N(16),N(17),N(18),N(19)); }
-void SpCoverage::insert (const SpCoverItem* itemp, A(0),A(1),A(2),A(3),A(4),A(5),A(6))
-{ insert(itemp,C(0),C(1),C(2),C(3),C(4),C(5),C(6),N(7),N(8),N(9),
-	 N(10),N(11),N(12),N(13),N(14),N(15),N(16),N(17),N(18),N(19)); }
-void SpCoverage::insert (const SpCoverItem* itemp, A(0),A(1),A(2),A(3),A(4),A(5),A(6),A(7))
-{ insert(itemp,C(0),C(1),C(2),C(3),C(4),C(5),C(6),C(7),N(8),N(9),
-	 N(10),N(11),N(12),N(13),N(14),N(15),N(16),N(17),N(18),N(19)); }
-void SpCoverage::insert (const SpCoverItem* itemp, A(0),A(1),A(2),A(3),A(4),A(5),A(6),A(7),A(8))
-{ insert(itemp,C(0),C(1),C(2),C(3),C(4),C(5),C(6),C(7),C(8),N(9),
-	 N(10),N(11),N(12),N(13),N(14),N(15),N(16),N(17),N(18),N(19)); }
-void SpCoverage::insert (const SpCoverItem* itemp, A(0),A(1),A(2),A(3),A(4),A(5),A(6),A(7),A(8),A(9))
-{ insert(itemp,C(0),C(1),C(2),C(3),C(4),C(5),C(6),C(7),C(8),C(9),
-	 N(10),N(11),N(12),N(13),N(14),N(15),N(16),N(17),N(18),N(19)); }
-void SpCoverage::insert (const SpCoverItem* itemp, A(0),A(1),A(2),A(3),A(4),A(5),A(6),A(7),A(8),A(9),A(10))
-{ insert(itemp,C(0),C(1),C(2),C(3),C(4),C(5),C(6),C(7),C(8),C(9),
-	 C(10),N(11),N(12),N(13),N(14),N(15),N(16),N(17),N(18),N(19)); }
-void SpCoverage::insert (const SpCoverItem* itemp, A(0),A(1),A(2),A(3),A(4),A(5),A(6),A(7),A(8),A(9),A(10),A(11))
-{ insert(itemp,C(0),C(1),C(2),C(3),C(4),C(5),C(6),C(7),C(8),C(9),
-	 C(10),C(11),N(12),N(13),N(14),N(15),N(16),N(17),N(18),N(19)); }
-void SpCoverage::insert (const SpCoverItem* itemp, A(0),A(1),A(2),A(3),A(4),A(5),A(6),A(7),A(8),A(9),A(10),A(11),A(12))
-{ insert(itemp,C(0),C(1),C(2),C(3),C(4),C(5),C(6),C(7),C(8),C(9),
-	 C(10),C(11),C(12),N(13),N(14),N(15),N(16),N(17),N(18),N(19)); }
-void SpCoverage::insert (const SpCoverItem* itemp, A(0),A(1),A(2),A(3),A(4),A(5),A(6),A(7),A(8),A(9),A(10),A(11),A(12),A(13))
-{ insert(itemp,C(0),C(1),C(2),C(3),C(4),C(5),C(6),C(7),C(8),C(9),
-	 C(10),C(11),C(12),C(13),N(14),N(15),N(16),N(17),N(18),N(19)); }
-void SpCoverage::insert (const SpCoverItem* itemp, A(0),A(1),A(2),A(3),A(4),A(5),A(6),A(7),A(8),A(9),A(10),A(11),A(12),A(13),A(14))
-{ insert(itemp,C(0),C(1),C(2),C(3),C(4),C(5),C(6),C(7),C(8),C(9),
-	 C(10),C(11),C(12),C(13),C(14),N(15),N(16),N(17),N(18),N(19)); }
-void SpCoverage::insert (const SpCoverItem* itemp, A(0),A(1),A(2),A(3),A(4),A(5),A(6),A(7),A(8),A(9),A(10),A(11),A(12),A(13),A(14),A(15))
-{ insert(itemp,C(0),C(1),C(2),C(3),C(4),C(5),C(6),C(7),C(8),C(9),
-	 C(10),C(11),C(12),C(13),C(14),C(15),N(16),N(17),N(18),N(19)); }
-void SpCoverage::insert (const SpCoverItem* itemp, A(0),A(1),A(2),A(3),A(4),A(5),A(6),A(7),A(8),A(9),A(10),A(11),A(12),A(13),A(14),A(15),A(16))
-{ insert(itemp,C(0),C(1),C(2),C(3),C(4),C(5),C(6),C(7),C(8),C(9),
-	 C(10),C(11),C(12),C(13),C(14),C(15),C(16),N(17),N(18),N(19)); }
-void SpCoverage::insert (const SpCoverItem* itemp, A(0),A(1),A(2),A(3),A(4),A(5),A(6),A(7),A(8),A(9),A(10),A(11),A(12),A(13),A(14),A(15),A(16),A(17))
-{ insert(itemp,C(0),C(1),C(2),C(3),C(4),C(5),C(6),C(7),C(8),C(9),
-	 C(10),C(11),C(12),C(13),C(14),C(15),C(16),C(17),N(18),N(19)); }
-void SpCoverage::insert (const SpCoverItem* itemp, A(0),A(1),A(2),A(3),A(4),A(5),A(6),A(7),A(8),A(9),A(10),A(11),A(12),A(13),A(14),A(15),A(16),A(17),A(18))
-{ insert(itemp,C(0),C(1),C(2),C(3),C(4),C(5),C(6),C(7),C(8),C(9),
-	 C(10),C(11),C(12),C(13),C(14),C(15),C(16),C(17),C(18),N(19)); }
+void SpCoverage::_insertp (A(0),A(1),A(2),A(3),A(4),A(5),A(6),A(7),A(8),A(9)) {
+    _insertp(C(0),C(1),C(2),C(3),C(4),C(5),C(6),C(7),C(8),C(9),
+	     N(10),N(11),N(12),N(13),N(14),N(15),N(16),N(17),N(18),N(19),
+	     N(20),N(21),N(22),N(23),N(24),N(25),N(26),N(27),N(28),N(29));
+}
+void SpCoverage::_insertp (A(0),A(1),A(2),A(3),A(4),A(5),A(6),A(7),A(8),A(9),
+			   A(10),A(11),A(12),A(13),A(14),A(15),A(16),A(17),A(18),A(19)) {
+    _insertp(C(0),C(1),C(2),C(3),C(4),C(5),C(6),C(7),C(8),C(9),
+	     C(10),C(11),C(12),C(13),C(14),C(15),C(16),C(17),C(18),C(19),
+	     N(20),N(21),N(22),N(23),N(24),N(25),N(26),N(27),N(28),N(29));
+}
+// Backward compatibility for Verilator
+void SpCoverage::_insertp (A(0), A(1),  K(2),int val2,  K(3),int val3,
+			   K(4),const string& val4,  A(5),A(6)) {
+    _insertp(C(0),C(1),
+	     key2,SpCvtToCStr(val2),  key3,SpCvtToCStr(val3),  key4, val4.c_str(),
+	     C(5),C(6),N(7),N(8),N(9),
+	     N(10),N(11),N(12),N(13),N(14),N(15),N(16),N(17),N(18),N(19),
+	     N(20),N(21),N(22),N(23),N(24),N(25),N(26),N(27),N(28),N(29));
+}
+//void SpCoverage::_insertp (A(0),  K(1),int val1,  K(2),int val2,
+//			   K(3),const string& val3,  A(4),A(5));
 #undef A
 #undef C
 #undef N
+#undef K

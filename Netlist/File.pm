@@ -1,17 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Id: File.pm 62129 2008-10-01 22:52:20Z wsnyder $
-# Author: Wilson Snyder <wsnyder@wsnyder.org>
-######################################################################
-#
-# Copyright 2001-2008 by Wilson Snyder.  This program is free software;
-# you can redistribute it and/or modify it under the terms of either the GNU
-# General Public License or the Perl Artistic License.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
+# See copyright, etc in below POD section.
 ######################################################################
 
 package SystemC::Netlist::File;
@@ -23,7 +11,7 @@ use SystemC::Template;
 use Verilog::Netlist::Subclass;
 @ISA = qw(SystemC::Netlist::File::Struct
 	Verilog::Netlist::Subclass);
-$VERSION = '1.300';
+$VERSION = '1.310';
 use strict;
 
 structs('new',
@@ -58,6 +46,10 @@ use strict;
 use vars qw (@ISA);
 use vars qw (@Text);	# Local for speed while inside parser.
 @ISA = qw (SystemC::Parser);
+
+# longest allowed user-defined string
+#use constant MAX_USER_STRING_LEN => 256;
+use constant MAX_USER_STRING_LEN => 5000;
 
 sub new {
     my $class = shift;
@@ -622,14 +614,7 @@ sub signal {
 
     # Replace our special types
     if ($type =~ /^sp_ui\b/) {
-	my $typeref = $self->netlist->find_class($type);
-	if ($typeref && $typeref->convert_type) {
-	    my $last = pop @Text;
-	    my $out = $typeref->sc_type;
-	    ($last->[3] =~ s!(sp_ui\s*<[^>]+>)!$out/*$1*/!g)
-		or $self->error("%Error, can't find type $type on text line\n");
-	    push_text($self, $last);
-	}
+	$self->_var_decl_guts($type);
     }
 }
 
@@ -642,11 +627,27 @@ sub covergroup_begin {
     print "Netlist::File: covergroup_begin parsed with name: $name\n" if $SystemC::Netlist::Debug;
 
     my $modref = $self->{modref};
+
+    if (!$modref) {
+	return $self->error ("SP_COVERGROUP \"$name\" outside of module definition\n");
+    }
+
+    if (length($name) > MAX_USER_STRING_LEN) {
+	my $max = MAX_USER_STRING_LEN;
+	return $self->error ("SP_COVERGROUP \"$name\" string too long (max $max chars)\n");
+    }
+
     # make a new covergroup
     my $covergroupref = $modref->current_covergroup();
     # name it
     $covergroupref->name($name);
     $covergroupref->page("\"$name\""); # default page = name with quotes
+    $covergroupref->lineno($self->lineno);
+
+    my $modname = $modref->name;
+    if (defined $modref->_covergroups($name)) {
+	$self->error("SP_COVERGROUP name \"$name\" appears more than once in module $modname\n");
+    }
     # add it to this module's list
     $modref->_covergroups($name,$covergroupref);
 
@@ -674,16 +675,24 @@ sub covergroup_end {
 
     push_text($self, [ 0, $self->filename, $self->lineno, "\n//SP_COVERGROUP End of SystemPerl coverage group\n"]);
 }
-sub covergroup_per_instance {
+
+sub covergroup_option {
     my $self = shift;
+    my $var = shift;
     my $val = shift;
 
     return if !$self->{need_covergroup};
 
-    print "Netlist::File: covergroup_per_instance parsed with value: $val\n" if $SystemC::Netlist::Debug;
+    print "Netlist::File: covergroup_option parsed with var = value: $var = $val\n" if $SystemC::Netlist::Debug;
+
+    if (length($var) > MAX_USER_STRING_LEN) {
+	my $max = MAX_USER_STRING_LEN;
+	return $self->error ("SP_COVERGROUP \"$var\" string too long (max $max chars)\n");
+    }
+
     my $modref = $self->{modref};
     my $currentCovergroup = $modref->current_covergroup();
-    $currentCovergroup->set_per_instance($val);
+    $currentCovergroup->set_option($var, $val);
 }
 
 sub covergroup_description {
@@ -693,7 +702,16 @@ sub covergroup_description {
     return if !$self->{need_covergroup};
 
     print "Netlist::File: covergroup_description parsed with name: $desc\n" if $SystemC::Netlist::Debug;
+
+    if (length($desc) > MAX_USER_STRING_LEN) {
+	my $max = MAX_USER_STRING_LEN;
+	return $self->error ("SP_COVERGROUP \"$desc\" string too long (max $max chars)\n");
+    }
+
     my $modref = $self->{modref};
+    if (!$modref) {
+	return $self->error ("SP_COVERGROUP outside of module definition\n");
+    }
     my $currentCovergroup = $modref->current_covergroup();
     $currentCovergroup->add_desc($desc);
 }
@@ -705,7 +723,16 @@ sub covergroup_page {
     return if !$self->{need_covergroup};
 
     print "Netlist::File: covergroup_page parsed with name: $page\n" if $SystemC::Netlist::Debug;
+
+    if (length($page) > MAX_USER_STRING_LEN) {
+	my $max = MAX_USER_STRING_LEN;
+	return $self->error ("SP_COVERGROUP \"$page\" string too long (max $max chars)\n");
+    }
+
     my $modref = $self->{modref};
+    if (!$modref) {
+	return $self->error ("SP_COVERGROUP outside of module definition\n");
+    }
     my $currentCovergroup = $modref->current_covergroup();
     $currentCovergroup->add_page($page);
 }
@@ -718,7 +745,15 @@ sub coversample {
 
     print "Netlist::File: coversample parsed with name: $name\n" if $SystemC::Netlist::Debug;
 
+    if (length($name) > MAX_USER_STRING_LEN) {
+	my $max = MAX_USER_STRING_LEN;
+	return $self->error ("SP_COVERGROUP \"$name\" string too long (max $max chars)\n");
+    }
+
     my $modref = $self->{modref};
+    if (!$modref) {
+	return $self->error ("SP_COVER_SAMPLE($name) outside of module definition\n");
+    }
 
     my %cgh = %{$modref->_covergroups};
     my $covergroupref = $cgh{$name}; # look up by name
@@ -739,9 +774,15 @@ sub cross_begin {
 
     print "Netlist::File: parsed cross name: $name, connecting to $connection\n" if $SystemC::Netlist::Debug;
 
+    if (length($name) > MAX_USER_STRING_LEN) {
+	my $max = MAX_USER_STRING_LEN;
+	return $self->error ("SP_COVERGROUP \"$name\" string too long (max $max chars)\n");
+    }
+
     my $modref = $self->{modref};
     my $point = $modref->current_coverpoint();
 
+    $point->lineno($self->lineno);
     $point->isCross(1);
     $point->name($name);
     $point->connection($connection);
@@ -779,9 +820,15 @@ sub coverpoint_begin {
 
     print "Netlist::File: coverpoint parsed point name: $name, connecting to $connection\n" if $SystemC::Netlist::Debug;
 
+    if (length($name) > MAX_USER_STRING_LEN) {
+	my $max = MAX_USER_STRING_LEN;
+	return $self->error ("SP_COVERGROUP \"$name\" string too long (max $max chars)\n");
+    }
+
     my $modref = $self->{modref};
     my $point = $modref->current_coverpoint();
 
+    $point->lineno($self->lineno);
     $point->name($name);
     $point->connection($connection);
     $point->isCross(0);
@@ -816,6 +863,8 @@ sub preproc_sp {
     if ($line=~ /^\s*\#\s*sp\s+(.*)$/) {
 	my $cmd = $1; $cmd =~ s/\s+$//;
 	$cmd =~ s!\s+//.*$!!;
+	while ($cmd =~ s!\s*/\*.*?\*/!!) {}
+	if ($cmd =~ m!(/\*|\*/)!) { $self->error("/* without terminating */ on same line not supported here"); }
 	# Ifdef/else/etc
 	if ($cmd =~ /^ifdef\s+(\S+)$/) {
 	    my $def = $self->{netlist}->defvalue_nowarn($1);
@@ -980,6 +1029,34 @@ sub enum_value {
     # write this to the netlist too
     my $netlist = $fileref->netlist();
     $netlist->{_enums}{$class} = $href->{$class};
+}
+
+sub var_decl {
+    my $self = shift;
+    my $type = shift;
+    # Callback from parser
+    return if $self->{_ifdef_off};
+    $self->_var_decl_guts($type);
+}
+
+sub _var_decl_guts {
+    my $self = shift;
+    my $type = shift;
+    # Callback or expansion of type used in another call
+    # Replace our special types
+    if ($type =~ /^sp_ui\b/) {
+	my $typeref = $self->netlist->find_class($type);
+	if ($typeref && $typeref->convert_type
+	    && $self->{need_text}) {
+	    my $last = pop @Text;
+	    my $out = $typeref->sc_type;
+	    ($last->[3] =~ s!(sp_ui\s*<[^>]+>)!$out/*$1*/!g)
+		or $self->error("%Error, can't find type $type on text line\n");
+	    push_text($self, $last);
+	}
+    } else {
+	$self->error("%Error, unexpected declaration callback on '$type'");
+    }
 }
 
 sub error {
@@ -1639,7 +1716,7 @@ SystemPerl is part of the L<http://www.veripool.org/> free SystemC software
 tool suite.  The latest version is available from CPAN and from
 L<http://www.veripool.org/systemperl>.
 
-Copyright 2001-2008 by Wilson Snyder.  This package is free software; you
+Copyright 2001-2009 by Wilson Snyder.  This package is free software; you
 can redistribute it and/or modify it under the terms of either the GNU
 Lesser General Public License or the Perl Artistic License.
 

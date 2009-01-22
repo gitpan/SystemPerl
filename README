@@ -6,12 +6,12 @@ This is the SystemC Perl Package, aka SystemPerl.
 1.1 Copyright
 =============
 
-This package is Copyright 2001-2008 by Wilson Snyder
+This package is Copyright 2001-2009 by Wilson Snyder
 <wsnyder@wsnyder.org>.
 
-   You may distribute under the terms of either the GNU General Public
-License or the Perl Artistic License, as specified in the Perl README
-file.
+   You may distribute under the terms of either the GNU Lesser General
+Public License or the Perl Artistic License, as specified in the Perl
+README file.
 
    This code is provided with no warranty of any kind, and is used
 entirely at your own risk.

@@ -1,9 +1,8 @@
-# $Id: Makefile.PL 58970 2008-08-12 13:24:36Z wsnyder $
 # DESCRIPTION: Perl ExtUtils: Type 'perl Makefile.PL' to create a Makefile for this package
 #
-# Copyright 2001-2008 by Wilson Snyder.  This program is free software;
+# Copyright 2001-2009 by Wilson Snyder.  This program is free software;
 # you can redistribute it and/or modify it under the terms of either the GNU
-# General Public License or the Perl Artistic License.
+# Lesser General Public License or the Perl Artistic License.
 
 use ExtUtils::MakeMaker;
 
@@ -35,7 +34,7 @@ scgrammer.c scgrammer.h:	scgrammer.y scparse.h
 	${YACC} ${YFLAGS} --debug --verbose -d -k $< -pscgrammer -o scgrammer.c
 
 clean::
-	-rm -rf test *.o sclex*.c scgrammer.h scgrammer.c *.output
+	-$(RM_RF) test *.o sclex*.c scgrammer.h scgrammer.c *.output
 ';
     return $out;
 }

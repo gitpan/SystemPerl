@@ -1,17 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Id: CoverGroup.pm 62129 2008-10-01 22:52:20Z wsnyder $
-# Author: Bobby Woods-Corwin <me@alum.mit.edu>
-######################################################################
-#
-# Copyright 2001-2008 by Bobby Woods-Corwin.  This program is free software;
-# you can redistribute it and/or modify it under the terms of either the GNU
-# General Public License or the Perl Artistic License.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
+# See copyright, etc in below POD section.
 ######################################################################
 
 package SystemC::Netlist::CoverGroup;
@@ -21,7 +9,7 @@ use Verilog::Netlist;
 use Verilog::Netlist::Subclass;
 @ISA = qw(SystemC::Netlist::CoverGroup::Struct
 	  Verilog::Netlist::Subclass);
-$VERSION = '1.300';
+$VERSION = '1.310';
 use strict;
 
 structs('new',
@@ -31,6 +19,8 @@ structs('new',
 	   description  => '$', #'      # description of the group
 	   page         => '$', #'      # HTML page name; default group name
 	   per_instance => '$', #'      # per_instance coverage? default 0
+	   automethods  => '$', #'      # module has /*AUTOMETHODS*/
+	   autoctor     => '$', #'      # module has SP_AUTO_CTOR
 	   #
 	   module	=> '$', #'	# Module containing statement
 	   filename 	=> '$', #'	# Filename this came from
@@ -66,6 +56,8 @@ sub current_covergroup {
 	     filename     => $self->filename,
 	     description  => "",
 	     per_instance => 0,
+	     automethods  => 0,
+	     autoctor     => 0,
 	     );
 	$openCovergroup = $covergroupref;
     }
@@ -99,8 +91,14 @@ sub add_point {
     my $self = shift;
     my $point = shift;
 
-    #print "adding point to group\n";
+    my $groupname = $self->name;
+    my $pointname = $point->name;
 
+    foreach my $otherpoint (@{$self->coverpoints}) {
+	if ($otherpoint->name eq $point->name) {
+	    $self->error("More than one point named \"$pointname\" found in group \"$groupname\"");
+	}
+    }
     push @{$self->coverpoints}, $point;
 }
 
@@ -123,11 +121,16 @@ sub add_page {
     $self->page($page);
 }
 
-sub set_per_instance {
+sub set_option {
     my $self = shift;
+    my $var = shift;
     my $val = shift;
 
-    $self->per_instance($val);
+    if ($var eq "per_instance") {
+	$self->per_instance($val);
+    } else {
+	$self->error("Unrecognized covergroup option \"$var\"\n");
+    }
 }
 
 sub _write_covergroup_decl {
@@ -138,6 +141,7 @@ sub _write_covergroup_decl {
 
     foreach my $covergroupref (sort {$a->name cmp $b->name}
 			       (values %{$modref->_covergroups})) {
+	$covergroupref->automethods(1);
 	foreach my $point (@{$covergroupref->coverpoints}) {
 	    bless $point, "SystemC::Netlist::CoverPoint";
 	    $point->_write_coverpoint_decl($fileref,$prefix,$modref,$covergroupref);
@@ -163,6 +167,8 @@ sub _write_covergroup_ctor {
     $fileref->print("    // Coverage Groups\n");
     foreach my $covergroupref (sort {$a->name cmp $b->name}
 			       (values %{$modref->_covergroups})) {
+	$modref->error("Module $mod is missing /*AUTOMETHODS*/") if !$covergroupref->automethods;
+	$covergroupref->autoctor(1); # FIXME how can I tell if autoctor is missing?
 	foreach my $point (@{$covergroupref->coverpoints}) {
 	    bless $point, "SystemC::Netlist::CoverPoint";
 	    $point->_write_coverpoint_ctor($fileref,$prefix,$modref,$covergroupref);
@@ -199,7 +205,7 @@ SystemPerl is part of the L<http://www.veripool.org/> free SystemC software
 tool suite.  The latest version is available from CPAN and from
 L<http://www.veripool.org/systemperl>.
 
-Copyright 2001-2008 by Wilson Snyder.  This package is free software; you
+Copyright 2001-2009 by Wilson Snyder.  This package is free software; you
 can redistribute it and/or modify it under the terms of either the GNU
 Lesser General Public License or the Perl Artistic License.
 
@@ -211,4 +217,3 @@ Bobby Woods-Corwin <me@alum.mit.edu>
 =head1 SEE ALSO
 
 L<SystemC::Netlist::Module>
-

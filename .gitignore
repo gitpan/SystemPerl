@@ -5,3 +5,5 @@ test_dir
 test_scl
 README
 *.old
+.svn
+.git

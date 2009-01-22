@@ -1,17 +1,5 @@
 # SystemC - SystemC Perl Interface
-# $Id: Template.pm 62129 2008-10-01 22:52:20Z wsnyder $
-# Author: Wilson Snyder <wsnyder@wsnyder.org>
-######################################################################
-#
-# Copyright 2001-2008 by Wilson Snyder.  This program is free software;
-# you can redistribute it and/or modify it under the terms of either the GNU
-# General Public License or the Perl Artistic License.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
+# See copyright, etc in below POD section.
 ######################################################################
 
 package SystemC::Template;
@@ -27,7 +15,7 @@ use Verilog::Netlist::Subclass;
 use strict;
 use vars qw ($Debug $Default_Self $VERSION);
 
-$VERSION = '1.300';
+$VERSION = '1.310';
 
 structs('_new_base',
 	'SystemC::Template::Struct'
@@ -313,7 +301,7 @@ SystemPerl is part of the L<http://www.veripool.org/> free SystemC software
 tool suite.  The latest version is available from CPAN and from
 L<http://www.veripool.org/systemperl>.
 
-Copyright 2001-2008 by Wilson Snyder.  This package is free software; you
+Copyright 2001-2009 by Wilson Snyder.  This package is free software; you
 can redistribute it and/or modify it under the terms of either the GNU
 Lesser General Public License or the Perl Artistic License.
 

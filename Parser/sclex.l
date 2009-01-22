@@ -1,7 +1,6 @@
 %option noyywrap align never-interactive prefix="sclex"
 %{
-/* $Id: sclex.l 61793 2008-09-26 13:19:21Z rwoodscorwin $
- ******************************************************************************
+/******************************************************************************
  * DESCRIPTION: SystemC lexer
  *
  * This file is part of SystemC-Perl.
@@ -12,9 +11,9 @@
  *
  ******************************************************************************
  *
- * Copyright 2001-2008 by Wilson Snyder.  This program is free software;
+ * Copyright 2001-2009 by Wilson Snyder.  This program is free software;
  * you can redistribute it and/or modify it under the terms of either the GNU
- * General Public License or the Perl Artistic License.
+ * Lesser General Public License or the Perl Artistic License.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -73,7 +72,7 @@ FLOATNUM	[0-9]+"."*[0-9]*[eE]-?[0-9]+
 %%
 
 "#line".*\n	{ scparser_EmitPrefix(); sclex_ppline(yytext); }
-"#include"	{ return(PP); }
+"#"{WHITESPACE}*"include"	{ return(PP); }
 "#"{WHITESPACE}*"sp".*\n	{ LINENO++; return(SP); }
 
 	/* Special macros we recognize */
@@ -106,10 +105,12 @@ FLOATNUM	[0-9]+"."*[0-9]*[eE]-?[0-9]+
 "default"	{ return(CG_DEFAULT); }
 "description"   { return(CG_DESCRIPTION); }
 "page"		{ return(CG_PAGE); }
-"option.per_instance" { return(CG_PER_INSTANCE); }
+"option" 	{ return(CG_OPTION); }
 "bins"          { return(CG_BINS); }
 "illegal_bins"  { return(CG_ILLEGAL_BINS); }
+"illegal_bins_func" { return(CG_ILLEGAL_BINS_FUNC); }
 "ignore_bins"   { return(CG_IGNORE_BINS); }
+"ignore_bins_func" { return(CG_IGNORE_BINS_FUNC); }
 "auto_enum_bins" { return(CG_AUTO_ENUM_BINS); }
 "cross"         { return(CG_CROSS); }
 "rows"          { return(CG_ROWS); }
@@ -123,6 +124,7 @@ FLOATNUM	[0-9]+"."*[0-9]*[eE]-?[0-9]+
 "protected"	{ return(PROTECTED); }
 "public"	{ return(PUBLIC); }
 "sc_main"	{ return(SC_MAIN); }
+"sp_ui"		{ return(SP_UI); }
 "struct"	{ return(CLASS); }
 "virtual"	{ return(VIRTUAL); }
 

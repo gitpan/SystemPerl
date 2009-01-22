@@ -1,9 +1,8 @@
-// $Id: ExMod.sp 60993 2008-09-17 16:58:23Z wsnyder $
 // DESCRIPTION: SystemPerl: Example source module
 //
-// Copyright 2001-2008 by Wilson Snyder.  This program is free software;
+// Copyright 2001-2009 by Wilson Snyder.  This program is free software;
 // you can redistribute it and/or modify it under the terms of either the GNU
-// General Public License or the Perl Artistic License.
+// Lesser General Public License or the Perl Artistic License.
 
 //error test:
 ///*AUTOSIGNAL*/

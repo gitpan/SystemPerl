@@ -1,9 +1,8 @@
-// $Id: ExBench.sp 61048 2008-09-18 00:45:49Z wsnyder $
 // DESCRIPTION: SystemPerl: Example main()
 //
-// Copyright 2001-2008 by Wilson Snyder.  This program is free software;
+// Copyright 2001-2009 by Wilson Snyder.  This program is free software;
 // you can redistribute it and/or modify it under the terms of either the GNU
-// General Public License or the Perl Artistic License.
+// Lesser General Public License or the Perl Artistic License.
 
 #sp interface
 

@@ -1,15 +1,5 @@
-#$Id: Parser.pm 62129 2008-10-01 22:52:20Z wsnyder $
-######################################################################
-#
-# Copyright 2001-2008 by Wilson Snyder.  This program is free software;
-# you can redistribute it and/or modify it under the terms of either the GNU
-# General Public License or the Perl Artistic License.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
+# SystemC - SystemC Perl Interface
+# See copyright, etc in below POD section.
 ######################################################################
 
 package SystemC::Parser;
@@ -21,7 +11,7 @@ require DynaLoader;
 use strict;
 use vars qw($VERSION);
 
-$VERSION = '1.300';
+$VERSION = '1.310';
 
 ######################################################################
 #### Configuration Section
@@ -66,6 +56,18 @@ sub read_include {
 sub auto {}
 sub cell {}
 sub cell_decl {}
+sub covergroup_begin {}
+sub covergroup_description {}
+sub covergroup_end {}
+sub covergroup_page {}
+sub covergroup_per_instance {}
+sub coverpoint {}
+sub coverpoint_begin {}
+sub coverpoint_end {}
+sub coversample {}
+sub cross {}
+sub cross_begin {}
+sub cross_end {}
 sub ctor {}
 sub enum_value {}
 sub module {}
@@ -75,18 +77,7 @@ sub pin_template {}
 sub preproc_sp {}
 sub signal {}
 sub text {}
-sub covergroup_begin {}
-sub covergroup_page {}
-sub covergroup_description {}
-sub covergroup_per_instance {}
-sub covergroup_end {}
-sub coversample {}
-sub coverpoint_begin {}
-sub coverpoint {}
-sub coverpoint_end {}
-sub cross_begin {}
-sub cross {}
-sub cross_end {}
+sub var_decl {}
 
 
 sub fileline {
@@ -234,6 +225,11 @@ Text is called for all text not otherwise recognized.  Dumping all
 text to a file will produce the original file, minus any #sp and
 stripped // Auto inserted comments.
 
+=item $self->var_decl  (I<type>)
+
+Var_decl is called on a variable declaration of sp_ui and any future
+SystemPerl types outside of other callbacks.
+
 =back
 
 =head1 DISTRIBUTION
@@ -242,7 +238,7 @@ SystemPerl is part of the L<http://www.veripool.org/> free SystemC software
 tool suite.  The latest version is available from CPAN and from
 L<http://www.veripool.org/systemperl>.
 
-Copyright 2001-2008 by Wilson Snyder.  This package is free software; you
+Copyright 2001-2009 by Wilson Snyder.  This package is free software; you
 can redistribute it and/or modify it under the terms of either the GNU
 Lesser General Public License or the Perl Artistic License.
 

@@ -2,6 +2,21 @@ Revision history for Perl extension SystemC::Netlist
 
 The contributors that suggested a given feature are shown in [].
 
+* SystemPerl 1.310 2009/01/22
+
+**	Further refinements of coverage.  [by Robert Woods-Corwin]
+
+**	SP_COVER_INSERT now only accepts char* keys and values.
+	This prevents GCC 4.2.1 from running out of memory.
+
+***	Support new CovVise coverage system.
+
+****	SpCoverage dumps are now written in the faster binary format.
+
+****	Fix parsing comments at end of "#sp ifelse" lines.  [Brian Cassell]
+
+****	Fix parsing sp_ui as basic type.  [Prabhat Gupta]
+
 * SystemPerl 1.300 2008/10/01
 
 **	Many improvements to coverage, including coverage groups and automatic
@@ -421,15 +436,14 @@ The contributors that suggested a given feature are shown in [].
 
 
 ----------------------------------------------------------------------
-$Id: Changes 62129 2008-10-01 22:52:20Z wsnyder $
 DESCRIPTION: Documentation on change history for this package
 ----------------------------------------------------------------------
 
 This uses outline mode in Emacs.  See C-h m [M-x describe-mode].
 
-Copyright 2001-2008 by Wilson Snyder.  This program is free software;
+Copyright 2001-2009 by Wilson Snyder.  This program is free software;
 you can redistribute it and/or modify it under the terms of either the GNU
-General Public License or the Perl Artistic License.
+Lesser General Public License or the Perl Artistic License.
 
 Local variables:
 mode: outline
