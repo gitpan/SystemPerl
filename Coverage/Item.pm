@@ -12,7 +12,7 @@ use vars qw($VERSION $Debug $AUTOLOAD);
 ######################################################################
 #### Configuration Section
 
-$VERSION = '1.310';
+$VERSION = '1.311';
 
 ######################################################################
 ######################################################################
@@ -254,7 +254,9 @@ Wilson Snyder <wsnyder@wsnyder.org>
 
 =head1 SEE ALSO
 
-C<SystemC::Coverage>
+L<SystemC::Manual>
+
+L<SystemC::Coverage>
 
 =cut
 

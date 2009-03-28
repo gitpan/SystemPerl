@@ -116,6 +116,7 @@ FLOATNUM	[0-9]+"."*[0-9]*[eE]-?[0-9]+
 "rows"          { return(CG_ROWS); }
 "cols"          { return(CG_COLS); }
 "table"         { return(CG_TABLE); }
+"window"        { return(CG_WINDOW); }
 
 "class"		{ return(CLASS); }
 "const"		{ return(CONST); }

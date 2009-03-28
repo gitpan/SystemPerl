@@ -2,6 +2,20 @@ Revision history for Perl extension SystemC::Netlist
 
 The contributors that suggested a given feature are shown in [].
 
+* SystemPerl 1.311 2009/03/28
+
+**	Created SYSTEMPERL_INCLUDE which if set allows relocating the
+	src directory.
+
+***	The systemc-mode.el provided now just calls c++-mode.  This solves
+	many Emacs 22 incompatibilities, and does enough for now.
+
+****	The README was converted into pod format to create SystemC::Manual.
+
+****	Added SpCoverage::write data can now be filtered by a string.
+
+****	Fix compile error with Bison 2.4.1.  [Chitlesh Goorah]
+
 * SystemPerl 1.310 2009/01/22
 
 **	Further refinements of coverage.  [by Robert Woods-Corwin]

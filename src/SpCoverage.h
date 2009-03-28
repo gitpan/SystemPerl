@@ -93,7 +93,7 @@ class SpCoverage {
 public:
     // GLOBAL METHODS
     /// Write all coverage data to a file
-    static void write (const char* filename = "logs/coverage.pl");
+    static void write (const char* filenamep = "logs/coverage.pl");
     /// Insert a coverage item
     /// We accept from 1-30 key/value pairs, all as strings.
     /// Call _insert1, followed by _insert2 and _insert3
@@ -127,6 +127,8 @@ public:
 #undef D
     /// Clear coverage points (and call delete on all items)
     static void clear();
+    /// Clear items not matching the provided string
+    static void clearNonMatch (const char* matchp);
     /// Zero coverage points
     static void zero();
 };

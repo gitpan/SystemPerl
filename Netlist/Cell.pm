@@ -8,7 +8,7 @@ use Class::Struct;
 use Verilog::Netlist;
 use SystemC::Netlist;
 @ISA = qw(Verilog::Netlist::Cell);
-$VERSION = '1.310';
+$VERSION = '1.311';
 use strict;
 
 ######################################################################
@@ -25,6 +25,8 @@ sub new_pin {
 
 ######################################################################
 #### Automatics (Preprocessing)
+
+sub _d { defined $_[0] ? $_[0] : "" }
 
 sub _autos_connect_port {
     my $self = shift;
@@ -51,7 +53,8 @@ sub _autos_connect_port {
 		    # You can't use s/$compile/$compile/ directly.  We could make a eval{}, but
 		    # we'll do it the way some C code might eventually have to...
 		    if ($cellpin =~ m/$cellpin_regexp/) {
-			my $a=$1; my $b=$2; my $c=$3; my $d=$4; my $e=$5; my $f=$6; my $g=$7; my $h=$8; my $i=$9;
+			my $a=_d($1); my $b=_d($2); my $c=_d($3); my $d=_d($4); my $e=_d($5);
+			my $f=_d($6); my $g=_d($7); my $h=_d($8); my $i=_d($9);
 			($replace !~ /\$1[0-9]/) or $self->error("AUTO_TEMPLATE only supports up to \$9, Replace='$replace'\n");
 			$replace =~ s/\$\{1\}/$a/g; $replace =~ s/\$\{2\}/$b/g;  $replace =~ s/\$\{3\}/$c/g; $replace =~ s/\$\{4\}/$d/g;
 			$replace =~ s/\$\{5\}/$e/g; $replace =~ s/\$\{6\}/$f/g;  $replace =~ s/\$\{7\}/$g/g; $replace =~ s/\$\{8\}/$h/g;

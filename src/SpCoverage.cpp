@@ -266,6 +266,19 @@ private:
 	return out;
     }
 
+    bool itemMatchesString(SpCoverageImpItem* itemp, const string& match) {
+	for (int i=0; i<MAX_KEYS; i++) {
+	    if (itemp->m_keys[i] != KEY_UNDEF) {
+		// We don't compare keys, only values
+		string val = m_indexValues[itemp->m_vals[i]];
+		if (string::npos != val.find(match)) {  // Found
+		    return true;
+		}
+	    }
+	}
+	return false;
+    }
+
     void selftest() {
 	// Little selftest
 	if (combineHier ("a.b.c","a.b.c")	!="a.b.c") SP_ABORT("%Error: selftest\n");
@@ -289,6 +302,21 @@ public:
 	m_indexValues.clear();
 	m_valueIndexes.clear();
     }
+    void clearNonMatch (const char* matchp) {
+	if (matchp && matchp[0]) {
+	    ItemList newlist;
+	    for (ItemList::iterator it=m_items.begin(); it!=m_items.end(); ++it) {
+		SpCoverageImpItem* itemp = *(it);
+		if (!itemMatchesString(itemp, matchp)) {
+		    delete itemp;
+		} else {
+		    newlist.push_back(itemp);
+		}
+	    }
+	    m_items = newlist;
+	}
+    }
+
     void zero() {
 	for (ItemList::iterator it=m_items.begin(); it!=m_items.end(); ++it) {
 	    (*it)->zero();
@@ -436,6 +464,10 @@ public:
 
 void SpCoverage::clear() {
     SpCoverageImp::imp().clear();
+}
+
+void SpCoverage::clearNonMatch (const char* matchp) {
+    SpCoverageImp::imp().clearNonMatch(matchp);
 }
 
 void SpCoverage::zero() {

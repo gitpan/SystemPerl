@@ -11,7 +11,7 @@ use SystemC::Template;
 use Verilog::Netlist::Subclass;
 @ISA = qw(SystemC::Netlist::File::Struct
 	Verilog::Netlist::Subclass);
-$VERSION = '1.310';
+$VERSION = '1.311';
 use strict;
 
 structs('new',
@@ -832,6 +832,35 @@ sub coverpoint_begin {
     $point->name($name);
     $point->connection($connection);
     $point->isCross(0);
+}
+
+sub coverpoint_window {
+    my $self = shift;
+    my $name = shift;
+    my $ev1 = shift;
+    my $ev2 = shift;
+    my $depth = shift;
+
+    return if !$self->{need_covergroup};
+
+    print "Netlist::File: coverpoint parsed window name: $name\n" if $SystemC::Netlist::Debug;
+
+    if (length($name) > MAX_USER_STRING_LEN) {
+	my $max = MAX_USER_STRING_LEN;
+	return $self->error ("SP_COVERGROUP \"$name\" string too long (max $max chars)\n");
+    }
+
+    my $modref = $self->{modref};
+    my $point = $modref->current_coverpoint();
+
+    $point->isWindow(1);
+    $point->name($name);
+    $point->event1($ev1);
+    $point->event2($ev2);
+    $point->windowDepth($depth);
+
+    # close this one out
+    $modref->close_new_coverpoint();
 }
 
 sub coverpoint {

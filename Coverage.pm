@@ -18,7 +18,7 @@ use vars qw($_Default_Self);
 ######################################################################
 #### Configuration Section
 
-$VERSION = '1.310';
+$VERSION = '1.311';
 
 use constant DEFAULT_FILENAME => 'logs/coverage.pl';
 
@@ -258,8 +258,10 @@ Wilson Snyder <wsnyder@wsnyder.org>
 
 =head1 SEE ALSO
 
-vcoverage,
-SystemC::Coverage::Item
+L<SystemC::Manual>
+
+L<vcoverage>,
+L<SystemC::Coverage::Item>
 
 =cut
 

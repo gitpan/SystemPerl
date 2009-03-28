@@ -9,7 +9,7 @@ use Pod::Usage;
 use strict;
 use vars qw ($Debug %Depend %Checked $VERSION);
 
-$VERSION = '1.310';
+$VERSION = '1.311';
 
 #======================================================================
 # main
@@ -253,6 +253,8 @@ Lesser General Public License or the Perl Artistic License.
 Wilson Snyder <wsnyder@wsnyder.org>
 
 =head1 SEE ALSO
+
+L<SystemC::Manual>
 
 L<make>
 

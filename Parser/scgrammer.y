@@ -22,6 +22,7 @@
  *****************************************************************************/
 
 #include "scparse.h"
+#include "scgrammer.h"
 #define YYERROR_VERBOSE
 #define SCFree(p) {if (p) free(p); p=NULL;}
 
@@ -161,6 +162,7 @@ int scgrammerlex() {
 %token		CG_ROWS
 %token		CG_COLS
 %token		CG_TABLE
+%token		CG_WINDOW
 %token		VL_SIG
 %token		VL_SIGW
 %token		VL_INOUT
@@ -243,6 +245,7 @@ exp:		auto				{ }
 		| CG_ROWS			{ }
 		| CG_COLS			{ }
 		| CG_TABLE			{ }
+		| CG_WINDOW			{ }
 		| coversample			{ }
 		| decl				{ }
 		| traceable			{ }
@@ -495,6 +498,7 @@ coverpoint:	coverpoint_head coverpoint_desc { scparser_call(0,"coverpoint_end");
                 | CG_DESCRIPTION '=' STRING ';' { scparser_call(1,"covergroup_description",$3); SCFree($3);}
                 | CG_OPTION SYMBOL '=' NUMBER ';' { scparser_call(2,"covergroup_option",$2,$4); SCFree($2); SCFree($4);}
                 | cross_head '{' cross_desc_list '}' ';' { scparser_call(0,"cross_end"); }
+                | CG_WINDOW SYMBOL '(' SYMBOL ',' SYMBOL ',' NUMBER ')' ';' { scparser_call(-4,"coverpoint_window",$2,$4,$6,$8);}
 		;
 
 coverpoint_head: COVERPOINT SYMBOL                  { scparser_call(2,"coverpoint_begin",$2,$2); SCFree($2); }

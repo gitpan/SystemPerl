@@ -33,7 +33,7 @@ use vars qw ($Debug
 
 #@Opt_Write_Params  # Set by some wrapper scripts
 
-$VERSION = '1.310';
+$VERSION = '1.311';
 
 #######################################################################
 # main
@@ -420,6 +420,7 @@ Wilson Snyder <wsnyder@wsnyder.org>
 
 =head1 SEE ALSO
 
+L<SystemC::Manual>,
 L<Verilog::Getopt>, L<SystemC::Coverage>
 
 =cut

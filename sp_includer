@@ -114,7 +114,7 @@ Wilson Snyder <wsnyder@wsnyder.org>
 
 =head1 SEE ALSO
 
-L<SystemC::SystemPerl>
+L<SystemC::Manual>
 
 =cut
 

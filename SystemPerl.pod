@@ -1,15 +1,4 @@
-######################################################################
-#
-# Copyright 2001-2009 by Wilson Snyder.  This program is free software;
-# you can redistribute it and/or modify it under the terms of either the GNU
-# Lesser General Public License or the Perl Artistic License.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-#
+# See copyright, etc in below POD section.
 ######################################################################
 
 =pod
@@ -694,6 +683,6 @@ Wilson Snyder <wsnyder@wsnyder.org>
 
 =head1 SEE ALSO
 
-L<sp_includer>, L<sp_preproc>, L<SystemC::Netlist>, L<SystemC::Parser>
+L<SystemC::Manual>
 
 =cut

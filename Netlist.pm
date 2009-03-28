@@ -15,7 +15,7 @@ use Verilog::Netlist::Subclass;
 use strict;
 use vars qw($Debug $Verbose $VERSION);
 
-$VERSION = '1.310';
+$VERSION = '1.311';
 
 ######################################################################
 #### Creation
@@ -127,6 +127,18 @@ sub _set_features {
 	    $self->{sp_allow_output_tracing} = 0;
 	}
     }
+}
+
+# add this pagename to the list; error if it's already there
+sub add_coverpoint_page_name {
+    my $self = shift;
+    my $pagename = shift;
+    my $coverpoint = shift;
+
+    if (defined $self->{pagenames}->{$pagename}) {
+	$coverpoint->error("duplicate SP_COVERGROUP page name \"$pagename\"\n");
+    }
+    $self->{pagenames}->{$pagename} = 1;
 }
 
 ######################################################################
@@ -380,6 +392,8 @@ Lesser General Public License or the Perl Artistic License.
 Wilson Snyder <wsnyder@wsnyder.org>
 
 =head1 SEE ALSO
+
+L<SystemC::Manual>
 
 L<SystemC::Netlist::Cell>,
 L<SystemC::Netlist::Class>,

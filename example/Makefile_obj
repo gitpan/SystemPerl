@@ -12,12 +12,14 @@
 ifeq ($(SYSTEMC_ARCH),)
   SYSTEMC_ARCH = linux
 endif
+
 SYSTEMPERL = ..
+SYSTEMPERL_INCLUDE ?= $(SYSTEMPERL)/src
 
 CC = g++
-INCDIR += -I. -I$(SYSTEMPERL)/src -I$(SYSTEMC)/include -I../example
-LIBDIR += -L. -L$(SYSTEMPERL)/src -L$(SYSTEMC)/lib-$(SYSTEMC_ARCH)
-VPATH += ../example $(SYSTEMPERL)/src
+INCDIR += -I. -I$(SYSTEMPERL_INCLUDE) -I$(SYSTEMC)/include -I../example
+LIBDIR += -L. -L$(SYSTEMPERL_INCLUDE) -L$(SYSTEMC)/lib-$(SYSTEMC_ARCH)
+VPATH += ../example $(SYSTEMPERL_INCLUDE)
 MAKEFILES += ../example/Makefile_obj
 
 SC_LIBS = -lsystemc $(SYSTEMC_LIBS)

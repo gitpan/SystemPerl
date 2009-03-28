@@ -141,7 +141,14 @@ SC_MODULE (__MODULE__) {
 	coverpoint m_vregsEnumVar {
 	    auto_enum_bins = ExModSubVregsEnum; // make a bin for each enum value
 	};
-	);
+    );
+
+    SP_COVERGROUP timing_window_example (
+	description = "example of a timing window";
+	// 9 bins +/- event1 occuring 4 samples before/after event2
+	window myWin(m_in,m_out,4);
+    );
+
     SP_COVERGROUP autoenum_example (
 	description = "enumerated type coverage";
 	// both of these coverpoints are the same; the latter is automatic
@@ -175,6 +182,7 @@ SC_MODULE (__MODULE__) {
 	    cols = {m_vregsEnumVar};
 	    ignore_bins_func = cross_ignore_func();  // ignore bins by function
 	    illegal_bins_func = cross_illegal_func();  // illegal bins by function
+	    option max_bins = 0x2000; // allow more than the usual 1024 bins
 	};
 	);
 
@@ -187,7 +195,7 @@ SC_MODULE (__MODULE__) {
     bool var32_ignore_func(uint64_t var32) { return (var32 % 5 == 3); } // ignore all values 3 mod 5
     bool var32_illegal_func(uint64_t var32) { return (var32 == 1000); } // illegal 1000
     bool cross_ignore_func(uint64_t autoenum, uint64_t vregsenum) { return (autoenum == vregsenum); }
-    bool cross_illegal_func(uint64_t autoenum, uint64_t vregsenum) { return (autoenum == vregsenum+1); }
+    bool cross_illegal_func(uint64_t autoenum, uint64_t vregsenum) { return (autoenum == ExModSubEnum::NINE) && (vregsenum == ExModSubVregsEnum::MODIFIED); }
 };
 
 //######################################################################

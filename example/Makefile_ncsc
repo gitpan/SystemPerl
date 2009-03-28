@@ -13,8 +13,9 @@ mydefault:
 	false
 
 SYSTEMPERL = ..
+SYSTEMPERL_INCLUDE ?= $(SYSTEMPERL)/src
 
-INCDIR += -I. -I$(SYSTEMPERL)/src -I$(SYSTEMC)/include -I$(SYSTEMPERL)/example
+INCDIR += -I. -I$(SYSTEMPERL_INCLUDE) -I$(SYSTEMC)/include -I$(SYSTEMPERL)/example
 
 SP_INCLUDER = $(PERL) $(SYSTEMPERL)/sp_includer
 SP_PREPROC  = $(PERL) $(SYSTEMPERL)/sp_preproc
@@ -39,7 +40,7 @@ preproc:
 
 ######################################################################
 
-CONCAT_CPP = $(SP_CPP) $(SYSTEMPERL)/src/Sp.cpp
+CONCAT_CPP = $(SP_CPP) $(SYSTEMPERL_INCLUDE)/Sp.cpp
 OUR_NCSC_CPP = Ex__ALL.cpp
 
 $(OUR_NCSC_CPP): $(CONCAT_CPP)

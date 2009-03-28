@@ -11,7 +11,7 @@ use vars qw($VERSION %CompressKey %DecompressKey %GroupKey);
 ######################################################################
 #### Configuration Section
 
-$VERSION = '1.310';
+$VERSION = '1.311';
 
 our %_Keys =
     (
@@ -178,7 +178,9 @@ Wilson Snyder <wsnyder@wsnyder.org>
 
 =head1 SEE ALSO
 
-C<SystemC::Coverage::Item>
+L<SystemC::Manual>
+
+L<SystemC::Coverage::Item>
 
 =cut
 

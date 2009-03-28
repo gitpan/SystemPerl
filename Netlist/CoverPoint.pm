@@ -10,7 +10,7 @@ use Verilog::Netlist;
 use Verilog::Netlist::Subclass;
 @ISA = qw(SystemC::Netlist::CoverPoint::Struct
 	  Verilog::Netlist::Subclass);
-$VERSION = '1.310';
+$VERSION = '1.311';
 use strict;
 
 # allow 64-bit values without bonking
@@ -39,16 +39,23 @@ structs('new',
 	   description  => '$', #'      # description of the point
 	   page         => '$', #'      # HTML page name; default group's page
 	   defaultName  => '$', #'	# Name of default bin
+	   defaultIsIllegal => '$', #'	# Is the default bin illegal?
+	   defaultIsIgnore => '$', #'	# Is the default bin ignore?
 	   type         => '$', #'	# type of coverpoint
-	   num_bins     => '$', #'	# number of bins
+	   num_bins     => '$', #'	# number of (non-default) bins
+	   max_bins     => '$', #'	# maximum number of bins (don't blow up memory by mistake)
 	   bins         => '@', #'	# list of bin data structures
 	   maxValue     => '$', #'	# max specified value
 	   minValue     => '$', #'	# min specified value
 	   enum         => '$', #'	# if an enum, what's the enum name?
 	   ignoreFunc   => '$', #'	# if present, the function name to compute ignores
 	   illegalFunc  => '$', #'	# if present, the function name to compute illegals
-	   isCross      => '$', #'	# is this point a cross
-	   crossMember  => '$', #'	# is this point a member of another cross
+	   isCross      => '$', #'	# is this point a cross?
+	   isWindow     => '$', #'	# is this point a timing window?
+	   event1       => '$', #'	# if a timing window, the first event
+	   event2       => '$', #'	# if a timing window, the second event
+	   windowDepth  => '$', #'	# if a timing window, the depth (+/-)
+	   crossMember  => '$', #'	# is this point a member of another cross?
 	   radix        => '$', #'	# for standard bins, with what radix to number them
 	   rows         => '@', #'	# (cross) list of rows
 	   cols   	=> '@', #'	# (cross) list of columns
@@ -91,13 +98,17 @@ sub current_coverpoint {
 	    (module   => $self,
 	     lineno   => $self->lineno,
 	     filename => $self->filename,
-	     num_bins => 1,
+	     num_bins => 0,
+	     max_bins => 1024,
 	     name     => "",
 	     description => "",
 	     defaultName => "",
+	     defaultIsIllegal=> 0,
+	     defaultIsIgnore=> 1, # by default, we ignore 'default' and don't insert a bin
 	     maxValue => 0,
 	     minValue => 0,
 	     crossMember => 0,
+	     isWindow => 0,
 	     radix => 10,
 	     );
 	$self->attributes("_openCoverpoint",$coverpointref);
@@ -129,7 +140,33 @@ sub coverpoint_sample_text {
     my $pointname = $self->name;
     my $out;
 
-    if ($self->crossMember) {
+    if ($self->isWindow) {
+	# update history arrays; increment bins if there's a match
+	$out .= "{ /* point name = $pointname - a timing window */\n";
+	$out .= "  /* step 1 - shift event history down the pipe */\n";
+	$out .= "  for(int i=0;i<=".$self->windowDepth.";i++) {\n";
+	$out .= "    _sp_cg_".$groupname."_".$pointname."_ev1_history[i] = _sp_cg_".$groupname."_".$pointname."_ev1_history[i+1];\n";
+	$out .= "    _sp_cg_".$groupname."_".$pointname."_ev2_history[i] = _sp_cg_".$groupname."_".$pointname."_ev2_history[i+1];\n";
+	$out .= "  }\n";
+	$out .= "  _sp_cg_".$groupname."_".$pointname."_ev1_history[".$self->windowDepth."+1] = ".$self->event1.";\n";
+	$out .= "  _sp_cg_".$groupname."_".$pointname."_ev2_history[".$self->windowDepth."+1] = ".$self->event2.";\n";
+	$out .= "  /* step 2 - increment bins now if events warrant */\n";
+	$out .= "  if(".$self->event1.") {\n;";
+	$out .= "    for(int i=0;i<=".$self->windowDepth.";i++) {\n";
+	$out .= "      if(_sp_cg_".$groupname."_".$pointname."_ev2_history[".$self->windowDepth."+1-i]) {\n";
+	$out .= "        ++_sp_cg_".$groupname."_".$pointname."_bin[".$self->windowDepth."-i]; /* bin corresponding to ".$self->event2." i cycles ago */\n";
+	$out .= "      }\n";
+	$out .= "    }\n";
+	$out .= "  }\n";
+	$out .= "  if(".$self->event2.") {\n;";
+	$out .= "    for(int i=1;i<=".$self->windowDepth.";i++) { // zero is already handled!\n";
+	$out .= "      if(_sp_cg_".$groupname."_".$pointname."_ev1_history[".$self->windowDepth."+1-i]) {\n";
+	$out .= "        ++_sp_cg_".$groupname."_".$pointname."_bin[".$self->windowDepth."+i]; /* bin corresponding to ".$self->event1." i cycles ago */\n";
+	$out .= "      }\n";
+	$out .= "    }\n";
+	$out .= "  }\n";
+	$out .= "}\n";
+    } elsif ($self->crossMember) {
 	$out .= "/* point name = $pointname is a crossMember - no separate sample needed */\n";
     } elsif ($self->isCross) {
 	$out .= "/* cross name = $pointname */\n";
@@ -140,11 +177,20 @@ sub coverpoint_sample_text {
 	push @dimensions, @{$self->cols};
 	push @dimensions, @{$self->tables};
 
+	my @args;
 	foreach my $dimension (@dimensions) {
 	    $out .= "[_sp_cg_".$groupname."_".$dimension->name;
 	    $out .= "_computeBin(".$dimension->connection.")]";
+	    push @args, $dimension->connection;
 	}
 	$out .= "; }\n";
+
+	if ($self->illegalFunc) {
+	    my $argsWithCommas = join(', ',@args);
+	    my $argsWithStreamAndCommas = join(' << ", " << ',@args);
+	    #$out .= "if (".$self->illegalFunc."($argsWithCommas)) { SP_ERROR_LN(\"".$self->filename."\",".$self->module->lineno.",\"SP_COVERGROUP illegal sample of ".$self->name.", asserted by: ".$self->illegalFunc."(".$argsWithCommas.")\\n\"); }\n";
+	    $out .= "if (".$self->illegalFunc."($argsWithCommas)) { ostringstream ostr; ostr << \"SP_COVERGROUP illegal sample of ".$self->name.", asserted by: ".$self->illegalFunc."(".$argsWithCommas."), values: \" << ".$argsWithStreamAndCommas." << endl; SP_ERROR_LN(\"".$self->filename."\",".$self->module->lineno.",ostr.str().c_str()); }\n";
+	}
     } else {
 	$out .= "/* point name = $pointname */\n";
 	#$out .= "{ printf(\"val %d -> bin %d\\n\",(int)".$coverpointref->connection.".read(),(int)_sp_cg_".$groupname."_".$pointname."_computeBin(".$coverpointref->connection.")); fflush(stdout); }\n";
@@ -205,6 +251,8 @@ sub coverpoint_build {
 	my $val_str = shift;
 	print "Netlist::File: coverpoint parsed binval: $val_str\n" if $SystemC::Netlist::Debug;
 	my $bin = $self->current_bin();
+	$bin->name($self->attributes("binname"));
+
 	push @{$bin->values}, $val_str;
 
 	if ($self->attributes("in_multi_bin")) {
@@ -229,6 +277,7 @@ sub coverpoint_build {
 	my $hi_str = shift;
 	print "Netlist::File: coverpoint parsed binrange: $lo_str:$hi_str\n" if $SystemC::Netlist::Debug;
 	my $bin = $self->current_bin();
+	$bin->name($self->attributes("binname"));
 	push @{$bin->ranges}, "$hi_str,$lo_str";
 
 	if ($self->attributes("in_multi_bin")) {
@@ -249,15 +298,13 @@ sub coverpoint_build {
     } elsif ($type eq "illegal") {
 	my $binname = shift;
 	print "Netlist::File: coverpoint parsed illegal bin, name = $binname\n" if $SystemC::Netlist::Debug;
-	my $bin = $self->current_bin();
-	$bin->name($binname);
+	$self->attributes("binname",$binname);
 	$self->attributes("in_illegal",1);
 	$self->attributes("in_ignore",0);
     } elsif ($type eq "ignore") {
 	my $binname = shift;
 	print "Netlist::File: coverpoint parsed ignore bin, name = $binname\n" if $SystemC::Netlist::Debug;
-	my $bin = $self->current_bin();
-	$bin->name($binname);
+	$self->attributes("binname",$binname);
 	$self->attributes("in_illegal",0);
 	$self->attributes("in_ignore",1);
     } elsif ($type eq "ignore_func") {
@@ -275,22 +322,20 @@ sub coverpoint_build {
 	    $self->error ("SP_COVERGROUP \"$binname\" string too long (max $max chars)\n");
 	}
 
-	my $bin = $self->current_bin();
-	$bin->name($binname);
+	$self->attributes("binname",$binname);
 	$self->attributes("in_illegal",0);
 	$self->attributes("in_ignore",0);
     } elsif ($type eq "default") {
 	print "Netlist::File: coverpoint parsed default\n" if $SystemC::Netlist::Debug;
-	my $bin = $self->current_bin();
-	$self->defaultName($bin->name);
-	$bin->isIllegal(1) if ($self->attributes("in_illegal"));
-	$bin->isIgnore(1)  if ($self->attributes("in_ignore"));
-
+	$self->defaultName($self->attributes("binname"));
+	$self->defaultIsIgnore($self->attributes("in_ignore"));
+	$self->defaultIsIllegal($self->attributes("in_illegal"));
     } elsif ($type eq "single") {
 	print "Netlist::File: coverpoint parsed single\n" if $SystemC::Netlist::Debug;
     } elsif ($type eq "multi_begin") {
 	print "Netlist::File: coverpoint parsed multi_begin\n" if $SystemC::Netlist::Debug;
 	my $bin = $self->current_bin();
+	$bin->name($self->attributes("binname"));
 	$self->attributes("in_multi_bin",1);
 	$self->attributes("multi_bin_count",0);
 	$self->attributes("multi_bin_basename",$bin->name);
@@ -298,6 +343,7 @@ sub coverpoint_build {
 	my $num_ranges = shift;
 	print "Netlist::File: coverpoint parsed multi_begin_num\n" if $SystemC::Netlist::Debug;
 	my $bin = $self->current_bin();
+	$bin->name($self->attributes("binname"));
 	$self->attributes("in_multi_bin",1);
 	$self->attributes("multi_bin_num_ranges",$num_ranges); # we use this in multi_bin_end
 	$self->attributes("multi_bin_count",0);
@@ -331,7 +377,6 @@ sub coverpoint_build {
     } elsif ($type eq "standard") {
 	print "Netlist::File: coverpoint parsed standard\n" if $SystemC::Netlist::Debug;
 	# only the default bin
-	$self->num_bins(1);
     } elsif ($type eq "standard_bins_range") {
 	my $binsize_str = shift;
 	my $lo_str = shift;
@@ -351,7 +396,7 @@ sub coverpoint_build {
 	$self->make_standard_bins($binsize,0,1023,$self->name);
     } elsif ($type eq "bins") {
 	print "Netlist::File: coverpoint parsed explicit bins\n" if $SystemC::Netlist::Debug;
-	$self->num_bins(scalar(@{$self->bins})+1); # +1 for default
+	$self->num_bins(scalar(@{$self->bins}));
     } elsif ($type eq "enum") {
 	my $enum = shift;
 	print "Netlist::File: coverpoint parsed enum bins, enum = $enum\n" if $SystemC::Netlist::Debug;
@@ -389,6 +434,17 @@ sub coverpoint_build {
 		$self->radix($val);
 	    } else {
 		$self->error("Unrecognized radix option \"$val\"; I know about 2/10/16\n");
+	    }
+	} elsif ($var eq "max_bins") {
+	    # check it's a number and >0
+	    if ($val =~ /^0x[0-9a-fA-F]+$/) { # hex number
+		#print "recognized hex $val as ". (hex $val)."\n";
+		$self->max_bins(hex $val);
+	    } elsif ($val =~ /^\d+$/) { # decimal number
+		#print "recognized dec $val\n";
+		$self->max_bins($val);
+	    } else {
+		$self->error("max_bins option \"$val\" is not a natural number!\n");
 	    }
 	} else {
 	    $self->error("Unrecognized coverpoint option \"$var = $val\"\n");
@@ -432,7 +488,6 @@ sub validate_value {
     }
 }
 
-
 sub make_standard_bins {
     my $self = shift;
     my $num_bins = shift;
@@ -459,6 +514,7 @@ sub make_standard_bins {
     # make bins
     for(my $i=0;$i<$num_bins;$i++) {
 	my $bin = $self->current_bin();
+	$bin->name($self->attributes("binname"));
 	my $lo = int(($span / $num_bins) * $i) + $lo_range;
 	my $hi = (int(($span / $num_bins) * ($i+1)) - 1) + $lo_range;
 
@@ -475,7 +531,7 @@ sub make_standard_bins {
 	# undef it so that the next bin will be fresh
 	$self->attributes("_openBin",undef);
     }
-    $self->num_bins(scalar(@{$self->bins})+1); # +1 for default
+    $self->num_bins(scalar(@{$self->bins}));
 }
 
 sub make_auto_enum_bins {
@@ -503,9 +559,12 @@ sub make_auto_enum_bins {
 
     foreach my $valsym (sort {$vals->{$enumtype}{$a} <=> $vals->{$enumtype}{$b}}
 			(keys %{$vals->{$enumtype}})) {
+	next if $valsym eq "MAX"; # auto-enums contain a value named MAX which isn't real
+
 	my $val = $vals->{$enumtype}{$valsym};
 
 	my $bin = $self->current_bin();
+	$bin->name($self->attributes("binname"));
 	push @{$bin->values}, sprintf("%u",$val); # force unsigned
 	if ($val < $self->minValue) { $self->minValue($val);}
 	if ($val > $self->maxValue) { $self->maxValue($val);}
@@ -518,7 +577,7 @@ sub make_auto_enum_bins {
 	$self->attributes("_openBin",undef);
     }
 
-    $self->num_bins(scalar(@{$self->bins})+1); # +1 for default
+    $self->num_bins(scalar(@{$self->bins}));
 }
 
 #################################
@@ -536,7 +595,44 @@ sub _write_coverpoint_decl {
 	$self->make_auto_enum_bins($fileref);
     }
 
-    if ($self->isCross) {
+    if ($self->isWindow) {
+	# declare event history to track old samples
+	$fileref->printf ("%sbool\t_sp_cg_%s_%s_ev1_history[%d];\t// SP_COVERGROUP window event history\n",
+			  $prefix,
+			  $covergroupref->name,
+			  $self->name,
+			  $self->windowDepth+2);
+	$fileref->printf ("%sbool\t_sp_cg_%s_%s_ev2_history[%d];\t// SP_COVERGROUP window event history\n",
+			  $prefix,
+			  $covergroupref->name,
+			  $self->name,
+			  $self->windowDepth+2);
+	# declare coverage bins
+	$fileref->printf ("%sSpZeroed<uint32_t>\t_sp_cg_%s_%s_bin[%d];\t// SP_COVERGROUP window declaration\n",
+			  $prefix,
+			  $covergroupref->name,
+			  $self->name,
+			  2*$self->windowDepth+1);
+
+	###########################################################################
+	# write the function returning the bin name
+	###########################################################################
+	$fileref->printf ("%sstatic const char* _sp_cg_%s_%s_binName(uint64_t point) { \t// SP_COVERGROUP declaration\n",
+			  $prefix,
+			  $covergroupref->name,
+			  $self->name);
+	$fileref->printf ("%s  static const char* _s_bin_to_name[] = {",$prefix);
+	for (my $i=$self->windowDepth;$i>0;$i--) {
+	    # just the number itself
+	    $fileref->printf ("\"-$i\",",$i);
+	}
+	for (my $i=0;$i<=$self->windowDepth;$i++) {
+	    # just the number itself
+	    $fileref->printf ("\"$i\",",$i);
+	}
+	$fileref->printf ("};\n");
+	$fileref->printf ("%s  return (_s_bin_to_name[point]);\n%s}\n",$prefix,$prefix);
+    } elsif ($self->isCross) {
 	# write the cross stuff
 	my @dimensions;
 	push @dimensions, @{$self->rows};
@@ -549,7 +645,7 @@ sub _write_coverpoint_decl {
 			  $covergroupref->name,
 			  $self->name);
 	foreach my $dimension (@dimensions) {
-	    $fileref->printf ("[%d]",$dimension->num_bins);
+	    $fileref->printf ("[%d]",$dimension->num_bins+1); # +1 for default
 	}
 	$fileref->printf (";\t// SP_COVERGROUP declaration\n");
 
@@ -634,55 +730,8 @@ sub _write_coverpoint_decl {
 			      $prefix,
 			      $covergroupref->name,
 			      $self->name,
-			      $self->num_bins);
+			      $self->num_bins+1); # +1 for default
 	}
-
-	###########################################################################
-	# write the function returning an arbitrary value per bin
-	###########################################################################
-	$fileref->printf ("%suint64_t _sp_cg_%s_%s_getArbitraryValue(uint64_t bin) { \t// SP_COVERGROUP declaration\n",
-			  $prefix,
-			  $covergroupref->name,
-			  $self->name);
-
-	my $bin_num = 0;
-	foreach my $bin (@{$self->bins}) {
-	    if (scalar @{$bin->values}) {
-		my @vals = @{$bin->values};
-		my $arbitrary_val = $vals[0];
-
-		# if it's not an enum, then add ULL to allow 64-bit numbers
-		$arbitrary_val .= "ULL" unless ($arbitrary_val =~ /^(\w+)::(\w+)$/);
-
-		$fileref->printf ("%s  if (bin == %s) return %s; // an arbitrary value in bin %s\n",
-				  $prefix,$bin_num,$arbitrary_val,$bin->name);
-	    } elsif (scalar @{$bin->ranges}) {
-		my @ranges = @{$bin->ranges};
-		$ranges[0] =~ /(\S+),(\S+)/;
-		my $hi_str = $1;
-
-		# if it's not an enum, then add ULL to allow 64-bit numbers
-		$hi_str .= "ULL" unless ($hi_str =~ /^(\w+)::(\w+)$/);
-
-		$fileref->printf ("%s  if (bin == %s) return %s; // an arbitrary value in bin %s\n",
-				  $prefix,$bin_num,$hi_str,$bin->name);
-	    } else {
-		my $binname = $bin->name;
-		$self->error("CoverPoint internal error: bin $binname has no values or ranges!\n");
-	    }
-	    $bin_num++;
-	}
-	if ($self->defaultName eq "") {
-	    $fileref->printf ("%s  if (bin == %s) return 0; // the unnamed default bin - the return value doesn't matter\n",
-			      $prefix,$bin_num);
-	} else {
-	    $fileref->printf ("%s  if (bin == %s) return 0; // the default bin (%s) - the return value doesn't matter\n",
-			      $prefix,$bin_num,$self->defaultName);
-	}
- 	$fileref->printf ("%s  SP_ERROR_LN(\"%s\",%d,\"Internal error: Illegal bin value for point %s\");\n",
-			  $prefix,$fileref->name,$covergroupref->module->lineno,$self->name);
- 	$fileref->printf ("%s  return 0;\n", $prefix);
-	$fileref->printf ("%s}\n", $prefix);
 
 	###########################################################################
 	# write the function returning the ignoredness
@@ -694,7 +743,7 @@ sub _write_coverpoint_decl {
 	$fileref->printf ("%s  static int _s_bin_to_ignore[] = {",$prefix);
 	my @lookupTable = (0) x ($self->num_bins);
 
-	$bin_num = 0;
+	my $bin_num = 0;
 	foreach my $bin (@{$self->bins}) {
 	    $lookupTable[$bin_num] = $bin->isIgnore;
 	    $bin_num+=1;
@@ -703,6 +752,9 @@ sub _write_coverpoint_decl {
 	for (my $i = 0; $i < $self->num_bins; $i++) {
 	    $fileref->printf ("%d,",$lookupTable[$i]);
 	}
+	# and add the default bin
+	$fileref->printf ("%d,",$self->defaultIsIgnore);
+
 	$fileref->printf ("};\n");
 	if ($self->ignoreFunc) {
 	    $fileref->printf ("%s  if (%s(_sp_cg_%s_%s_getArbitraryValue(bin))) { return true; }\n",
@@ -711,8 +763,8 @@ sub _write_coverpoint_decl {
 			      $self->name);
 	}
 
- 	$fileref->printf ("%s  if (bin >= %d) { SP_ERROR_LN(\"%s\",%d,\"Internal error: Illegal bin value in %s_ignore\"); return true; }\n",
- 			  $prefix,$self->num_bins,
+ 	$fileref->printf ("%s  if (bin >= %d) { SP_ERROR_LN(\"%s\",%d,\"Internal error: Illegal bin value in %s_ignore\\n\"); return true; }\n",
+ 			  $prefix,$self->num_bins+1, # +1 for default
  			  $fileref->name,$covergroupref->module->lineno,$self->name);
 	$fileref->printf ("%s  return (_s_bin_to_ignore[bin]);\n%s}\n",
 			  $prefix,$prefix);
@@ -737,6 +789,9 @@ sub _write_coverpoint_decl {
 	for (my $i = 0; $i < $self->num_bins; $i++) {
 	    $fileref->printf ("%d,",$lookupTable[$i]);
 	}
+	# and add the default bin
+	$fileref->printf ("%d,",$self->defaultIsIllegal);
+
 	$fileref->printf ("};\n");
 	if ($self->illegalFunc) {
 	    $fileref->printf ("%s  if (%s(_sp_cg_%s_%s_getArbitraryValue(bin))) { return true; }\n",
@@ -744,8 +799,8 @@ sub _write_coverpoint_decl {
 			      $covergroupref->name,
 			      $self->name);
 	}
- 	$fileref->printf ("%s  if (bin >= %d) { SP_ERROR_LN(\"%s\",%d,\"Internal error: Illegal bin value in %s_illegal\"); return true; }\n",
- 			  $prefix,$self->num_bins,
+ 	$fileref->printf ("%s  if (bin >= %d) { SP_ERROR_LN(\"%s\",%d,\"Internal error: Illegal bin value in %s_illegal\\n\"); return true; }\n",
+ 			  $prefix,$self->num_bins+1, # +1 for default
  			  $fileref->name,$covergroupref->module->lineno,$self->name);
 	$fileref->printf ("%s  return (_s_bin_to_illegal[bin]);\n%s}\n",
 			  $prefix,$prefix);
@@ -789,6 +844,53 @@ sub _write_coverpoint_decl {
 	}
 
 	###########################################################################
+	# write the function returning an arbitrary value per bin
+	###########################################################################
+	$fileref->printf ("%suint64_t _sp_cg_%s_%s_getArbitraryValue(uint64_t bin) { \t// SP_COVERGROUP declaration\n",
+			  $prefix,
+			  $covergroupref->name,
+			  $self->name);
+
+	$bin_num = 0;
+	foreach my $bin (@{$self->bins}) {
+	    if (scalar @{$bin->values}) {
+		my @vals = @{$bin->values};
+		my $arbitrary_val = $vals[0];
+
+		# if it's not an enum, then add ULL to allow 64-bit numbers
+		$arbitrary_val .= "ULL" unless ($arbitrary_val =~ /^(\w+)::(\w+)$/);
+
+		$fileref->printf ("%s  if (bin == %s) return %s; // an arbitrary value in bin %s\n",
+				  $prefix,$bin_num,$arbitrary_val,$bin->name);
+	    } elsif (scalar @{$bin->ranges}) {
+		my @ranges = @{$bin->ranges};
+		$ranges[0] =~ /(\S+),(\S+)/;
+		my $hi_str = $1;
+
+		# if it's not an enum, then add ULL to allow 64-bit numbers
+		$hi_str .= "ULL" unless ($hi_str =~ /^(\w+)::(\w+)$/);
+
+		$fileref->printf ("%s  if (bin == %s) return %s; // an arbitrary value in bin %s\n",
+				  $prefix,$bin_num,$hi_str,$bin->name);
+	    } else {
+		my $binname = $bin->name;
+		$self->error("CoverPoint internal error: bin $binname has no values or ranges!\n");
+	    }
+	    $bin_num++;
+	}
+	if ($self->defaultName eq "") {
+	    $fileref->printf ("%s  if (bin == %s) return %dULL; // the unnamed default bin - return a value not in any other bin\n",
+			      $prefix,$bin_num,($self->maxValue+1));
+	} else {
+	    $fileref->printf ("%s  if (bin == %s) return %dULL; // the default bin (%s) - return a value not in any other bin\n",
+			      $prefix,$bin_num,($self->maxValue+1),$self->defaultName);
+	}
+ 	$fileref->printf ("%s  SP_ERROR_LN(\"%s\",%d,\"Internal error: Illegal bin value for point %s\\n\");\n",
+			  $prefix,$fileref->name,$covergroupref->module->lineno,$self->name);
+ 	$fileref->printf ("%s  return 0;\n", $prefix);
+	$fileref->printf ("%s}\n", $prefix);
+
+	###########################################################################
 	# write the function computing which bin to increment
 	###########################################################################
 	if (($self->minValue < 0) || ($self->maxValue > MAX_BIN_LOOKUP_SIZE)) {
@@ -797,6 +899,15 @@ sub _write_coverpoint_decl {
 			      $prefix,
 			      $covergroupref->name,
 			      $self->name);
+
+	    if ($self->illegalFunc) {
+		#$fileref->printf ("%s  if (%s(point)) { SP_ERROR_LN(\"%s\",%d,\"SP_COVERGROUP illegal sample of %s, asserted by: %s\\n\"); }\n",
+		$fileref->printf ("%s  if (%s(point)) { ostringstream ostr; ostr << \"SP_COVERGROUP illegal sample of %s, asserted by %s, value: \" << point << endl; SP_ERROR_LN(\"%s\",%d,ostr.str().c_str()); }\n",
+				  $prefix,$self->illegalFunc,
+				  $self->name,$self->illegalFunc,
+				  $fileref->name,$covergroupref->module->lineno);
+	    }
+
 	    $bin_num = 0;
 	    foreach my $bin (@{$self->bins}) {
 		$fileref->printf ("%s  if (0\n",$prefix);
@@ -825,24 +936,34 @@ sub _write_coverpoint_decl {
 		}
 
 		if ($bin->isIllegal) {
-		    $fileref->printf ("%s     ) { SP_ERROR_LN(\"%s\",%d,\"Illegal bin %s hit\"); return 0; } // %s\n", $prefix,$fileref->name,$covergroupref->module->lineno,$bin->name,$bin->name);
+		    #$fileref->printf ("%s     ) { SP_ERROR_LN(\"%s\",%d,\"Sampled %s and hit illegal bin: %s\\n\"); return 0; } // %s\n",
+		    $fileref->printf ("%s     ) { ostringstream ostr; ostr << \"SP_COVERGROUP Sampled %s and hit illegal bin: %s, value: \" << point << endl; SP_ERROR_LN(\"%s\",%d,ostr.str().c_str()); return 0; } // %s\n",
+				      $prefix,$self->name,$bin->name,
+				      $fileref->name,$covergroupref->module->lineno,
+				      $bin->name);
 		} else {
 		    $fileref->printf ("%s     ) return %d; // %s\n", $prefix,$bin_num,$bin->name);
 		}
 		$bin_num+=1;
 	    }
-	    # else the default bucket
-	    $fileref->printf ("%s  return %d; // default\n%s}\n",$prefix,$bin_num,$prefix);
+	    # else the default bin
+	    if ($self->defaultIsIllegal) {
+		#$fileref->printf ("%s  SP_ERROR_LN(\"%s\",%d,\"Sampled %s and hit illegal default bin: %s\\n\"); return 0;\n%s}\n",
+		$fileref->printf ("%s  ostringstream ostr; ostr << \"SP_COVERGROUP Sampled %s and hit illegal default bin: %s, value: \" << point << endl; SP_ERROR_LN(\"%s\",%d,ostr.str().c_str()); return 0;\n%s}\n",
+				  $prefix,$self->name,$self->defaultName,
+				  $fileref->name,$covergroupref->module->lineno,$prefix);
+	    } else {
+		$fileref->printf ("%s  return %d; // default\n%s}\n",$prefix,$bin_num,$prefix);
+	    }
 	} else { # all values in range, use a lookup table
-	    # FIXME illegals
-	    $fileref->printf ("%sstatic int _sp_cg_%s_%s_computeBin(uint64_t point) { \t// SP_COVERGROUP declaration\n",
+	    $fileref->printf ("%sint _sp_cg_%s_%s_computeBin(uint64_t point) { \t// SP_COVERGROUP declaration\n",
 			      $prefix,
 			      $covergroupref->name,
 			      $self->name);
 	    $fileref->printf ("%s  static int _s_value_to_bin[] = {",$prefix);
-	    # start with all default, which is bin number $self->num_bins - 1
+	    # start with all default, which is bin number $self->num_bins
 	    # 0 thru $self->maxValue inclusive
-	    my @lookupTable = ($self->num_bins-1) x ($self->maxValue+1);
+	    my @lookupTable = ($self->num_bins) x ($self->maxValue+1);
 
 	    # now populate the lookup table
 	    my $bin_num = 0;
@@ -870,11 +991,18 @@ sub _write_coverpoint_decl {
 		$fileref->printf ("%d,",$lookupTable[$i]);
 	    }
 	    $fileref->printf ("};\n");
+	    if ($self->illegalFunc) {
+		#$fileref->printf ("%s  if (%s(point)) { SP_ERROR_LN(\"%s\",%d,\"SP_COVERGROUP illegal sample of %s, asserted by: %s\\n\"); }\n",
+		$fileref->printf ("%s  if (%s(point)) { ostringstream ostr; ostr << \"SP_COVERGROUP illegal sample of %s, asserted by: %s, value: \" << point << endl; SP_ERROR_LN(\"%s\",%d,ostr.str().c_str()); }\n",
+				  $prefix,$self->illegalFunc,
+				  $self->name, $self->illegalFunc,
+				  $fileref->name,$covergroupref->module->lineno);
+	    }
 	    $fileref->printf ("%s  if ((point > %d) | (point < %d)) return %d; // default\n",
 			      $prefix,
 			      $self->maxValue,
 			      $self->minValue,
-			      $self->num_bins-1);
+			      $self->num_bins);
 	    $fileref->printf ("%s  return (_s_value_to_bin[point]);\n%s}\n",
 			      $prefix,$prefix);
 	}
@@ -897,7 +1025,43 @@ sub _write_coverpoint_ctor {
     # if neither exists, use empty quotes
     my $description = $self->description || "\"\"";
 
-    if ($self->isCross) {
+    if ($self->isWindow) {
+	$modref->netlist->add_coverpoint_page_name($page,$self);
+
+	# initialize the event history
+	$fileref->printf("for(int i=0;i<%d;i++) {\n",$self->windowDepth+2);
+	$fileref->printf("  _sp_cg_%s_%s_ev1_history[i] = false;\n",
+			 $covergroupref->name,
+			 $self->name);
+	$fileref->printf("  _sp_cg_%s_%s_ev2_history[i] = false;\n",
+			 $covergroupref->name,
+			 $self->name);
+	$fileref->printf("}\n");
+	# SP_COVER_INSERT the bins
+	$fileref->printf("{ for(int i=0;i<%d;i++) {\n",2*$self->windowDepth+1);
+	$fileref->printf('    SP_COVER_INSERT(&_sp_cg_%s_%s_bin[i]',
+			 $covergroupref->name,
+			 $self->name);
+	$fileref->printf(',"filename","%s"', $self->filename);
+	$fileref->printf(',"lineno","%s"', $self->lineno);
+	$fileref->printf(',"groupname","%s"', $covergroupref->name);
+	$fileref->printf(',"per_instance","%s"', $covergroupref->per_instance);
+	$fileref->printf(',"groupcmt",%s', $description); # quotes already present
+	$fileref->printf(',"pointname","%s"', $self->name);
+	$fileref->printf(',"hier",name()');
+	# fields so the auto-table-generation code will recognize it
+	$fileref->printf(',"page","%s"', $page);
+	$fileref->printf(',"table", "%s"',$self->name);
+	$fileref->printf(',"col0",_sp_cg_%s_%s_binName(i)',
+			 $covergroupref->name,
+			 $self->name);
+	$fileref->printf(',"col0_name","%s observed N samples before(-) or after(+) %s"',$self->event1,$self->event2);
+	$fileref->printf(");");
+	$fileref->printf("\n");
+	$fileref->printf("} }\n");
+    } elsif ($self->isCross) {
+	$modref->netlist->add_coverpoint_page_name($page,$self);
+
 	# write the cross stuff
 	my @dimensions;
 	push @dimensions, @{$self->rows};
@@ -905,19 +1069,20 @@ sub _write_coverpoint_ctor {
 	push @dimensions, @{$self->tables};
 
 	my $indent = "";
+	my $total_bins = 1;
 	foreach my $dimension (@dimensions) {
 	    $indent .= "  "; # indent two more spaces
 
-	    my $num_bins = $dimension->num_bins;
-	    if ($dimension->defaultName eq "") {
-		# don't make a bin for default unless it was specifically called for
-		$num_bins--;
-	    }
-
 	    $fileref->printf("%sfor(int _sp_cg_%s=0;_sp_cg_%s<%d;_sp_cg_%s++) {\n",
 			     $indent,$dimension->name,$dimension->name,
-			     $num_bins,$dimension->name);
+			     $dimension->num_bins + 1,$dimension->name); # include default
+	    $total_bins = $total_bins * ($dimension->num_bins + 1);
 	}
+
+	if ($total_bins > $self->max_bins) {
+	    $self->error("cross ".$self->name." has $total_bins bins (max ".$self->max_bins.", change with \"option max_bins = <num>\")!\n");
+	}
+
 	$indent .= "  ";
 	# don't insert illegals and ignores
 	my @ignoreVars;
@@ -997,12 +1162,15 @@ sub _write_coverpoint_ctor {
 	    $fileref->printf("}\n");
 	}
     } elsif (!$self->crossMember) {
-	my $num_bins = $self->num_bins;
-	if ($self->defaultName eq "") {
-	    # don't make a bin for default unless it was specifically called for
-	    $num_bins--;
+
+	my $total_bins = $self->num_bins + 1;
+	if ($total_bins > $self->max_bins) {
+	    $self->error("coverpoint ".$self->name." has $total_bins bins (max ".$self->max_bins.", change with \"option max_bins = <num>\")!\n");
 	}
-	$fileref->printf("{ for(int i=0;i<%d;i++) {\n",$num_bins);
+
+	$modref->netlist->add_coverpoint_page_name($page,$self);
+
+	$fileref->printf("{ for(int i=0;i<%d;i++) {\n",$self->num_bins + 1); # include default
 	$fileref->printf("    if (!_sp_cg_%s_%s_ignored(i) && !_sp_cg_%s_%s_illegal(i)) {\n",
 			 $covergroupref->name, $self->name,
 			 $covergroupref->name, $self->name);

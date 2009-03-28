@@ -11,7 +11,7 @@ require DynaLoader;
 use strict;
 use vars qw($VERSION);
 
-$VERSION = '1.310';
+$VERSION = '1.311';
 
 ######################################################################
 #### Configuration Section
@@ -64,6 +64,7 @@ sub covergroup_per_instance {}
 sub coverpoint {}
 sub coverpoint_begin {}
 sub coverpoint_end {}
+sub coverpoint_window {}
 sub coversample {}
 sub cross {}
 sub cross_begin {}
@@ -248,6 +249,6 @@ Wilson Snyder <wsnyder@wsnyder.org>
 
 =head1 SEE ALSO
 
-L<SystemC::Netlist>
+L<SystemC::Manual>
 
 =cut

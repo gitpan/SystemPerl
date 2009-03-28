@@ -10,9 +10,9 @@ use Carp;
 
 sub MY::postamble {
 "
-README: readme.texi
-	-rm -rf \$@
-	makeinfo \$< --output \$@ --no-headers --no-validate
+README: Manual.pod
+	-\$(RM_RF) \$@
+	pod2text --loose \$< > \$@
 
 dist: distcheck README
 
