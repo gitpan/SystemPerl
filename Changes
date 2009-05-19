@@ -2,6 +2,22 @@ Revision history for Perl extension SystemC::Netlist
 
 The contributors that suggested a given feature are shown in [].
 
+* SystemPerl 1.320 2009/05/19
+
+**	This package is now licensed under LGPL v3 and/or Artistic v2.0.
+
+**	Verilog-Perl 3.200 or newer is required to run this version.
+
+***	Add signal and direction regexp to AUTOINOUT_MODULE.  [Brian Cassell]
+
+***	Include list of "use"d files in .sp_tree report.
+
+***	Fix tracing Verilog escaped identifiers with dots getting mis-scoped.
+
+****	Respect #sp ifdef's in coverage groups.
+
+****	Fix warning about README on git installs.  [Brian Small]
+
 * SystemPerl 1.311 2009/03/28
 
 **	Created SYSTEMPERL_INCLUDE which if set allows relocating the
@@ -455,9 +471,10 @@ DESCRIPTION: Documentation on change history for this package
 
 This uses outline mode in Emacs.  See C-h m [M-x describe-mode].
 
-Copyright 2001-2009 by Wilson Snyder.  This program is free software;
-you can redistribute it and/or modify it under the terms of either the GNU
-Lesser General Public License or the Perl Artistic License.
+Copyright 2001-2009 by Wilson Snyder.  This program is free software; you
+can redistribute it and/or modify it under the terms of either the GNU
+Lesser General Public License Version 3 or the Perl Artistic License
+Version 2.0.
 
 Local variables:
 mode: outline

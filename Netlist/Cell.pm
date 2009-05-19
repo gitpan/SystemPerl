@@ -8,7 +8,7 @@ use Class::Struct;
 use Verilog::Netlist;
 use SystemC::Netlist;
 @ISA = qw(Verilog::Netlist::Cell);
-$VERSION = '1.311';
+$VERSION = '1.320';
 use strict;
 
 ######################################################################
@@ -144,7 +144,8 @@ L<http://www.veripool.org/systemperl>.
 
 Copyright 2001-2009 by Wilson Snyder.  This package is free software; you
 can redistribute it and/or modify it under the terms of either the GNU
-Lesser General Public License or the Perl Artistic License.
+Lesser General Public License Version 3 or the Perl Artistic License
+Version 2.0.
 
 =head1 AUTHORS
 

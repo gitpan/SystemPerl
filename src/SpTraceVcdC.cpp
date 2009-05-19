@@ -5,7 +5,7 @@
 //
 // Copyright 2001-2009 by Wilson Snyder.  This program is free software;
 // you can redistribute it and/or modify it under the terms of either the GNU
-// Lesser General Public License or the Perl Artistic License.
+// Lesser General Public License Version 3 or the Perl Artistic License Version 2.0.
 //
 // This is distributed in the hope that it will be useful, but WITHOUT ANY
 // WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -322,7 +322,7 @@ void SpTraceVcd::dumpHeader () {
     printIndent(1);
     printStr("\n");
 
-    // We detect the .'s in module names to determine hierarchy.  This
+    // We detect the spaces in module names to determine hierarchy.  This
     // allows signals to be declared without fixed ordering, which is
     // required as Verilog signals might be separately declared from
     // SP_TRACE signals.
@@ -338,29 +338,28 @@ void SpTraceVcd::dumpHeader () {
 	const char* np = hiername;
 	lastName = hiername;
 
-	// Skip common prefix, it must break at a "." or space
+	// Skip common prefix, it must break at a space or tab
 	for (; *np && (*np == *lp); np++, lp++) {}
-	while (np!=hiername && *np && *np!='.' && *np!=' ') { np--; lp--; }
+	while (np!=hiername && *np && *np!=' ' && *np!='\t') { np--; lp--; }
 	//cout <<"hier "<<hiername<<endl<<"  lp "<<lp<<endl<<"  np "<<np<<endl;
 
-	// Any extra .'s in last name are scope ups we need to do
+	// Any extra spaces in last name are scope ups we need to do
 	bool first = true;
 	for (; *lp; lp++) {
-	    if (*lp=='.' || (first && *lp!=' ')) {
-		if (*(lp+1)=='.') break;  // ".." means signal name starts
+	    if (*lp==' ' || (first && *lp!='\t')) {
 		printIndent(-1);
 		printStr("$upscope $end\n");
 	    }
 	    first = false;
 	}
 
-	// Any new .'s are scope downs we need to do
+	// Any new spaces are scope downs we need to do
 	while (*np) {
-	    if (*np=='.') np++;
-	    if (*np==' ') break; // " " means signal name starts
+	    if (*np==' ') np++;
+	    if (*np=='\t') break; // tab means signal name starts
 	    printIndent(1);
 	    printStr("$scope module ");
-	    for (; *np && *np!='.' && *np!=' '; np++) {
+	    for (; *np && *np!=' ' && *np!='\t'; np++) {
 		if (*np=='[') printStr("(");
 		else if (*np==']') printStr(")");
 		else *m_writep++=*np;
@@ -407,18 +406,26 @@ void SpTraceVcd::declare (uint32_t code, const char* name, int arraynum,
     m_sigs.push_back(sig);
 
     // Split name into basename
-    string hiername;	// space separates scope from basename of signal
-    const char* basename = name;
-    if (char* dot = (char*)strrchr(basename,'.')) {
-	int predotlen = dot - basename;
-	string nameasstr = name;
-	basename=dot+1;
-	if (m_modName!="") { hiername = m_modName+"."; }  // Make ->module calls optional
-	hiername += nameasstr.substr(0,predotlen)+" "+basename;
-    } else {
-	if (m_modName!="") { hiername = m_modName+" "; }  // Make ->module calls optional
-	hiername += name;
+    // Spaces and tabs aren't legal in VCD signal names, so:
+    // Space separates each level of scope
+    // Tab separates final scope from signal name
+    // Tab sorts before spaces, so signals nicely will print before scopes
+    // Note the hiername may be nothing, if so we'll add "\t{name}"
+    string nameasstr = name;
+    if (m_modName!="") { nameasstr = m_modName+m_scopeEscape+nameasstr; }  // Optional ->module prefix
+    string hiername;
+    string basename;
+    for (const char* cp=nameasstr.c_str(); *cp; cp++) {
+	if (isScopeEscape(*cp)) {
+	    // Ahh, we've just read a scope, not a basename
+	    if (hiername!="") hiername += " ";
+	    hiername += basename;
+	    basename = "";
+	} else {
+	    basename += *cp;
+	}
     }
+    hiername += "\t"+basename;
 
     // Print reference
     string decl = (m_evcd?"$var port ":"$var wire ");
@@ -539,6 +546,7 @@ uint8_t ch;
 uint64_t timestamp = 1;
 
 void vcdInit (SpTraceVcd* vcdp, void* userthis, uint32_t code) {
+    vcdp->scopeEscape('.');
     vcdp->module ("top");
      vcdp->declBus (0x2, "v1",-1,5,1);
      vcdp->declBus (0x3, "v2",-1,6,0);

@@ -18,7 +18,7 @@ use SystemC::Netlist::CoverGroup;
 use SystemC::Netlist::CoverPoint;
 
 @ISA = qw(Verilog::Netlist::Module);
-$VERSION = '1.311';
+$VERSION = '1.320';
 use strict;
 
 # Some attributes we use:
@@ -96,7 +96,9 @@ sub autos1 {
     # First stage of autos... Builds pins, etc
     $self->_autos1_recurse_inherits($self->netlist->{_class_inherits}{$self->name});
     if ($self->_autoinoutmod) {
-	my $frommodname = $self->_autoinoutmod;
+	my $frommodname = $self->_autoinoutmod->[0];
+	my $sig_re = $self->_autoinoutmod->[1] || "";
+	my $dir_re = $self->_autoinoutmod->[2] || "";
 	my $fromref = $self->netlist->find_module ($frommodname);
 	if (!$fromref && $self->netlist->{link_read}) {
 	    print "  Link_Read_Auto ",$frommodname,"\n" if $Verilog::Netlist::Debug;
@@ -114,7 +116,8 @@ sub autos1 {
 	    # Copy ports
 	    foreach my $portref ($fromref->ports_sorted) {
 		my $type = $portref->type;
-		if ($type eq 'wire') {  # From verilog
+		next if $sig_re && $portref->name !~ /$sig_re/;
+		if ($type eq '' || $type =~ /^\[/) {  # From verilog
 		    if (my $net = $fromref->find_net($portref->name)) {
 			my $newtype = $net->sc_type_from_verilog;
 			my $typeref = $self->netlist->find_class($newtype);
@@ -122,6 +125,7 @@ sub autos1 {
 			$type = $newtype;
 		    }
 		}
+		next if $dir_re && ($portref->direction." ".$type) !~ /$dir_re/;
 		my $newport = $self->new_port
 		    (name	=> $portref->name,
 		     filename	=> ($self->filename.":AUTOINOUT_MODULE("
@@ -129,7 +133,7 @@ sub autos1 {
 				    .$portref->lineno.")"),
 		     lineno	=> $self->lineno,
 		     direction	=> $portref->direction,
-		     type	=> $type,
+		     data_type	=> $type,
 		     comment	=> " From AUTOINOUT_MODULE(".$fromref->name.")",
 		     array	=> $portref->array,
 		     sp_autocreated=>1,
@@ -160,7 +164,7 @@ sub _autos1_recurse_inherits {
 				    .$portref->lineno.")"),
 		     lineno	=> $self->lineno,
 		     direction	=> $portref->direction,
-		     type	=> $portref->type,
+		     data_type	=> $portref->data_type,
 		     comment	=> " From INHERITED(".$fromref->name.")",
 		     array	=> $portref->array,
 		     );
@@ -173,7 +177,7 @@ sub _autos1_recurse_inherits {
 				    .$netref->filename.":"
 				    .$netref->lineno.")"),
 		     lineno	=> $self->lineno,
-		     type	=> $netref->type,
+		     data_type	=> $netref->data_type,
 		     comment	=> " From INHERITED(".$fromref->name.")",
 		     array	=> $netref->array,
 		     );
@@ -354,7 +358,8 @@ L<http://www.veripool.org/systemperl>.
 
 Copyright 2001-2009 by Wilson Snyder.  This package is free software; you
 can redistribute it and/or modify it under the terms of either the GNU
-Lesser General Public License or the Perl Artistic License.
+Lesser General Public License Version 3 or the Perl Artistic License
+Version 2.0.
 
 =head1 AUTHORS
 

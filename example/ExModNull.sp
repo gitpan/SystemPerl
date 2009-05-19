@@ -1,8 +1,9 @@
 // DESCRIPTION: SystemPerl: Example "null" module
 //
 // Copyright 2001-2009 by Wilson Snyder.  This program is free software;
-// you can redistribute it and/or modify it under the terms of either the GNU
-// Lesser General Public License or the Perl Artistic License.
+// you can redistribute it and/or modify it under the terms of either the
+// GNU Lesser General Public License Version 3 or the Perl Artistic License
+// Version 2.0.
 
 #sp interface
 #include <systemperl.h>
@@ -10,8 +11,15 @@
 
 SC_MODULE (__MODULE__) {
 
-    // Pull all I/Os from ExMod
+    // Pull specific I/Os from ExMod
     /*AUTOINOUT_MODULE(ExMod)*/
+
+#sp ifdef NEVER
+    // Other examples of INOUT_MODULE
+    /*AUTOINOUT_MODULE(ExMod,"clk","")*/
+    /*AUTOINOUT_MODULE(ExMod,"","^in")*/
+    /*AUTOINOUT_MODULE(ExMod,"","sc_clock")*/
+#sp endif
 
   private:
     /*AUTOSUBCELL_DECL*/

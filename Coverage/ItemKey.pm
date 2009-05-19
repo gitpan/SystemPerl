@@ -11,7 +11,7 @@ use vars qw($VERSION %CompressKey %DecompressKey %GroupKey);
 ######################################################################
 #### Configuration Section
 
-$VERSION = '1.311';
+$VERSION = '1.320';
 
 our %_Keys =
     (
@@ -25,7 +25,6 @@ our %_Keys =
      "groupdesc" => { compressed=>"d",	group=>1, default=>"", },
      "groupname" => { compressed=>"g",	group=>1, default=>"", },
      "groupcmt"	 => { compressed=>"O",	group=>1, default=>"", },
-     "hier"	 => { compressed=>"h",	group=>1, default=>"", },
      "per_instance"=>{compressed=>"P",	group=>1, default=>0,	},
      "row0_name" => { compressed=>"R0", group=>1, default=>undef, },
      "row1_name" => { compressed=>"R1", group=>1, default=>undef, },
@@ -34,17 +33,20 @@ our %_Keys =
      "table"	 => { compressed=>"T",	group=>1, default=>undef, },
      "thresh"	 => { compressed=>"s",	group=>1, default=>undef, },
      "type"	 => { compressed=>"t",	group=>1, default=>"", },
-     # Point attributes
+     # Bin attributes
      "col0"	 => { compressed=>"c0", group=>0, default=>undef, },
      "col1"	 => { compressed=>"c1", group=>0, default=>undef, },
      "col2"	 => { compressed=>"c2", group=>0, default=>undef, },
      "col3"	 => { compressed=>"c3", group=>0, default=>undef, },
      "comment"	 => { compressed=>"o",	group=>0, default=>"", },
-     "lineno"	 => { compressed=>"l",	group=>0, default=>0,	},  # In point to aid line coverage compression
+     "hier"	 => { compressed=>"h",	group=>0, default=>"", },
+     "limit"	 => { compressed=>"L",	group=>0, default=>undef, },
+     "lineno"	 => { compressed=>"l",	group=>0, default=>0,	},
      "row0"	 => { compressed=>"r0", group=>0, default=>undef, },
      "row1"	 => { compressed=>"r1", group=>0, default=>undef, },
      "row2"	 => { compressed=>"r2", group=>0, default=>undef, },
      "row3"	 => { compressed=>"r3", group=>0, default=>undef, },
+     "weight"	 => { compressed=>"w",	group=>0, default=>undef, },
      # Count
      "count"	 => { compressed=>"c",	group=>0, default=>0, },
      );
@@ -170,7 +172,8 @@ L<http://www.veripool.org/systemperl>.
 
 Copyright 2001-2009 by Wilson Snyder.  This package is free software; you
 can redistribute it and/or modify it under the terms of either the GNU
-Lesser General Public License or the Perl Artistic License.
+Lesser General Public License Version 3 or the Perl Artistic License
+Version 2.0.
 
 =head1 AUTHORS
 

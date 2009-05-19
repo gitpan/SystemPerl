@@ -5,7 +5,7 @@
 //
 // Copyright 2001-2009 by Wilson Snyder.  This program is free software;
 // you can redistribute it and/or modify it under the terms of either the GNU
-// Lesser General Public License or the Perl Artistic License.
+// Lesser General Public License Version 3 or the Perl Artistic License Version 2.0.
 //
 // This is distributed in the hope that it will be useful, but WITHOUT ANY
 // WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -38,7 +38,10 @@ typedef unsigned long long uint64_t;
 #include <algorithm>
 #include <vector>
 #include <map>
+#include <cctype>
 using namespace std;
+
+#define SPTRACEVCDC_VERSION 1320	// Version number of this file AS_AN_INTEGER
 
 // Note cannot include systemperl.h, or we won't work with non-SystemC compiles
 #include "SpCommon.h"
@@ -76,6 +79,7 @@ private:
     int			m_fd;		///< File descriptor we're writing to
     string		m_filename;	///< Filename we're writing to (if open)
     uint64_t		m_rolloverMB;	///< MB of file size to rollover at
+    char		m_scopeEscape;	///< Character to separate scope components
     int			m_modDepth;	///< Depth of module hierarchy
     bool		m_fullDump;	///< True indicates dump ignoring if changed
     uint32_t		m_nextCode;	///< Next code number to assign
@@ -145,6 +149,7 @@ public:
 	m_timeLastDump = 0;
 	m_sigs_oldvalp = NULL;
 	m_evcd = false;
+	m_scopeEscape = '.';  // Backward compatibility
 	m_wroteBytes = 0;
     }
     ~SpTraceVcd();
@@ -156,6 +161,10 @@ public:
     void rolloverMB(uint64_t rolloverMB) { m_rolloverMB=rolloverMB; };
     /// Is file open?
     bool isOpen() const { return m_isOpen; }
+    /// Change character that splits scopes.  Note whitespace are ALWAYS escapes.
+    void scopeEscape(char flag) { m_scopeEscape = flag; }
+    /// Is this an escape?
+    inline bool isScopeEscape(char c) { return isspace(c) || c==m_scopeEscape; }
 
     // METHODS
     void open (const char* filename);	///< Open the file; call isOpen() to see if errors
@@ -330,8 +339,8 @@ public:
 	}
     }
     inline void chgTriBit (uint32_t code, const uint32_t newval, const uint32_t newtri) {
-	uint32_t diff = (m_sigs_oldvalp[code] ^ newval
-			 | m_sigs_oldvalp[code+1] ^ newtri);
+	uint32_t diff = ((m_sigs_oldvalp[code] ^ newval)
+			 | (m_sigs_oldvalp[code+1] ^ newtri));
 	if (SP_UNLIKELY(diff)) {
 	    // Verilator 3.510 and newer provide clean input, so the below is only for back compatibility
 	    if (SP_UNLIKELY(diff & 1)) {   // Change after clean?
@@ -340,8 +349,8 @@ public:
 	}
     }
     inline void chgTriBus (uint32_t code, const uint32_t newval, const uint32_t newtri, int bits) {
-	uint32_t diff = (m_sigs_oldvalp[code] ^ newval
-			 | m_sigs_oldvalp[code+1] ^ newtri);
+	uint32_t diff = ((m_sigs_oldvalp[code] ^ newval)
+			 | (m_sigs_oldvalp[code+1] ^ newtri));
 	if (SP_UNLIKELY(diff)) {
 	    if (SP_UNLIKELY(bits==32 || (diff & ((1U<<bits)-1) ))) {
 		fullTriBus (code, newval, newtri, bits);
@@ -359,8 +368,8 @@ public:
     }
     inline void chgTriArray (uint32_t code, const uint32_t* newvalp, const uint32_t* newtrip, int bits) {
 	for (int word=0; word<(((bits-1)/32)+1); ++word) {
-	    if (SP_UNLIKELY(m_sigs_oldvalp[code+word*2] ^ newvalp[word]
-			    | m_sigs_oldvalp[code+word*2+1] ^ newtrip[word])) {
+	    if (SP_UNLIKELY((m_sigs_oldvalp[code+word*2] ^ newvalp[word])
+			    | (m_sigs_oldvalp[code+word*2+1] ^ newtrip[word]))) {
 		fullTriArray (code,newvalp,newtrip,bits);
 		return;
 	    }

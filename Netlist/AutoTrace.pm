@@ -6,7 +6,7 @@ package SystemC::Netlist::AutoTrace;
 use File::Basename;
 
 use SystemC::Netlist::Module;
-$VERSION = '1.311';
+$VERSION = '1.320';
 use strict;
 
 use vars qw ($Debug_Check_Code);
@@ -95,7 +95,7 @@ sub _tracer_dups_recurse {
 	foreach my $pinref ($cellref->pins_sorted) {
 	    if ($pinref->net && $pinref->port && $pinref->port->net
 		&& $pinref->port->net->array eq $pinref->net->array
-		&& $pinref->port->net->type eq $pinref->net->type
+		&& $pinref->port->net->data_type eq $pinref->net->data_type
 		&& $pinref->port->net->msb eq $pinref->net->msb
 		&& $pinref->port->net->lsb eq $pinref->net->lsb
 		&& $pinref->port->net->stored_lsb eq $pinref->net->stored_lsb
@@ -256,7 +256,7 @@ sub _tracer_setup_net {
 	$newvecref = [@{$vecref}, $netref->array];
     }
     if (!$netref->width()) {
-	if (my $classref = $netref->netlist->find_class($netref->type)) {
+	if (my $classref = $netref->netlist->find_class($netref->data_type)) {
 	    # It's a structure we know about.  Recurse all of the members of the struct
 	    foreach my $subnetref ($classref->nets_sorted()) {
 		_tracer_setup_net($trinfo, $tracesref,
@@ -468,7 +468,7 @@ sub _write_tracer_init_recurse {
 
 	if ($tref->{ignore}) {
 	    $fileref->printf("${aindent}  //IGNORED: %s: Type=%s  Array=%s\n"
-			     ,$tref->{ignore},$netref->type||"",$netref->array||'');
+			     ,$tref->{ignore},$netref->data_type||"",$netref->array||'');
 	    $fileref->printf("${aindent}  //{");
 	} else {
 	    $fileref->printf("${aindent}  {");
@@ -646,7 +646,8 @@ L<http://www.veripool.org/systemperl>.
 
 Copyright 2001-2009 by Wilson Snyder.  This package is free software; you
 can redistribute it and/or modify it under the terms of either the GNU
-Lesser General Public License or the Perl Artistic License.
+Lesser General Public License Version 3 or the Perl Artistic License
+Version 2.0.
 
 =head1 AUTHORS
 

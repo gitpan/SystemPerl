@@ -5,7 +5,7 @@
 //
 // Copyright 2001-2009 by Wilson Snyder.  This program is free software;
 // you can redistribute it and/or modify it under the terms of either the GNU
-// Lesser General Public License or the Perl Artistic License.
+// Lesser General Public License Version 3 or the Perl Artistic License Version 2.0.
 //
 // This is distributed in the hope that it will be useful, but WITHOUT ANY
 // WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -30,6 +30,8 @@
 #include <sstream>
 #include <string>
 #include "SpCommon.h"
+
+#define SPCOVERAGE_VERSION 1320	// Version number of this file AS_AN_INTEGER
 
 //=============================================================================
 /// Insert a item for coverage analysis.

@@ -10,7 +10,7 @@ use Verilog::Netlist;
 use Verilog::Netlist::Subclass;
 @ISA = qw(SystemC::Netlist::CoverPoint::Struct
 	  Verilog::Netlist::Subclass);
-$VERSION = '1.311';
+$VERSION = '1.320';
 use strict;
 
 # allow 64-bit values without bonking
@@ -23,6 +23,9 @@ use constant MAX_BIN_LOOKUP_SIZE => 256;
 # longest allowed user-defined string
 #use constant MAX_USER_STRING_LEN => 256;
 use constant MAX_USER_STRING_LEN => 5000;
+
+# CovVise limit default
+use constant DEFAULT_LIMIT => 10;
 
 struct('Bin'
        =>[name          => '$', #'	# name of bin
@@ -44,10 +47,12 @@ structs('new',
 	   type         => '$', #'	# type of coverpoint
 	   num_bins     => '$', #'	# number of (non-default) bins
 	   max_bins     => '$', #'	# maximum number of bins (don't blow up memory by mistake)
+	   weight       => '$', #'	# statistical weight for CovVise
 	   bins         => '@', #'	# list of bin data structures
 	   maxValue     => '$', #'	# max specified value
 	   minValue     => '$', #'	# min specified value
 	   enum         => '$', #'	# if an enum, what's the enum name?
+	   limitFunc    => '$', #'	# if present, the function name to compute limits (0 means "waive this")
 	   ignoreFunc   => '$', #'	# if present, the function name to compute ignores
 	   illegalFunc  => '$', #'	# if present, the function name to compute illegals
 	   isCross      => '$', #'	# is this point a cross?
@@ -110,6 +115,7 @@ sub current_coverpoint {
 	     crossMember => 0,
 	     isWindow => 0,
 	     radix => 10,
+	     weight => 1.0,
 	     );
 	$self->attributes("_openCoverpoint",$coverpointref);
     }
@@ -310,6 +316,9 @@ sub coverpoint_build {
     } elsif ($type eq "ignore_func") {
 	my $func = shift;
 	$self->ignoreFunc($func);
+    } elsif ($type eq "limit_func") {
+	my $func = shift;
+	$self->limitFunc($func);
     } elsif ($type eq "illegal_func") {
 	my $func = shift;
 	$self->illegalFunc($func);
@@ -1051,6 +1060,8 @@ sub _write_coverpoint_ctor {
 	$fileref->printf(',"hier",name()');
 	# fields so the auto-table-generation code will recognize it
 	$fileref->printf(',"page","%s"', $page);
+	$fileref->printf(',"limit","%d"',DEFAULT_LIMIT);
+	$fileref->printf(',"weight","%f"', ($self->weight / (2*$self->windowDepth+1)));
 	$fileref->printf(',"table", "%s"',$self->name);
 	$fileref->printf(',"col0",_sp_cg_%s_%s_binName(i)',
 			 $covergroupref->name,
@@ -1076,6 +1087,13 @@ sub _write_coverpoint_ctor {
 	    $fileref->printf("%sfor(int _sp_cg_%s=0;_sp_cg_%s<%d;_sp_cg_%s++) {\n",
 			     $indent,$dimension->name,$dimension->name,
 			     $dimension->num_bins + 1,$dimension->name); # include default
+	    # $total_bins uses the "+ 1" because if default is not ignored, then it's
+	    # still a bin which might be SP_COVER_INSERTed.
+	    #
+	    # This total does not take into account bins which CovVise will never
+	    # see because they are ignored or illegal; default is ignored unless
+	    # specified otherwise
+	    #
 	    $total_bins = $total_bins * ($dimension->num_bins + 1);
 	}
 
@@ -1114,6 +1132,20 @@ sub _write_coverpoint_ctor {
 	$fileref->printf(',"hier",name()');
 	# fields so the auto-table-generation code will recognize it
 	$fileref->printf(',"page","%s"', $page);
+	if ($self->limitFunc) {
+	    my @limitArgs;
+	    foreach my $dimension (@dimensions) {
+		my $dimname = $dimension->name;
+		my $cgname = $covergroupref->name;
+		push @limitArgs, "_sp_cg_${cgname}_${dimname}_getArbitraryValue(_sp_cg_${dimname})";
+	    }
+	    $fileref->printf(',"limit",SpCvtToCStr(%s(%s))',
+			     $self->limitFunc,
+			     join(', ',@limitArgs));
+	} else {
+	    $fileref->printf (',"limit","%d"',DEFAULT_LIMIT);
+	}
+	$fileref->printf(',"weight","%f"', ($self->weight / $total_bins));
 
 	# FIXME old-style
 	$fileref->printf(',"table", "%s"', $self->name);
@@ -1187,6 +1219,15 @@ sub _write_coverpoint_ctor {
 	$fileref->printf(',"hier",name()');
 	# fields so the auto-table-generation code will recognize it
 	$fileref->printf(',"page","%s"', $page);
+	if ($self->limitFunc) {
+	    $fileref->printf (',"limit",SpCvtToCStr(%s(_sp_cg_%s_%s_getArbitraryValue(i)))',
+			      $self->limitFunc,
+			      $covergroupref->name,
+			      $self->name);
+	} else {
+	    $fileref->printf (',"limit","%d"',DEFAULT_LIMIT);
+	}
+	$fileref->printf(',"weight","%f"', ($self->weight / ($self->num_bins+1)));
 	$fileref->printf(',"table", "%s"', $self->name);
 	$fileref->printf(',"row0",_sp_cg_%s_%s_binName(i)',
 			 $covergroupref->name,
@@ -1225,7 +1266,8 @@ L<http://www.veripool.org/systemperl>.
 
 Copyright 2001-2009 by Wilson Snyder.  This package is free software; you
 can redistribute it and/or modify it under the terms of either the GNU
-Lesser General Public License or the Perl Artistic License.
+Lesser General Public License Version 3 or the Perl Artistic License
+Version 2.0.
 
 =head1 AUTHORS
 

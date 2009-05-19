@@ -12,7 +12,7 @@
  *
  * Copyright 2001-2009 by Wilson Snyder.  This program is free software;
  * you can redistribute it and/or modify it under the terms of either the GNU
- * Lesser General Public License or the Perl Artistic License.
+ * Lesser General Public License Version 3 or the Perl Artistic License Version 2.0.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -157,6 +157,7 @@ int scgrammerlex() {
 %token		CG_ILLEGAL_BINS_FUNC
 %token		CG_IGNORE_BINS
 %token		CG_IGNORE_BINS_FUNC
+%token		CG_LIMIT_FUNC
 %token		CG_AUTO_ENUM_BINS
 %token		CG_CROSS
 %token		CG_ROWS
@@ -240,6 +241,7 @@ exp:		auto				{ }
 		| CG_ILLEGAL_BINS_FUNC		{ }
 		| CG_IGNORE_BINS		{ }
 		| CG_IGNORE_BINS_FUNC		{ }
+		| CG_LIMIT_FUNC			{ }
 		| CG_AUTO_ENUM_BINS		{ }
 		| CG_CROSS			{ }
 		| CG_ROWS			{ }
@@ -453,6 +455,7 @@ coverpointBin:  cpBinType '=' CG_DEFAULT ';'	{ scparser_call(1,"coverpoint","def
                 | cpBinType cpBinMulti cpBinRange ';' { scparser_call(1,"coverpoint","multi_auto_end"); }
                 | cpBinType cpBinMultiNum cpBinRange ';' { scparser_call(1,"coverpoint","multi_auto_end"); }
                 | CG_AUTO_ENUM_BINS '=' SYMBOL ';' { scparser_call(2,"coverpoint","enum", $3); SCFree($3); }
+                | CG_LIMIT_FUNC '=' SYMBOL '(' ')' ';' { scparser_call(2,"coverpoint","limit_func", $3); SCFree($3); }
                 | CG_IGNORE_BINS_FUNC '=' SYMBOL '(' ')' ';' { scparser_call(2,"coverpoint","ignore_func", $3); SCFree($3); }
                 | CG_ILLEGAL_BINS_FUNC '=' SYMBOL '(' ')' ';' { scparser_call(2,"coverpoint","illegal_func", $3); SCFree($3); }
                 | cpDescOrOpt                   { }
@@ -484,6 +487,7 @@ cross_start:	CG_ROWS      { scparser_call(1,"cross","start_rows"); }
 
 cross_entry:	cross_start  '=' '{' cross_item_list '}' ';' {}
                 | cpDescOrOpt                   { }
+                | CG_LIMIT_FUNC '=' SYMBOL '(' ')' ';' { scparser_call(2,"coverpoint","limit_func", $3); SCFree($3); }
                 | CG_IGNORE_BINS_FUNC '=' SYMBOL '(' ')' ';' { scparser_call(2,"coverpoint","ignore_func", $3); SCFree($3); }
                 | CG_ILLEGAL_BINS_FUNC '=' SYMBOL '(' ')' ';' { scparser_call(2,"coverpoint","illegal_func", $3); SCFree($3); }
                 | CG_PAGE '=' STRING ';' 	{ scparser_call(2,"coverpoint","page",$3); SCFree($3);}

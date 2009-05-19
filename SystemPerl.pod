@@ -354,13 +354,16 @@ Becomes:
     //... other accessors
     // End of SystemPerl automatic enumeration
 
-=item /*AUTOINOUT_MODULE(I<mod>)*/
+=item /*AUTOINOUT_MODULE(I<mod>[,I<signal>[,I<direction-or-type>]])*/
 
 AUTOINOUT_MODULE indicates the input/output list should be copied from the
-specified other module.  This is useful for creating null modules which
-need identical pinouts to the module which they are nulling out.
-AUTOSIGNAL must be used along with this auto, as the ports are inserted
-at the point where the AUTOSIGNAL is.
+specified other module.  Optionally only signal names matching the
+specified regular expression, and with direction and data type matching the
+third parameter are included.
+
+This is useful for creating null modules which need identical pinouts to
+the module which they are nulling out.  AUTOSIGNAL must be used along with
+this auto, as the ports are inserted at the point where the AUTOSIGNAL is.
 
 =item /*AUTOIMPLEMENTATION*/
 
@@ -675,7 +678,8 @@ L<http://www.veripool.org/systemperl>.
 
 Copyright 2001-2009 by Wilson Snyder.  This package is free software; you
 can redistribute it and/or modify it under the terms of either the GNU
-Lesser General Public License or the Perl Artistic License.
+Lesser General Public License Version 3 or the Perl Artistic License
+Version 2.0.
 
 =head1 AUTHORS
 

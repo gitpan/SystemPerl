@@ -8,7 +8,7 @@ use Class::Struct;
 use Verilog::Netlist;
 use SystemC::Netlist;
 @ISA = qw(Verilog::Netlist::Net);
-$VERSION = '1.311';
+$VERSION = '1.320';
 use strict;
 
 ######################################################################
@@ -20,13 +20,13 @@ sub netlist {
 
 sub cast_type {
     my $self = shift;
-    my $typeref = $self->netlist->find_class($self->type);
+    my $typeref = $self->netlist->find_class($self->data_type);
     return $typeref && $typeref->cast_type;
 }
 
 sub sc_type {
     my $self = shift;
-    my $typeref = $self->netlist->find_class($self->type);
+    my $typeref = $self->netlist->find_class($self->data_type);
     return $typeref && $typeref->sc_type;
 }
 
@@ -39,7 +39,7 @@ sub sc_type_from_verilog {
 
 sub is_sc_bv {
     my $self = shift;
-    my $typeref = $self->netlist->find_class($self->type);
+    my $typeref = $self->netlist->find_class($self->data_type);
     return $typeref && $typeref->is_sc_bv;
 }
 
@@ -59,8 +59,8 @@ sub _decl_order {
 sub _link {
     my $self = shift;
     # If there is no msb defined, try to pull it based on the type of the signal
-    if (!defined $self->msb && defined $self->type) {
-	my $typeref = $self->netlist->find_class($self->type);
+    if (!defined $self->msb && defined $self->data_type) {
+	my $typeref = $self->netlist->find_class($self->data_type);
 	if (defined $typeref) {
 	    $self->msb($typeref->msb);
 	    $self->lsb($typeref->lsb);
@@ -151,7 +151,8 @@ L<http://www.veripool.org/systemperl>.
 
 Copyright 2001-2009 by Wilson Snyder.  This package is free software; you
 can redistribute it and/or modify it under the terms of either the GNU
-Lesser General Public License or the Perl Artistic License.
+Lesser General Public License Version 3 or the Perl Artistic License
+Version 2.0.
 
 =head1 AUTHORS
 

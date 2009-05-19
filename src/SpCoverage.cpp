@@ -5,7 +5,7 @@
 //
 // Copyright 2001-2009 by Wilson Snyder.  This program is free software;
 // you can redistribute it and/or modify it under the terms of either the GNU
-// Lesser General Public License or the Perl Artistic License.
+// Lesser General Public License Version 3 or the Perl Artistic License Version 2.0.
 //
 // This is distributed in the hope that it will be useful, but WITHOUT ANY
 // WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -174,6 +174,7 @@ private:
 	if (key == "groupdesc") return "d";
 	if (key == "groupname") return "g";
 	if (key == "hier") return "h";
+	if (key == "limit") return "L";
 	if (key == "lineno") return "l";
 	if (key == "per_instance") return "P";
 	if (key == "row0") return "r0";
@@ -187,6 +188,7 @@ private:
 	if (key == "table") return "T";
 	if (key == "thresh") return "s";
 	if (key == "type") return "t";
+	if (key == "weight") return "w";
 #define SP_CIK_COL0 "c0"
 #define SP_CIK_COL0_NAME "C0"
 #define SP_CIK_COL1 "c1"
@@ -203,6 +205,7 @@ private:
 #define SP_CIK_GROUPDESC "d"
 #define SP_CIK_GROUPNAME "g"
 #define SP_CIK_HIER "h"
+#define SP_CIK_LIMIT "L"
 #define SP_CIK_LINENO "l"
 #define SP_CIK_PER_INSTANCE "P"
 #define SP_CIK_ROW0 "r0"
@@ -216,6 +219,7 @@ private:
 #define SP_CIK_TABLE "T"
 #define SP_CIK_THRESH "s"
 #define SP_CIK_TYPE "t"
+#define SP_CIK_WEIGHT "w"
 	// AUTO_EDIT_END_SystemC::Coverage::ItemKey
 	return key;
     }

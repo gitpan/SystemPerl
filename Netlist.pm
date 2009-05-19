@@ -15,7 +15,7 @@ use Verilog::Netlist::Subclass;
 use strict;
 use vars qw($Debug $Verbose $VERSION);
 
-$VERSION = '1.311';
+$VERSION = '1.320';
 
 ######################################################################
 #### Creation
@@ -260,7 +260,9 @@ sub write_cell_library {
     $self->dependency_out($params{filename});
     my $fh = IO::File->new(">$params{filename}") or die "%Error: $! writing $params{filename}\n";
     foreach my $modref ($self->modules_sorted) {
-	next if $modref->is_libcell() && !$params{include_libcells};
+	next if !$params{include_libcells} && $modref->is_libcell();
+	# Skip libcells that are never used
+	next if $params{include_libcells} && $modref->is_libcell() && $modref->userdata('level')==0;
 	print $fh "MODULE ",$modref->name,"\n";
 	foreach my $cellref ($modref->cells_sorted) {
 	    print $fh "  CELL ",$cellref->name," ",$self->remove_defines($cellref->submodname),"\n";
@@ -385,7 +387,8 @@ L<http://www.veripool.org/systemperl>.
 
 Copyright 2001-2009 by Wilson Snyder.  This package is free software; you
 can redistribute it and/or modify it under the terms of either the GNU
-Lesser General Public License or the Perl Artistic License.
+Lesser General Public License Version 3 or the Perl Artistic License
+Version 2.0.
 
 =head1 AUTHORS
 

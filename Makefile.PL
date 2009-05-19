@@ -2,7 +2,7 @@
 #
 # Copyright 2001-2009 by Wilson Snyder.  This program is free software;
 # you can redistribute it and/or modify it under the terms of either the GNU
-# Lesser General Public License or the Perl Artistic License.
+# Lesser General Public License Version 3 or the Perl Artistic License Version 2.0.
 
 require 5.005;
 use ExtUtils::MakeMaker;
@@ -10,6 +10,8 @@ use Carp;
 
 sub MY::postamble {
 "
+all:: README
+
 README: Manual.pod
 	-\$(RM_RF) \$@
 	pod2text --loose \$< > \$@
@@ -68,7 +70,7 @@ WriteMakefile(
 	      NO_META	=> 1,
 	      PREREQ_PM => {'Pod::Usage' => 0,
 			    'Verilog::Getopt' => 2.211,
-			    'Verilog::Netlist' => 2.315,
+			    'Verilog::Netlist' => 3.200,
 			},
 	      PMLIBDIRS => [qw( Coverage Netlist Parser)],
 	      EXE_FILES => [qw( sp_preproc sp_includer sp_makecheck vcoverage )],
@@ -86,3 +88,9 @@ if (!$ENV{SYSTEMC}) {
     warn "       tracing.  Type 'make sc_patch' to attempt the edits.\n";
     warn "       See the README file for details.\n"
 }
+
+my $mkv = `make --version`;
+if ($? || $mkv !~ /GNU Make/i) {
+    warn "-Important: Now type 'gmake MAKE=gmake' as this package requires GNU Make\n";
+}
+1;

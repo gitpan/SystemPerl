@@ -11,7 +11,7 @@ use SystemC::Template;
 use Verilog::Netlist::Subclass;
 @ISA = qw(SystemC::Netlist::File::Struct
 	Verilog::Netlist::Subclass);
-$VERSION = '1.311';
+$VERSION = '1.320';
 use strict;
 
 structs('new',
@@ -311,12 +311,12 @@ sub auto {
 	    $self->_add_code_symbols({$symb=>1});  # Track that we consume the clock, etc
 	}
     }
-    elsif ($line =~ /^(\s*)\/\*AUTOINOUT_MODULE\(([a-zA-Z0-9_,]+)\)\*\//) {
+    elsif ($line =~ /^(\s*)\/\*AUTOINOUT_MODULE\(([a-zA-Z0-9_]+)(?: *, *"([^"]*)" *, *"([^"]*)"|) *\)\*\//) {
 	if (!$modref) {
 	    return $self->error ("AUTOINOUT_MODULE outside of module definition", $line);
 	}
 	!$modref->_autoinoutmod() or return $self->error("Only one AUTOINOUT_MODULE allowed per module");
-	$modref->_autoinoutmod($2);
+	$modref->_autoinoutmod([$2,$3,$4]);
 	push_text($self, [ 1, $self->filename, $self->lineno,
 			   \&SystemC::Netlist::Module::_write_autoinout,
 			   $modref, $self->{fileref}, $1]);
@@ -576,7 +576,7 @@ sub signal {
 	     filename=>$self->filename, lineno=>$self->lineno,
 	     sp_traced=>($inout eq "sp_traced"),
 	     simple_type=>($inout eq "sp_traced" || $inout eq "sp_traced_vl"),
-	     type=>$type, array=>$array,
+	     data_type=>$type, array=>$array,
 	     comment=>undef, msb=>$msb, lsb=>$lsb,
 	     );
 	$net->_decl_order($modref->_decl_max(1+$modref->_decl_max));
@@ -588,14 +588,14 @@ sub signal {
 	$net or $net = $modref->new_net
 	    (name=>$netname,
 	     filename=>$self->filename, lineno=>$self->lineno,
-	     simple_type=>1, type=>$type, array=>$array,
+	     simple_type=>1, data_type=>$type, array=>$array,
 	     comment=>undef, msb=>$msb, lsb=>$lsb,
 	     );
 	$self->{netref} = $net;
 	my $port = $modref->new_port
 	    (name=>$netname,
 	     filename=>$self->filename, lineno=>$self->lineno,
-	     direction=>$dir, type=>$type,
+	     direction=>$dir, data_type=>$type,
 	     array=>$array, comment=>undef,);
     }
     elsif ($inout =~ /sc_(inout|in|out)$/) {
@@ -622,6 +622,7 @@ sub covergroup_begin {
     my $self = shift;
     my $name = shift;
 
+    return if $self->{_ifdef_off};
     return if !$self->{need_covergroup};
 
     print "Netlist::File: covergroup_begin parsed with name: $name\n" if $SystemC::Netlist::Debug;
@@ -664,6 +665,7 @@ sub covergroup_begin {
 sub covergroup_end {
     my $self = shift;
 
+    return if $self->{_ifdef_off};
     return if !$self->{need_covergroup};
 
     print "Netlist::File: covergroup_end parsed\n" if $SystemC::Netlist::Debug;
@@ -681,6 +683,7 @@ sub covergroup_option {
     my $var = shift;
     my $val = shift;
 
+    return if $self->{_ifdef_off};
     return if !$self->{need_covergroup};
 
     print "Netlist::File: covergroup_option parsed with var = value: $var = $val\n" if $SystemC::Netlist::Debug;
@@ -699,6 +702,7 @@ sub covergroup_description {
     my $self = shift;
     my $desc = shift;
 
+    return if $self->{_ifdef_off};
     return if !$self->{need_covergroup};
 
     print "Netlist::File: covergroup_description parsed with name: $desc\n" if $SystemC::Netlist::Debug;
@@ -720,6 +724,7 @@ sub covergroup_page {
     my $self = shift;
     my $page = shift;
 
+    return if $self->{_ifdef_off};
     return if !$self->{need_covergroup};
 
     print "Netlist::File: covergroup_page parsed with name: $page\n" if $SystemC::Netlist::Debug;
@@ -741,6 +746,7 @@ sub coversample {
     my $self = shift;
     my $name = shift;
 
+    return if $self->{_ifdef_off};
     return if !$self->{need_covergroup};
 
     print "Netlist::File: coversample parsed with name: $name\n" if $SystemC::Netlist::Debug;
@@ -770,6 +776,7 @@ sub cross_begin {
     my $connection = shift;
     my $name = shift;
 
+    return if $self->{_ifdef_off};
     return if !$self->{need_covergroup};
 
     print "Netlist::File: parsed cross name: $name, connecting to $connection\n" if $SystemC::Netlist::Debug;
@@ -791,6 +798,7 @@ sub cross_begin {
 sub cross {
     my $self = shift;
 
+    return if $self->{_ifdef_off};
     return if !$self->{need_covergroup};
 
     my $modref = $self->{modref};
@@ -804,6 +812,7 @@ sub cross {
 sub cross_end {
     my $self = shift;
 
+    return if $self->{_ifdef_off};
     return if !$self->{need_covergroup};
 
     my $modref = $self->{modref};
@@ -816,6 +825,7 @@ sub coverpoint_begin {
     my $connection = shift;
     my $name = shift;
 
+    return if $self->{_ifdef_off};
     return if !$self->{need_covergroup};
 
     print "Netlist::File: coverpoint parsed point name: $name, connecting to $connection\n" if $SystemC::Netlist::Debug;
@@ -841,6 +851,7 @@ sub coverpoint_window {
     my $ev2 = shift;
     my $depth = shift;
 
+    return if $self->{_ifdef_off};
     return if !$self->{need_covergroup};
 
     print "Netlist::File: coverpoint parsed window name: $name\n" if $SystemC::Netlist::Debug;
@@ -866,6 +877,7 @@ sub coverpoint_window {
 sub coverpoint {
     my $self = shift;
 
+    return if $self->{_ifdef_off};
     return if !$self->{need_covergroup};
 
     my $modref = $self->{modref};
@@ -879,6 +891,7 @@ sub coverpoint {
 sub coverpoint_end {
     my $self = shift;
 
+    return if $self->{_ifdef_off};
     return if !$self->{need_covergroup};
 
     my $modref = $self->{modref};
@@ -1204,7 +1217,7 @@ sub dump {
 sub uses_sorted {
     my $self = shift;
     # Return all uses
-    return (sort {$a->name() cmp $b->name()} (values %{$self->{_uses}}));
+    return (sort {$a->{name} cmp $b->{name}} (values %{$self->_uses()}));
 }
 
 ######################################################################
@@ -1747,7 +1760,8 @@ L<http://www.veripool.org/systemperl>.
 
 Copyright 2001-2009 by Wilson Snyder.  This package is free software; you
 can redistribute it and/or modify it under the terms of either the GNU
-Lesser General Public License or the Perl Artistic License.
+Lesser General Public License Version 3 or the Perl Artistic License
+Version 2.0.
 
 =head1 AUTHORS
 

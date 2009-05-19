@@ -12,7 +12,7 @@ use SystemC::Netlist::Net;
 use SystemC::Netlist::Cell;
 use SystemC::Netlist::Module;
 @ISA = qw(Verilog::Netlist::Pin);
-$VERSION = '1.311';
+$VERSION = '1.320';
 use strict;
 
 ######################################################################
@@ -21,9 +21,9 @@ use strict;
 sub type_match {
     my $self = shift;
     # Override base method
-    return 1 if $self->net->type eq $self->port->type;
-    my $type1 = $self->net->type;
-    my $type2 = $self->port->type;
+    return 1 if $self->net->data_type eq $self->port->data_type;
+    my $type1 = $self->net->data_type;
+    my $type2 = $self->port->data_type;
     my $type1ref = $self->netlist->find_class($type1);
     my $type2ref = $self->netlist->find_class($type2);
     if ($type1ref && $type2ref) {
@@ -32,6 +32,7 @@ sub type_match {
 	return 1 if (($type1ref->convert_type || "") eq $type2
 		     || ($type2ref->convert_type || "") eq $type1);
     }
+    # print "  DBG ",__PACKAGE__,":",__LINE__,":\n";  $self->dump(0,1);
     return undef;
 }
 
@@ -45,7 +46,7 @@ sub _autos {
 		    (name=>$self->netname,
 		     filename=>$self->module->filename,
 		     lineno=>$self->lineno . ':(AUTOSIGNAL)',
-		     type=>$self->port->type,
+		     data_type=>$self->port->data_type,
 		     comment=>" For ".$self->submod->name, #.".".$self->name,
 		     module=>$self->module, sp_autocreated=>1,)
 		    ->_link;
@@ -108,7 +109,8 @@ L<http://www.veripool.org/systemperl>.
 
 Copyright 2001-2009 by Wilson Snyder.  This package is free software; you
 can redistribute it and/or modify it under the terms of either the GNU
-Lesser General Public License or the Perl Artistic License.
+Lesser General Public License Version 3 or the Perl Artistic License
+Version 2.0.
 
 =head1 AUTHORS
 

@@ -1,12 +1,15 @@
 // DESCRIPTION: SystemPerl: Example source module
 //
 // Copyright 2001-2009 by Wilson Snyder.  This program is free software;
-// you can redistribute it and/or modify it under the terms of either the GNU
-// Lesser General Public License or the Perl Artistic License.
+// you can redistribute it and/or modify it under the terms of either the
+// GNU Lesser General Public License Version 3 or the Perl Artistic License
+// Version 2.0.
 
 #sp interface  // Comment
 #include <systemperl.h>
 #include <iostream>
+#include "SpCoverage.h"
+
 /*AUTOSUBCELL_CLASS*/
 
 class ExModSubEnum {
@@ -132,6 +135,7 @@ SC_MODULE (__MODULE__) {
 	    ignore_bins ign = 0xffc0;           // ignore bins
 	    ignore_bins_func = var32_ignore_func();  // ignore bins by function
 	    illegal_bins_func = var32_illegal_func();  // illegal bins by function
+	    limit_func = var32_limit_func();    // change CovVise limit by function
 	    bins other = default;               // named default
 	};
 	);
@@ -146,7 +150,7 @@ SC_MODULE (__MODULE__) {
     SP_COVERGROUP timing_window_example (
 	description = "example of a timing window";
 	// 9 bins +/- event1 occuring 4 samples before/after event2
-	window myWin(m_in,m_out,4);
+	window myWin(in,out,4);
     );
 
     SP_COVERGROUP autoenum_example (
@@ -182,6 +186,7 @@ SC_MODULE (__MODULE__) {
 	    cols = {m_vregsEnumVar};
 	    ignore_bins_func = cross_ignore_func();  // ignore bins by function
 	    illegal_bins_func = cross_illegal_func();  // illegal bins by function
+	    limit_func = cross_limit_func();    // change CovVise limit by function
 	    option max_bins = 0x2000; // allow more than the usual 1024 bins
 	};
 	);
@@ -194,8 +199,10 @@ SC_MODULE (__MODULE__) {
     /*AUTOMETHODS*/
     bool var32_ignore_func(uint64_t var32) { return (var32 % 5 == 3); } // ignore all values 3 mod 5
     bool var32_illegal_func(uint64_t var32) { return (var32 == 1000); } // illegal 1000
+    uint32_t var32_limit_func(uint64_t var32) { return (var32); } // return = value
     bool cross_ignore_func(uint64_t autoenum, uint64_t vregsenum) { return (autoenum == vregsenum); }
     bool cross_illegal_func(uint64_t autoenum, uint64_t vregsenum) { return (autoenum == ExModSubEnum::NINE) && (vregsenum == ExModSubVregsEnum::MODIFIED); }
+    uint32_t cross_limit_func(uint64_t autoenum, uint64_t vregsenum) { return (autoenum == ExModSubEnum::NINE) ? 9 : 123; }
 };
 
 //######################################################################
@@ -298,7 +305,9 @@ void __MODULE__::clock() {
     SP_AUTO_COVER();
 
     SP_COVER_SAMPLE(cross_example);
-
+    SP_COVER_SAMPLE(vregs_enum_example);
+    SP_COVER_SAMPLE(timing_window_example);
+    SP_COVER_SAMPLE(autoenum_example);
     SP_COVER_SAMPLE(example_group);
     if (in.read()) {
 	SP_COVER_SAMPLE(example_group2);

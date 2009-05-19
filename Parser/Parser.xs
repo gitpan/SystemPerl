@@ -1,17 +1,18 @@
 #/* SystemC.xs -- SystemC Booter  -*- Mode: C -*-
 #*********************************************************************
 #*
-#* Vl SystemC perl utility library
+#* SystemC perl utility library
 #*
-#* Author: Wilson Snyder <wsnyder@wsnyder.org> or <wsnyder@iname.com>
+#* Author: Wilson Snyder <wsnyder@wsnyder.org>
 #*
 #* Code available from: http://www.veripool.org/
 #*
 #*********************************************************************
 #*
 #* Copyright 2001-2009 by Wilson Snyder.  This program is free software;
-#* you can redistribute it and/or modify it under the terms of either the GNU
-#* Lesser General Public License or the Perl Artistic License.
+#* you can redistribute it and/or modify it under the terms of either the
+#* GNU Lesser General Public License Version 3 or the Perl Artistic License
+#* Version 2.0.
 #*
 #* This program is distributed in the hope that it will be useful,
 #* but WITHOUT ANY WARRANTY; without even the implied warranty of

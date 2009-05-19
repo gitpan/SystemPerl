@@ -13,7 +13,7 @@
  *
  * Copyright 2001-2009 by Wilson Snyder.  This program is free software;
  * you can redistribute it and/or modify it under the terms of either the GNU
- * Lesser General Public License or the Perl Artistic License.
+ * Lesser General Public License Version 3 or the Perl Artistic License Version 2.0.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -111,6 +111,7 @@ FLOATNUM	[0-9]+"."*[0-9]*[eE]-?[0-9]+
 "illegal_bins_func" { return(CG_ILLEGAL_BINS_FUNC); }
 "ignore_bins"   { return(CG_IGNORE_BINS); }
 "ignore_bins_func" { return(CG_IGNORE_BINS_FUNC); }
+"limit_func"    { return(CG_LIMIT_FUNC); }
 "auto_enum_bins" { return(CG_AUTO_ENUM_BINS); }
 "cross"         { return(CG_CROSS); }
 "rows"          { return(CG_ROWS); }
