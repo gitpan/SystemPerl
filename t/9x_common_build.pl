@@ -32,11 +32,15 @@ if (! -x "$dir/ex_main"
     skip("skip Harmless; Not linux or missing SystemC",1);
     skip("skip Harmless; Not linux or missing SystemC",1);
     skip("skip Harmless; Not linux or missing SystemC",1);
+    skip("skip Harmless; Not linux or missing SystemC",1);
 } else {
     run_system ("cd $dir && ./ex_main");
     ok(1);
     ok(-r "$dir/sim_sc.vcd");
     ok(-r "$dir/sim_sp.vcd");
+
+    # Check coverage
+    ok(1);
     run_system ("cd $dir && ../vcoverage -y ../");
     ok(-r "$dir/logs/coverage_source/ExModSub.sp");
 }

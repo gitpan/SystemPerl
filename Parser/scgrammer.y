@@ -408,6 +408,12 @@ inst_clk:	SC_CLOCK '(' 			{ SCFree($1); }
 sp:		SP				{ scparser_call(1,"preproc_sp",sclextext);}
 		;
 
+//************************************
+// SP_COVERGROUP parsing
+
+///////
+// bins
+
 // recognize enums
 cpBinNumber :   NUMBER				{ $$ = $1; }
                 | SYMBOL COLONCOLON SYMBOL	{ $$ = scstrjoin3sis ($1,"::",$3); }
@@ -435,19 +441,6 @@ cpBinMulti:     '[' ']' '=' { scparser_call(1,"coverpoint","multi_begin"); }
 cpBinMultiNum:  '[' NUMBER ']' '=' { scparser_call(2,"coverpoint","multi_begin_num",$2); SCFree($2);}
                 ;
 
-cpDescription:  CG_DESCRIPTION '=' STRING ';' { scparser_call(2,"coverpoint","description",$3); SCFree($3);}
-                ;
-
-cpOption:       CG_OPTION SYMBOL '=' NUMBER ';' { scparser_call(3,"coverpoint", "option",$2,$4); SCFree($2); SCFree($4);}
-                ;
-
-cpDescOrOpt:    cpDescription                 { }
-                | cpOption                    { }
-                ;
-
-cpDescOrOptList: cpDescOrOpt			{ }
-		| cpDescOrOptList cpDescOrOpt	{ }
-		;
 
 coverpointBin:  cpBinType '=' CG_DEFAULT ';'	{ scparser_call(1,"coverpoint","default"); }
                 | cpBinType '=' cpBinValue ';'  { scparser_call(1,"coverpoint","single"); }
@@ -455,23 +448,52 @@ coverpointBin:  cpBinType '=' CG_DEFAULT ';'	{ scparser_call(1,"coverpoint","def
                 | cpBinType cpBinMulti cpBinRange ';' { scparser_call(1,"coverpoint","multi_auto_end"); }
                 | cpBinType cpBinMultiNum cpBinRange ';' { scparser_call(1,"coverpoint","multi_auto_end"); }
                 | CG_AUTO_ENUM_BINS '=' SYMBOL ';' { scparser_call(2,"coverpoint","enum", $3); SCFree($3); }
-                | CG_LIMIT_FUNC '=' SYMBOL '(' ')' ';' { scparser_call(2,"coverpoint","limit_func", $3); SCFree($3); }
-                | CG_IGNORE_BINS_FUNC '=' SYMBOL '(' ')' ';' { scparser_call(2,"coverpoint","ignore_func", $3); SCFree($3); }
-                | CG_ILLEGAL_BINS_FUNC '=' SYMBOL '(' ')' ';' { scparser_call(2,"coverpoint","illegal_func", $3); SCFree($3); }
-                | cpDescOrOpt                   { }
-                | CG_PAGE '=' STRING ';' 	{ scparser_call(2,"coverpoint","page",$3); SCFree($3);}
+                | cpOpt                         { }
                 ;
 
 coverpointBinList: coverpointBin			{ }
 		| coverpointBinList coverpointBin	{ }
 		;
 
+////////////////////////////
+// options and configuration
+
+// options valid in covergroup scope
+cgOpt:          CG_DESCRIPTION '=' STRING ';' { scparser_call(1,"covergroup_description",$3); SCFree($3);}
+                | CG_OPTION SYMBOL '=' NUMBER ';' { scparser_call(2,"covergroup_option",$2,$4); SCFree($2); SCFree($4);}
+                | CG_PAGE '=' STRING ';'       { scparser_call(1,"covergroup_page",$3); SCFree($3);}
+                ;
+
+// options valid in coverpoint scope
+cpOpt:          CG_DESCRIPTION '=' STRING ';' { scparser_call(2,"coverpoint","description",$3); SCFree($3);}
+                | CG_OPTION SYMBOL '=' NUMBER ';' { scparser_call(3,"coverpoint", "option",$2,$4); SCFree($2); SCFree($4);}
+                | CG_PAGE '=' STRING ';' 	{ scparser_call(2,"coverpoint","page",$3); SCFree($3);}
+                | CG_LIMIT_FUNC '=' SYMBOL '(' ')' ';' { scparser_call(2,"coverpoint","limit_func", $3); SCFree($3); }
+                | CG_IGNORE_BINS_FUNC '=' SYMBOL '(' ')' ';' { scparser_call(2,"coverpoint","ignore_func", $3); SCFree($3); }
+                | CG_ILLEGAL_BINS_FUNC '=' SYMBOL '(' ')' ';' { scparser_call(2,"coverpoint","illegal_func", $3); SCFree($3); }
+                ;
+
+cpOptList:      cpOpt				{ }
+		| cpOptList cpOpt		{ }
+		;
+
+//////////////
+// coverpoints
+
+coverpoint_head: COVERPOINT SYMBOL                  { scparser_call(2,"coverpoint_begin",$2,$2); SCFree($2); }
+		| COVERPOINT SYMBOL '(' SYMBOL ')'  { scparser_call(-2,"coverpoint_begin",$2,$4); }
+                ;
+
 coverpoint_desc:  ';'                           { scparser_call(1,"coverpoint","standard"); }
                 | '[' NUMBER ']' ';'            { scparser_call(2,"coverpoint","standard_bins", $2); SCFree($2); }
+                | '[' NUMBER ']' '{' cpOptList '}' ';'            { scparser_call(2,"coverpoint","standard_bins", $2); SCFree($2); }
                 | '[' NUMBER ']' '=' '[' NUMBER ':' NUMBER ']' ';'            { scparser_call(4,"coverpoint","standard_bins_range", $2, $6, $8); SCFree($2); }
-                | '[' NUMBER ']' '=' '[' NUMBER ':' NUMBER ']' '{' cpDescOrOptList '}' ';'            { scparser_call(4,"coverpoint","standard_bins_range", $2, $6, $8); SCFree($2); }
+                | '[' NUMBER ']' '=' '[' NUMBER ':' NUMBER ']' '{' cpOptList '}' ';' { scparser_call(4,"coverpoint","standard_bins_range", $2, $6, $8); SCFree($2); }
                 | '{' coverpointBinList '}' ';'            { scparser_call(1,"coverpoint","bins"); }
                 ;
+
+//////////
+// crosses
 
 cross_item:	SYMBOL	 { scparser_call(2,"cross","item",$1); SCFree($1); }
 		;
@@ -486,32 +508,36 @@ cross_start:	CG_ROWS      { scparser_call(1,"cross","start_rows"); }
 		;
 
 cross_entry:	cross_start  '=' '{' cross_item_list '}' ';' {}
-                | cpDescOrOpt                   { }
-                | CG_LIMIT_FUNC '=' SYMBOL '(' ')' ';' { scparser_call(2,"coverpoint","limit_func", $3); SCFree($3); }
-                | CG_IGNORE_BINS_FUNC '=' SYMBOL '(' ')' ';' { scparser_call(2,"coverpoint","ignore_func", $3); SCFree($3); }
-                | CG_ILLEGAL_BINS_FUNC '=' SYMBOL '(' ')' ';' { scparser_call(2,"coverpoint","illegal_func", $3); SCFree($3); }
-                | CG_PAGE '=' STRING ';' 	{ scparser_call(2,"coverpoint","page",$3); SCFree($3);}
+                | cpOpt                   	{ }
 		;
 
 cross_desc_list: cross_entry			{ }
 		| cross_desc_list cross_entry	{ }
 		;
 
-coverpoint:	coverpoint_head coverpoint_desc { scparser_call(0,"coverpoint_end"); }
-                | CG_PAGE '=' STRING ';' 	{ scparser_call(1,"covergroup_page",$3); SCFree($3);}
-                | CG_DESCRIPTION '=' STRING ';' { scparser_call(1,"covergroup_description",$3); SCFree($3);}
-                | CG_OPTION SYMBOL '=' NUMBER ';' { scparser_call(2,"covergroup_option",$2,$4); SCFree($2); SCFree($4);}
-                | cross_head '{' cross_desc_list '}' ';' { scparser_call(0,"cross_end"); }
-                | CG_WINDOW SYMBOL '(' SYMBOL ',' SYMBOL ',' NUMBER ')' ';' { scparser_call(-4,"coverpoint_window",$2,$4,$6,$8);}
-		;
-
-coverpoint_head: COVERPOINT SYMBOL                  { scparser_call(2,"coverpoint_begin",$2,$2); SCFree($2); }
-		| COVERPOINT SYMBOL '(' SYMBOL ')'  { scparser_call(-2,"coverpoint_begin",$2,$4); }
-                ;
-
 cross_head:     CG_CROSS SYMBOL                  { scparser_call(2,"cross_begin",$2,$2); SCFree($2); }
 		| CG_CROSS SYMBOL '(' SYMBOL ')'  { scparser_call(-2,"cross_begin",$2,$4); }
                 ;
+
+//////////
+// window
+
+window_head:    CG_WINDOW SYMBOL  '(' SYMBOL ',' SYMBOL ',' NUMBER ')' { scparser_call(-4,"coverpoint_window",$2,$4,$6,$8);}
+                ;
+
+window_desc:    ';'                             { }
+                | '{' cpOptList '}' ';'         { }
+                ;
+
+/////////////
+// covergroup
+
+coverpoint:	coverpoint_head coverpoint_desc          { scparser_call(0,"coverpoint_end"); }
+                | cross_head '{' cross_desc_list '}' ';' { scparser_call(0,"coverpoint_end"); }
+                | window_head window_desc                { scparser_call(0,"coverpoint_end"); }
+//                | CG_WINDOW SYMBOL '(' SYMBOL ',' SYMBOL ',' NUMBER ')' ';' { scparser_call(-4,"coverpoint_window",$2,$4,$6,$8);}
+                | cgOpt                   	{ }
+		;
 
 coverpointList:	coverpoint			{ }
 		| coverpointList coverpoint	{ }
@@ -522,6 +548,9 @@ covergroup:     covergroup_head '(' coverpointList ')' ';' { scparser_call(0,"co
 
 covergroup_head: SP_COVERGROUP SYMBOL { scparser_call(-1,"covergroup_begin",$2); }
 		;
+
+////////////////////
+// covergroup sample
 
 coversample:    SP_COVER_SAMPLE '(' SYMBOL  ')' ';' { scparser_call(-1,"coversample",$3); }
 		;

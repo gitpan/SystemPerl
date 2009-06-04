@@ -31,7 +31,7 @@
 #include <string>
 #include "SpCommon.h"
 
-#define SPCOVERAGE_VERSION 1320	// Version number of this file AS_AN_INTEGER
+#define SPCOVERAGE_VERSION 1321	// Version number of this file AS_AN_INTEGER
 
 //=============================================================================
 /// Insert a item for coverage analysis.

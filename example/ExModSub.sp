@@ -151,6 +151,13 @@ SC_MODULE (__MODULE__) {
 	description = "example of a timing window";
 	// 9 bins +/- event1 occuring 4 samples before/after event2
 	window myWin(in,out,4);
+	window myWin2(in,out,6) {
+	    description = "windows can have descriptions";
+	    page = "window page";
+	    option radix = 16; // name the bins in hex
+	    ignore_bins_func = window_ignore_func();
+	    limit_func = window_limit_func();
+	};
     );
 
     SP_COVERGROUP autoenum_example (
@@ -166,6 +173,7 @@ SC_MODULE (__MODULE__) {
 	};
 	coverpoint m_autoEnumVar(automatic_autoEnumVar) {
 	    auto_enum_bins = ExModSubEnum; // make a bin for each enum value
+	    page = "automatic enum page";
 	};
 	);
 
@@ -181,7 +189,7 @@ SC_MODULE (__MODULE__) {
 	};
 	cross myCross {
 	    description = "this text goes above the cross table";
-	    page = "put this table on a separate page";
+	    page = "put this table on another separate page";
 	    rows = {m_autoEnumVar};
 	    cols = {m_vregsEnumVar};
 	    ignore_bins_func = cross_ignore_func();  // ignore bins by function
@@ -200,6 +208,10 @@ SC_MODULE (__MODULE__) {
     bool var32_ignore_func(uint64_t var32) { return (var32 % 5 == 3); } // ignore all values 3 mod 5
     bool var32_illegal_func(uint64_t var32) { return (var32 == 1000); } // illegal 1000
     uint32_t var32_limit_func(uint64_t var32) { return (var32); } // return = value
+
+    bool window_ignore_func(uint64_t cycles) { return (cycles < 3); } // ignore all counts < 3
+    uint32_t window_limit_func(uint64_t cycles) { return (cycles / 2); }
+
     bool cross_ignore_func(uint64_t autoenum, uint64_t vregsenum) { return (autoenum == vregsenum); }
     bool cross_illegal_func(uint64_t autoenum, uint64_t vregsenum) { return (autoenum == ExModSubEnum::NINE) && (vregsenum == ExModSubVregsEnum::MODIFIED); }
     uint32_t cross_limit_func(uint64_t autoenum, uint64_t vregsenum) { return (autoenum == ExModSubEnum::NINE) ? 9 : 123; }

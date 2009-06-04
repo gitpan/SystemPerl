@@ -41,7 +41,7 @@ typedef unsigned long long uint64_t;
 #include <cctype>
 using namespace std;
 
-#define SPTRACEVCDC_VERSION 1320	// Version number of this file AS_AN_INTEGER
+#define SPTRACEVCDC_VERSION 1321	// Version number of this file AS_AN_INTEGER
 
 // Note cannot include systemperl.h, or we won't work with non-SystemC compiles
 #include "SpCommon.h"

@@ -12,7 +12,7 @@ use SystemC::Template;
 use Verilog::Netlist::Subclass;
 @ISA = qw(SystemC::Netlist::Class::Struct
 	  Verilog::Netlist::Subclass);
-$VERSION = '1.320';
+$VERSION = '1.321';
 use strict;
 
 structs('new',

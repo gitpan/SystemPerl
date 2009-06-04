@@ -10,7 +10,7 @@ use Verilog::Netlist;
 use Verilog::Netlist::Subclass;
 @ISA = qw(SystemC::Netlist::CoverPoint::Struct
 	  Verilog::Netlist::Subclass);
-$VERSION = '1.320';
+$VERSION = '1.321';
 use strict;
 
 # allow 64-bit values without bonking
@@ -228,6 +228,9 @@ sub cross_build {
 	my $currentCovergroup = $self->module->current_covergroup();
 	foreach my $point (@{$currentCovergroup->coverpoints}) {
 	    if ($point->name eq $item) {
+		if($point->isWindow) {
+		    $self->error("Crossing windows is not (yet) supported.\n");
+		}
 		$point->crossMember(1);
 		my $dimension = $self->attributes("dimension");
 		if ($dimension eq "rows") {
@@ -641,6 +644,63 @@ sub _write_coverpoint_decl {
 	}
 	$fileref->printf ("};\n");
 	$fileref->printf ("%s  return (_s_bin_to_name[point]);\n%s}\n",$prefix,$prefix);
+
+	###########################################################################
+	# write the function returning an arbitrary value per bin
+	###########################################################################
+	$fileref->printf ("%suint64_t _sp_cg_%s_%s_getArbitraryValue(uint64_t bin) { \t// SP_COVERGROUP declaration\n",
+			  $prefix,
+			  $covergroupref->name,
+			  $self->name);
+
+	my $binnum=0;
+	for (my $i=$self->windowDepth;$i>0;$i--) {
+	    # FIXME should be return -%d
+	    # but negative windows are going away anyway
+	    $fileref->printf ("%s  if (bin == %d) return %d; // FIXME negative window \n",
+			      $prefix,$binnum,$i);
+	    $binnum++;
+	}
+	for (my $i=0;$i<=$self->windowDepth;$i++) {
+	    $fileref->printf ("%s  if (bin == %d) return %d; // positive window \n",
+			      $prefix,$binnum,$i);
+	    $binnum++;
+	}
+ 	$fileref->printf ("%s  SP_ERROR_LN(\"%s\",%d,\"Internal error: Illegal bin value for point %s\\n\");\n",
+			  $prefix,$fileref->name,$covergroupref->module->lineno,$self->name);
+ 	$fileref->printf ("%s  return 0;\n", $prefix);
+	$fileref->printf ("%s}\n", $prefix);
+
+	###########################################################################
+	# write the function returning the ignoredness
+	###########################################################################
+	$fileref->printf ("%sbool _sp_cg_%s_%s_ignored(uint64_t bin) { \t// SP_COVERGROUP declaration\n",
+			  $prefix,
+			  $covergroupref->name,
+			  $self->name);
+	if ($self->ignoreFunc) {
+	    $fileref->printf ("%s  if (%s(_sp_cg_%s_%s_getArbitraryValue(bin))) { return true; }\n",
+			      $prefix,$self->ignoreFunc,
+			      $covergroupref->name,
+			      $self->name);
+	}
+	$fileref->printf ("%s  return false;\n%s}\n",
+			  $prefix,$prefix);
+	###########################################################################
+	# write the function returning the illegality
+	###########################################################################
+	$fileref->printf ("%sbool _sp_cg_%s_%s_illegal(uint64_t bin) { \t// SP_COVERGROUP declaration\n",
+			  $prefix,
+			  $covergroupref->name,
+			  $self->name);
+	if ($self->illegalFunc) {
+	    $fileref->printf ("%s  if (%s(_sp_cg_%s_%s_getArbitraryValue(bin))) { return true; }\n",
+			      $prefix,$self->illegalFunc,
+			      $covergroupref->name,
+			      $self->name);
+	}
+	$fileref->printf ("%s  return false;\n%s}\n",
+			  $prefix,$prefix);
     } elsif ($self->isCross) {
 	# write the cross stuff
 	my @dimensions;
@@ -1048,7 +1108,11 @@ sub _write_coverpoint_ctor {
 	$fileref->printf("}\n");
 	# SP_COVER_INSERT the bins
 	$fileref->printf("{ for(int i=0;i<%d;i++) {\n",2*$self->windowDepth+1);
-	$fileref->printf('    SP_COVER_INSERT(&_sp_cg_%s_%s_bin[i]',
+
+	$fileref->printf("    if (!_sp_cg_%s_%s_ignored(i) && !_sp_cg_%s_%s_illegal(i)) {\n",
+			 $covergroupref->name, $self->name,
+			 $covergroupref->name, $self->name);
+	$fileref->printf('      SP_COVER_INSERT(&_sp_cg_%s_%s_bin[i]',
 			 $covergroupref->name,
 			 $self->name);
 	$fileref->printf(',"filename","%s"', $self->filename);
@@ -1060,7 +1124,15 @@ sub _write_coverpoint_ctor {
 	$fileref->printf(',"hier",name()');
 	# fields so the auto-table-generation code will recognize it
 	$fileref->printf(',"page","%s"', $page);
-	$fileref->printf(',"limit","%d"',DEFAULT_LIMIT);
+	if ($self->limitFunc) {
+	    # windows have values == bin numbers # FIXME no they don't; make a getArbitraryValue()
+	    $fileref->printf (',"limit",SpCvtToCStr(%s(i))',
+			      $self->limitFunc,
+			      $covergroupref->name,
+			      $self->name);
+	} else {
+	    $fileref->printf (',"limit","%d"',DEFAULT_LIMIT);
+	}
 	$fileref->printf(',"weight","%f"', ($self->weight / (2*$self->windowDepth+1)));
 	$fileref->printf(',"table", "%s"',$self->name);
 	$fileref->printf(',"col0",_sp_cg_%s_%s_binName(i)',
@@ -1069,7 +1141,7 @@ sub _write_coverpoint_ctor {
 	$fileref->printf(',"col0_name","%s observed N samples before(-) or after(+) %s"',$self->event1,$self->event2);
 	$fileref->printf(");");
 	$fileref->printf("\n");
-	$fileref->printf("} }\n");
+	$fileref->printf("} } }\n");
     } elsif ($self->isCross) {
 	$modref->netlist->add_coverpoint_page_name($page,$self);
 

@@ -103,27 +103,45 @@ SC_MODULE(__MODULE__) {
   EnumType var1;
   EnumType var2;
   uint32_t var3;
+  uint32_t var4;
+  bool e1;
+  bool e2;
   ...
 
   SP_COVERGROUP name (
+    option per_instance = 1;                     // this group is covered separately per instance
     description = "a bunch of text that will appear next to the HTML table; what's this covergroup all about?";
-    coverpoint      var3[16] = [0:0x1000];       // 16 evenly space buckets dividing [0:0x1000]
+    coverpoint      var3[16] = [0:0x1000];       // 16 evenly space bins dividing [0:0x1000]
     coverpoint      var3_alt(var3) {             // alternate name
-      bins sizes[] = {0, 1, [2:5], [8:100]};     // 4 buckets as specified
-      bins other = default;
+      bins sizes[] = {0, 1, [2:5], [8:100]};     // 4 bins as specified
+      bins few = [3:5];
+      bins three = EnumType::THREE;              // can use enums on the RHS
+      bins dist_ranges[4] = [200:299];           // 4 bins spread over a range
+      bins other = default;                      // named default
+      limit_func = var3_limit();
     }
-    coverpoint var1 {                            // automatic enum buckets
-	auto_enum_bins = EnumType;
+    coverpoint var1 {                            // automatic enum bins
+      auto_enum_bins = EnumType;
     };
-    coverpoint var3 {                       // illegal and ignored bins
+    coverpoint var4[16] = [0:0x1000] {           // illegal and ignored bins
+      option radix = 16;                         // name the bins in hex
+      illegal_bins_func = var4_illegal();
+      ignore_bins_func = var4_ignore();
       illegal_bins banish_bad_luck = 13;
       ignore_bins  ignore_zero = 0;
     };
-    cross myCross {                              // 2-dimensional cross
-      rows = {var1};
+    cross myCross {                              // 3-dimensional cross; up to 8 are permitted
+      rows = {var1,var4};
       cols = {var3_alt};
+      page = "mypage";                           // put this table on a separate page
+      description = "this text goes above the table";
     };
+    window myWin(e1,e2,4);                       // 9 bins +/- e1 occuring 4 samples before/after e2
   );
+  ...
+  bool var4_ignore(uint64_t var4) { ... }  // return true if value should be ignored
+  bool var4_illegal(uint64_t var4) { ... } // return true if test should assert
+  uint32_t var3_limit(uint64_t var3_alt) { ... } // return CovVise limit for "high"; default is 10
   ...
   /*AUTOMETHODS*/
 }

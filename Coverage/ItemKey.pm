@@ -11,7 +11,7 @@ use vars qw($VERSION %CompressKey %DecompressKey %GroupKey);
 ######################################################################
 #### Configuration Section
 
-$VERSION = '1.320';
+$VERSION = '1.321';
 
 our %_Keys =
     (

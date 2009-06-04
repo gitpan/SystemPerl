@@ -27,6 +27,9 @@
 
 #define SCLEX_MAX_INCLUDE_DEPTH 20
 
+// Flex 2.5.35 has compile warning in ECHO, so we'll default our own rule
+#define ECHO yyerror("Missing sclex.l rule: ECHO rule invoked");
+
 typedef struct {
     int lineno;
     const char *filename;

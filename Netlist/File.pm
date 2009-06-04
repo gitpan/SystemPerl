@@ -11,7 +11,7 @@ use SystemC::Template;
 use Verilog::Netlist::Subclass;
 @ISA = qw(SystemC::Netlist::File::Struct
 	Verilog::Netlist::Subclass);
-$VERSION = '1.320';
+$VERSION = '1.321';
 use strict;
 
 structs('new',
@@ -809,17 +809,6 @@ sub cross {
     $point->cross_build(@_);
 }
 
-sub cross_end {
-    my $self = shift;
-
-    return if $self->{_ifdef_off};
-    return if !$self->{need_covergroup};
-
-    my $modref = $self->{modref};
-    # close this one out
-    $modref->close_new_coverpoint();
-}
-
 sub coverpoint_begin {
     my $self = shift;
     my $connection = shift;
@@ -869,9 +858,6 @@ sub coverpoint_window {
     $point->event1($ev1);
     $point->event2($ev2);
     $point->windowDepth($depth);
-
-    # close this one out
-    $modref->close_new_coverpoint();
 }
 
 sub coverpoint {

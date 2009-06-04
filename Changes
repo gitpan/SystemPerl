@@ -2,6 +2,15 @@ Revision history for Perl extension SystemC::Netlist
 
 The contributors that suggested a given feature are shown in [].
 
+* SystemPerl 1.321 2009/06/04
+
+****	Work around compiler warning when using flex 2.5.35. [Jonathan Kimmitt]
+
+****	SP_COVERGROUP timing windows can now have options/illegal/ignore/limit
+	like other coverpoints.
+
+****	Fix test failure on 32-bit systems.  [Brennan Ashton]
+
 * SystemPerl 1.320 2009/05/19
 
 **	This package is now licensed under LGPL v3 and/or Artistic v2.0.
