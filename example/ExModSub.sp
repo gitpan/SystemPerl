@@ -69,7 +69,7 @@ class MySigStruct {
 public:
     SP_TRACED bool	m_in;
     SP_TRACED bool	m_out;
-    sc_bv<72>		m_outbx;	// You can trace this, but a SC patch is required
+    sc_bv<72>		m_outbx;
     MySigStruct() {}
     MySigStruct(bool i, bool o, bool ob) : m_in(i), m_out(o), m_outbx(ob) {}
 };
@@ -121,8 +121,11 @@ SC_MODULE (__MODULE__) {
 	    option radix = 2; // name the bins in binary
 	};
 	coverpoint m_var64[0x10];
-	coverpoint m_var64(bigaddr)[16] = [0:0xffffffffffff]; // more than 32 bits
-	coverpoint m_var64(verybigaddr)[16] = [0:0xffffffffffffffff]; // all fs
+	// These require a 64-bit perl
+	//coverpoint m_var64(bigaddr)[16] = [0:0xffffffffffff]; // more than 32 bits
+	//coverpoint m_var64(verybigaddr)[16] = [0:0xffffffffffffffff]; // all fs
+	coverpoint m_var64(bigaddr)[16] = [0:0xfffffff];
+	coverpoint m_var64(verybigaddr)[16] = [0:0xffffffff];
 	coverpoint m_var32 {
 	    bins zero = 0;
 	    bins few = [ExModSubEnum::ONE:ExModSubEnum::TWO];  // can use enums on the RHS in ranges
@@ -257,9 +260,9 @@ SP_CTOR_IMP(__MODULE__) /*AUTOINIT*/ {
 
     // Other coverage scheme
     SP_AUTO_COVER_CMT("Commentary");
-    if (0) SP_AUTO_COVER_CMT("Never_Occurs");
-    if (0) SP_AUTO_COVER_CMT_IF("Not_Possible",0);
-    SP_AUTO_COVER_CMT_IF("Always_Occurs",1||1);  // If was just '1' SP would short-circuit the eval
+    if (0) { SP_AUTO_COVER_CMT("Never_Occurs"); }
+    if (0) { SP_AUTO_COVER_CMT_IF("Not_Possible",0); }
+    SP_AUTO_COVER_CMT_IF("Always_Occurs",(1||1));  // If was just '1' SP would short-circuit the eval
     for (int i=0; i<3; i++) {
 	static uint32_t coverValue = 100;
 	SP_COVER_INSERT(&coverValue, "comment","Hello World",

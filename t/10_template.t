@@ -45,5 +45,4 @@ $tpl->write( filename=>'test_dir/10_template.out',
 	     );
 ok(1);
 
-ok (files_identical ('t/10_template.out',
-		     'test_dir/10_template.out',));
+ok (files_identical ('test_dir/10_template.out', 't/10_template.out'));

@@ -29,7 +29,10 @@ sclex_prefix.c: sclex.l  scgrammer.h scparse.h
 	${LEX} ${LEXFLAGS} -Psclex -o$@ $<
 
 sclex.c: sclex_prefix.c
-	sed "s/(void) *fwrite(\(.*\))/if (fwrite(\1)) {}/" < $< > $@    # GCC 4.1.0 warn_unused_result
+        # GCC 4.1.0 warn_unused_result
+	cat $< \
+	| sed "s/(void) *fwrite(\(.*\))/if (fwrite(\1)) {}/g" \
+	| sed "s/static \(int y*y*input\) /\1 /g" > $@
 
 scgrammer.c scgrammer.h:	scgrammer.y scparse.h
 	${YACC} ${YFLAGS} --debug --verbose -d -k $< -pscgrammer -o scgrammer.c

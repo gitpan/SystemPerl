@@ -24,14 +24,13 @@
 #ifndef _SPCOVERAGE_H_
 #define _SPCOVERAGE_H_ 1
 
-#include <sys/types.h>	// uint32_t
-#include <stdint.h>	// uint32_t
+#include "SpCommon.h"
 #include <iostream>
 #include <sstream>
 #include <string>
-#include "SpCommon.h"
 
-#define SPCOVERAGE_VERSION 1321	// Version number of this file AS_AN_INTEGER
+#define SPCOVERAGE_VERSION 1330	// Version number of this file AS_AN_INTEGER
+using namespace std;
 
 //=============================================================================
 /// Insert a item for coverage analysis.

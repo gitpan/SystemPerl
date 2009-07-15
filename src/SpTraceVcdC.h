@@ -24,13 +24,8 @@
 #ifndef _SPTRACEVCDC_H_
 #define _SPTRACEVCDC_H_ 1
 
-#include <sys/types.h>	// uint32_t
-#if defined(_WIN32) && !defined(__MINGW32__) && !defined(__CYGWIN__)
-typedef unsigned long uint32_t;
-typedef unsigned long long uint64_t;
-#else
-# include <stdint.h>	// uint32_t
-#endif
+// Note cannot include systemperl.h, or we won't work with non-SystemC compiles
+#include "SpCommon.h"
 
 #include <iostream>
 #include <fstream>
@@ -38,13 +33,9 @@ typedef unsigned long long uint64_t;
 #include <algorithm>
 #include <vector>
 #include <map>
-#include <cctype>
 using namespace std;
 
-#define SPTRACEVCDC_VERSION 1321	// Version number of this file AS_AN_INTEGER
-
-// Note cannot include systemperl.h, or we won't work with non-SystemC compiles
-#include "SpCommon.h"
+#define SPTRACEVCDC_VERSION 1330	// Version number of this file AS_AN_INTEGER
 
 class SpTraceVcd;
 class SpTraceCallInfo;

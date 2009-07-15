@@ -33,17 +33,16 @@
 #endif
 
 /* Necessary includes */
+#include "SpCommon.h"
+
 #include <sstream>	// For AUTOENUM
 using namespace std;
-#ifdef SYSTEMC_LESSER
+#ifdef SYSTEMC_LESSER	// Allow users to manually make a lighter weight systemc include file
 # include <systemc_lesser.h>
 #else
 # include <systemc.h>
 #endif
-#include <stdint.h>      // uint32_t
 #include <cstdarg>      // ... vaargs
-
-#include "SpCommon.h"
 
 //********************************************************************
 // Switches

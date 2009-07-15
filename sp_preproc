@@ -24,7 +24,7 @@ use vars qw ($Debug $VERSION $opt_makedeps $Opt_Lint $Exit_Status %Error_Unlink)
 
 $Opt_Lint = 1;
 
-$VERSION = '1.321';
+$VERSION = '1.330';
 
 #======================================================================
 # main
@@ -48,6 +48,7 @@ my $opt_tree;
 my $opt_trace_duplicates = 0;
 my $opt_write_verilog;
 my $opt_hier_only;
+my $opt_mdir = "";
 
 my $opt = new Verilog::Getopt(gcc_style=>1, vcs_style=>1);
 $opt->libext([".sp"]);
@@ -59,6 +60,7 @@ if (! GetOptions (
 	  "version"	=> sub { print "Version $VERSION\n"; exit(0); },
 	  "M:s"		=> \$opt_makedeps,
 	  "MMD:s"	=> \$opt_makedeps,
+	  "Mdir=s"	=> \$opt_mdir,
 	  "autos!"	=> \$opt_autos,
 	  "hier-only!"	=> \$opt_hier_only,
 	  "inline!"	=> \$opt_inline,
@@ -75,6 +77,8 @@ if (! GetOptions (
     )) {
     die "%Error: Bad usage, try 'sp_preproc --help'\n";
 }
+
+$opt_mdir .= "/" if $opt_mdir ne "" && $opt_mdir !~ m!/$!;
 
 ($opt_hier_only && ($opt_preproc || $opt_inline)) && die "%Error: -hier_only can't be used w/ --preproc or --inline";
 
@@ -125,9 +129,9 @@ $nl->exit_if_error();
 if ($opt_preproc) {
     foreach my $fileref ($nl->files()) {
 	next if $fileref->is_libcell();
-	my $filename_h = $fileref->basename .".h";
-	my $filename_c = $fileref->basename .".cpp";
-	my $filename_slow_c = $fileref->basename ."__Slow.cpp";
+	my $filename_h = $opt_mdir . $fileref->basename .".h";
+	my $filename_c = $opt_mdir . $fileref->basename .".cpp";
+	my $filename_slow_c = $opt_mdir . $fileref->basename ."__Slow.cpp";
 	$fileref->write( filename=> $filename_h,
 			 type=>'interface', expand_autos=>1,
 			 keep_timestamp=>1,);
@@ -150,7 +154,9 @@ if ($opt_inline) {
     }
 }
 if ($opt_makedeps) {
-    $nl->dependency_write($opt_makedeps);
+    my $filename = ($opt_makedeps ne "" ? $opt_makedeps
+		    : $opt_mdir."sppreproc.d");
+    $nl->dependency_write($filename);
 }
 
 $nl->exit_if_error();
@@ -362,7 +368,7 @@ faster generation of sp_lib files.
 Edit the existing source code "inline".  Similar to the Verilog-mode AUTOs.
 Use --inline --noautos to remove the expanded automatics.
 
-=item --libfile
+=item --libfile I<filename>
 
 Filename to write a list of sp_cells into, for later use as a --libcell to
 another sp_preproc run.
@@ -377,6 +383,17 @@ Files listed before --libcell will be preprocessed or inlined as
 appropriate.  Files after noexpand will only be used for resolving
 references, they will not be linked, linted, or otherwise checked.
 --nolibcell can be used to re-enable checking of subsequent files.
+
+=item --M I<filename>
+
+=item --MMD I<filename>
+
+Write dependencies in Makefile format to the specified filename.
+
+=item --Mdir I<dirname>
+
+Write preprocessor outputs to the specified directory instead of the
+current directory.
 
 =item --ncsc
 
@@ -421,9 +438,9 @@ Write the SystemC interconnections in Verilog format to the specified
 filename.  Note this does not include logic, it only contains module ports
 and cells.
 
-=item -M
+=item -M I<filename>
 
-Makes the dependency listing (similar to I<cpp -M>).
+Writes the dependency listing (similar to I<cpp -M>) to the specified filename.
 
 =item -DI<var>=I<value>
 

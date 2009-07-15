@@ -159,18 +159,6 @@ you need to install or upgrade the C<verilog-perl> package from CPAN.
 
 =item
 
-To trace sc_bv's, you must patch the SystemC library.  Type as root
-C<make sc_patch> and this will be done for you.  What this does is add
-an accessor function for getting at the raw data in the sc_bv class.
-(Using the preexisting public functions would require too much
-computational overhead.)
-
-This will also patch SystemC to work with Redhat 9 distributions (GCC
-3.2.2).  If you were not able to compile SystemC due to compile
-errors, it may now work.
-
-=item
-
 Type C<make> to compile SystemPerl.
 
 If you get a error message ``y.tab.c: error: parse error before

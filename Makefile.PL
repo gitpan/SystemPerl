@@ -23,9 +23,6 @@ install-local: manifypods
 	cp -R sp_makecheck \$(DIRPROJECT_PREFIX)/bin/sp_makecheck__notfound
 	cp systemc-mode.el \$(DIRPROJECT_PREFIX)/site-lisp
 
-sc_patch:
-	\$(PERL) patch.pl
-
 ## Maintainer use:
 preexist:
 	svnorcvs nexists \$(DISTNAME)_\$(VERSION_SYM)
@@ -82,11 +79,7 @@ WriteMakefile(
 	      );
 
 if (!$ENV{SYSTEMC}) {
-    warn "-Info: SystemC isn't in the environment, 'make test' won't work\n";
-} elsif (!-r "$ENV{SYSTEMC}/systemperl_patched") {
-    warn "-Info: Your SystemC distribution has NOT been patched to allow sc_bv\n";
-    warn "       tracing.  Type 'make sc_patch' to attempt the edits.\n";
-    warn "       See the README file for details.\n"
+    warn "-Info: SystemC isn't in the environment, 'make test' will skip tests\n";
 }
 
 my $mkv = `make --version`;

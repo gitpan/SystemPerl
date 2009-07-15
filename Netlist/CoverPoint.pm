@@ -4,13 +4,14 @@
 
 package SystemC::Netlist::CoverPoint;
 use Class::Struct;
+use Config;
 use Carp;
 
 use Verilog::Netlist;
 use Verilog::Netlist::Subclass;
 @ISA = qw(SystemC::Netlist::CoverPoint::Struct
 	  Verilog::Netlist::Subclass);
-$VERSION = '1.321';
+$VERSION = '1.330';
 use strict;
 
 # allow 64-bit values without bonking
@@ -473,6 +474,11 @@ sub validate_value {
 
     if ($str =~ /^0x[0-9a-fA-F]+$/) { # hex number
 	#print "recognized hex $str as ". (hex $str)."\n";
+	if (length $str > 2+16) {
+	    $self->error("Hex value of over 64 bits: $str\n");
+	} elsif (length $str > 2+8 && !_perl64()) {
+	    $self->error("Hex value of 64 bits; need a 64-bit Perl interpreter: $str\n");
+	}
 	return hex $str;
     } elsif ($str =~ /^\d+$/) { # decimal number
 	#print "recognized dec $str\n";
@@ -498,6 +504,12 @@ sub validate_value {
 	$self->error("parsed coverpoint bin value not a decimal or hex number: $str");
 	return 0;
     }
+}
+
+sub _perl64 {
+    return 0 if $ENV{SYSTEMPERL_WARN_PERL64};  # So we don't break 'make test' on 32 bits
+    return 1 if $Config{ivsize}>=8;
+    return 0;
 }
 
 sub make_standard_bins {

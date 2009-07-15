@@ -6,11 +6,6 @@
 # Lesser General Public License Version 3 or the Perl Artistic License Version 2.0.
 
 my $dir = "test_dir";
-if ($Use_SCL) {
-    print "*** Using SCLITE\n";
-    $ENV{SYSTEMC} = "../sclite";
-    $dir = "test_scl";
-}
 
 unlink glob("$dir/logs/*");
 

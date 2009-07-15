@@ -24,6 +24,9 @@
 #ifndef _SP_LOG_H_
 #define _SP_LOG_H_ 1
 
+#include "SpCommon.h"
+#include <cstdio>
+
 #ifndef UTIL_ATTR_PRINTF
 # ifdef __GNUC__
 /// Declare a routine to have PRINTF format error checking
@@ -32,8 +35,6 @@
 #  define UTIL_ATTR_PRINTF(fmtArgNum)
 # endif
 #endif
-
-#include <cstdio>
 
 // Some functions may be used by generic C compilers!
 #ifdef __cplusplus

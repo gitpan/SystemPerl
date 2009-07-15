@@ -15,7 +15,7 @@ use Verilog::Netlist::Subclass;
 use strict;
 use vars qw($Debug $Verbose $VERSION);
 
-$VERSION = '1.321';
+$VERSION = '1.330';
 
 ######################################################################
 #### Creation
@@ -24,7 +24,6 @@ sub new {
     my $class = shift;
     my $self = $class->SUPER::new
 	(sp_allow_output_tracing => undef,	# undef = set it automatically
-	 sp_allow_bv_tracing => undef,		# undef = set it automatically
 	 sp_trace_duplicates => 0,
 	 sc_version => undef,
 	 ncsc => undef,
@@ -115,9 +114,6 @@ sub _set_features {
     # Determine what features are in this SystemC version
     my $ver = $self->sc_version;
     my $patched = ($ENV{SYSTEMC} && -r "$ENV{SYSTEMC}/systemperl_patched");
-    if (!defined $self->{sp_allow_bv_tracing}) {
-	$self->{sp_allow_bv_tracing} = $patched;
-    }
     if (!defined $self->{sp_allow_output_tracing}) {
 	if (($self->sc_numeric_version||0) >= 2.000) {
 	    $self->{sp_allow_output_tracing} = 1;

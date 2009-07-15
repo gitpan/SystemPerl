@@ -6,7 +6,7 @@ package SystemC::Netlist::AutoTrace;
 use File::Basename;
 
 use SystemC::Netlist::Module;
-$VERSION = '1.321';
+$VERSION = '1.330';
 use strict;
 
 use vars qw ($Debug_Check_Code);
@@ -151,9 +151,6 @@ sub _net_ignore {
 				     && ($netref->array=~/^[0-9]/)
 				     && (($netref->array()||0)>32));
     my $scbv = $netref->is_sc_bv;
-    if ($scbv && !$netref->netlist->{sp_allow_bv_tracing}) {
-	return "Memory Vector - need patch";
-    }
     if (!$netref->simple_type) {
 	if ($netref->port && $netref->port->direction eq "out") {
 	    if (!$netref->netlist->{sp_allow_output_tracing}) {
@@ -208,7 +205,7 @@ sub _tracer_setup_accessor {
     my $accessor = "";	# Function call to get the value of the signal
     my $scbv = $netref->is_sc_bv;
     if ($scbv) {
-	$accessor .= "(((uint32_t*)(";
+	$accessor .= "(SP_SC_BV_DATAP(";
     }
     $accessor .= $orig_accessor.$netref->name;
     if ($netref->array) {
@@ -234,9 +231,7 @@ sub _tracer_setup_accessor {
 	}
     }
     if ($scbv) {
-	$accessor .= ".get_datap()))[0])";
-	$ignore or die "%Error: Should have ignored, memory vector,"
-	    if (!$ignore && !$netref->netlist->{sp_allow_bv_tracing});
+	$accessor .= ")[0])";
     }
 
     return $accessor;

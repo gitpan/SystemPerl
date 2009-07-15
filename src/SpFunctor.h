@@ -40,8 +40,7 @@
 #ifndef _VLFUNCTOR_H_
 #define _VLFUNCTOR_H_ 1
 
-#include <sys/types.h>	// uint32_t
-#include <stdint.h>	// uint32_t
+#include "SpCommon.h"
 using namespace std;
 
 //=============================================================================

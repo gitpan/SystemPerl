@@ -140,7 +140,6 @@ void SpTraceFile::trace (const unsigned int &, const sc_string &, const char **)
     DECL_TRACE_METHOD_B( long int )
     DECL_TRACE_METHOD_A( float )
     DECL_TRACE_METHOD_A( double )
-# ifndef _SC_LITE_
     DECL_TRACE_METHOD_A( sc_bit )
     DECL_TRACE_METHOD_A( sc_logic )
     DECL_TRACE_METHOD_A( sc_bool_vector )
@@ -155,7 +154,6 @@ void SpTraceFile::trace (const unsigned int &, const sc_string &, const char **)
     DECL_TRACE_METHOD_A( sc_signal_resolved_vector )
     DECL_TRACE_METHOD_A( sc_bv_ns::sc_bv_base )
     DECL_TRACE_METHOD_A( sc_bv_ns::sc_lv_base )
-# endif
 #endif
 
 #undef DECL_TRACE_METHOD_A

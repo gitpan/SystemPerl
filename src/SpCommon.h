@@ -24,6 +24,16 @@
 #ifndef _SPCOMMON_H_
 #define _SPCOMMON_H_ 1
 
+#include <sys/types.h>	// uint32_t
+#if defined(_WIN32) && !defined(__MINGW32__) && !defined(__CYGWIN__)
+typedef unsigned long uint32_t;
+typedef unsigned long long uint64_t;
+#endif
+
+#include <stdint.h>	// uint32_t
+#include <cctype>
+#include <cstdlib>	// NULL
+
 // Utilities here must NOT require SystemC headers!
 
 //=============================================================================
@@ -87,6 +97,9 @@
 //********************************************************************
 // Simple classes.  If get bigger, move to optional include
 
+// Some functions may be used by generic C compilers!
+#ifdef __cplusplus
+
 /// Templated class which constructs to zero.
 /// Originally used for easy pre-zeroing of data used for SpCoverage.
 /// SystemPerl 1.301 and later always zero the points when they are added.
@@ -100,6 +113,8 @@ template <class T> class SpZeroed { public:
 
 /// Uint32_t which constructs to zero.  (Backward compatible)
 typedef SpZeroed<uint32_t> SpUInt32Zeroed;
+
+#endif // __cplusplus
 
 //=============================================================================
 

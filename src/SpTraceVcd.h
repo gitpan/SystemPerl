@@ -29,6 +29,24 @@
 #include "systemperl.h"
 
 //=============================================================================
+// SP_SC_BV_DATAP
+// We want to get a pointer to m_data in the sc_bv_base class,
+// but it is protected.  So make an exposing class, then use
+// cast magic to get at it.  Saves patching get_datap in SystemC.
+
+#ifndef SP_SC_BV_DATAP
+# define SP_SC_BV_DATAP(bv) (SpScBvExposer::sp_datap(bv))
+class SpScBvExposer : public sc_bv_base {
+public:
+    static uint32_t* sp_datap(const sc_bv_base& base) {
+	return static_cast<const SpScBvExposer*>(&base)->sp_datatp(); }
+    uint32_t* sp_datatp() const { return (uint32_t*)(m_data); }
+    // Above reads this protected element in sc_bv_base:
+    //   sc_digit* m_data; // data array
+};
+#endif
+
+//=============================================================================
 // SpTraceFile
 ///  SystemPerl VCD Trace class
 ////
@@ -182,7 +200,6 @@ private:
     DECL_TRACE_METHOD_B( long int )
     DECL_TRACE_METHOD_A( float )
     DECL_TRACE_METHOD_A( double )
-#  ifndef _SC_LITE_
     DECL_TRACE_METHOD_A( sc_bit )
     DECL_TRACE_METHOD_A( sc_logic )
     DECL_TRACE_METHOD_A( sc_bool_vector )
@@ -197,7 +214,6 @@ private:
     DECL_TRACE_METHOD_A( sc_signal_resolved_vector )
     DECL_TRACE_METHOD_A( sc_bv_ns::sc_bv_base )
     DECL_TRACE_METHOD_A( sc_bv_ns::sc_lv_base )
-#  endif
 # endif
 
 # undef DECL_TRACE_METHOD_A

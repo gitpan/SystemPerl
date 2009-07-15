@@ -79,7 +79,7 @@ so must still point to a valid structure at that time.
 For example:
 
     // In the class declaration:
-    SpUInt32Zeroed m_fcCases[FsmState::MAX][FsmState::MAX]; // [old][new]
+    SpZeroed<uint32_t> m_fcCases[FsmState::MAX][FsmState::MAX]; // [old][new]
 
     ...
     // In the constructor:
@@ -256,9 +256,6 @@ waves files that AUTOTRACE creates.
 SP_TRACED may also be used on the member variables inside standard classes.
 This allows the class to be traced if it is used as the type of a
 sc_in/sc_out/sc_signal.  For a sample, see MySigStruct in the examples.
-
-Note you cannot trace output ports without patching the SystemC library,
-see the README file.
 
 =back
 
