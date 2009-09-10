@@ -24,7 +24,7 @@ use vars qw ($Debug $VERSION $opt_makedeps $Opt_Lint $Exit_Status %Error_Unlink)
 
 $Opt_Lint = 1;
 
-$VERSION = '1.330';
+$VERSION = '1.331';
 
 #======================================================================
 # main

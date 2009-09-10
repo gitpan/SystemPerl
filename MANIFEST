@@ -40,6 +40,7 @@ Parser/scgrammer.y
 Parser/sclex.l
 Parser/scparse.h
 Parser/typemap
+Parser/yaccfix
 README
 sp_includer
 sp_makecheck

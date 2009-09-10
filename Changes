@@ -2,6 +2,14 @@ Revision history for Perl extension SystemC::Netlist
 
 The contributors that suggested a given feature are shown in [].
 
+* SystemPerl 1.331 2009/09/10
+
+***	Traces are opened with O_NONBLOCK for faster writes. [Rodney Sinclair]
+
+****	Fix compilation and installation on MacOS 10.4. [Robert Guenzel]
+
+****	Fix link error in SpTraceVcd on Cadence Incisive. [Avner Fish]
+
 * SystemPerl 1.330 2009/07/14
 
 **	Patching SystemC is no longer required to trace sc_bvs.

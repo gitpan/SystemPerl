@@ -90,6 +90,13 @@ public:
 
 private:
     /// Fake outs for linker
+
+#ifdef NC_SYSTEMC
+    // Cadence Incisive has these as abstract functions so we must create them
+    virtual void set_time_unit( int exponent10_seconds ) {} // deprecated
+    virtual void set_time_unit( double v, sc_time_unit tu ) {}
+#endif
+
 //--------------------------------------------------
 # if (SYSTEMC_VERSION>=20050714)
     // SystemC 2.1.v1

@@ -138,7 +138,7 @@ void SpTraceVcd::openNext (bool incFilename) {
     if (m_filename[0]=='|') {
 	assert(0);	// Not supported yet.
     } else {
-	m_fd = ::open (m_filename.c_str(), O_CREAT|O_WRONLY|O_TRUNC|O_LARGEFILE, 0666);
+	m_fd = ::open (m_filename.c_str(), O_CREAT|O_WRONLY|O_TRUNC|O_LARGEFILE|O_NONBLOCK, 0666);
 	if (m_fd<0) {
 	    // User code can check isOpen()
 	    m_isOpen = false;
