@@ -392,7 +392,8 @@ void SpTraceVcd::declare (uint32_t code, const char* name, int arraynum,
 			  bool tri, bool bussed, int msb, int lsb) {
     if (!code) { SP_ABORT("%Error: internal trace problem, code 0 is illegal\n"); }
 
-    int codesNeeded = 1+int((msb-lsb+1)/32);
+    int bits = ((msb>lsb)?(msb-lsb):(lsb-msb))+1;
+    int codesNeeded = 1+int(bits/32);
     if (tri) codesNeeded *= 2;   // Space in change array for __en signals
 
     // Make sure array is large enough
@@ -402,7 +403,7 @@ void SpTraceVcd::declare (uint32_t code, const char* name, int arraynum,
     }
 
     // Save declaration info
-    SpTraceVcdSig sig = SpTraceVcdSig(code, (msb-lsb+1));
+    SpTraceVcdSig sig = SpTraceVcdSig(code, bits);
     m_sigs.push_back(sig);
 
     // Split name into basename
@@ -430,7 +431,7 @@ void SpTraceVcd::declare (uint32_t code, const char* name, int arraynum,
     // Print reference
     string decl = (m_evcd?"$var port ":"$var wire ");
     char buf [1000];
-    sprintf(buf, "%2d ", msb-lsb+1);
+    sprintf(buf, "%2d ", bits);
     decl += buf;
     if (m_evcd) {
 	sprintf(buf, "<%d", code);

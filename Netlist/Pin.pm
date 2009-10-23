@@ -12,7 +12,7 @@ use SystemC::Netlist::Net;
 use SystemC::Netlist::Cell;
 use SystemC::Netlist::Module;
 @ISA = qw(Verilog::Netlist::Pin);
-$VERSION = '1.331';
+$VERSION = '1.332';
 use strict;
 
 ######################################################################

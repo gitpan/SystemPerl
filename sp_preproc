@@ -24,7 +24,7 @@ use vars qw ($Debug $VERSION $opt_makedeps $Opt_Lint $Exit_Status %Error_Unlink)
 
 $Opt_Lint = 1;
 
-$VERSION = '1.331';
+$VERSION = '1.332';
 
 #======================================================================
 # main
@@ -296,7 +296,7 @@ sub mod_levels {
 sub mod_levels_recurse {
     my $modref = shift;
     my $level = shift;
-    if ($level>=($modref->userdata('level'))) {
+    if ($level>=($modref->userdata('level')||0)) {
 	$modref->userdata('level',$level);
     }
     if ($level>100) {

@@ -97,6 +97,9 @@ private:
     virtual void set_time_unit( double v, sc_time_unit tu ) {}
 #endif
 
+// Alias as docs mention SpTraceVcdFile to match SpTraceVcdCFile
+typedef SpTraceFile SpTraceVcdFile;
+
 //--------------------------------------------------
 # if (SYSTEMC_VERSION>=20050714)
     // SystemC 2.1.v1

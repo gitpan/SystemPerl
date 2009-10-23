@@ -35,7 +35,7 @@
 #include <map>
 using namespace std;
 
-#define SPTRACEVCDC_VERSION 1331	// Version number of this file AS_AN_INTEGER
+#define SPTRACEVCDC_VERSION 1332	// Version number of this file AS_AN_INTEGER
 
 class SpTraceVcd;
 class SpTraceCallInfo;

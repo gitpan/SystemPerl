@@ -15,7 +15,7 @@ use Verilog::Netlist::Subclass;
 use strict;
 use vars qw ($Debug $Default_Self $VERSION);
 
-$VERSION = '1.331';
+$VERSION = '1.332';
 
 structs('_new_base',
 	'SystemC::Template::Struct'

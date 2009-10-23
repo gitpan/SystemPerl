@@ -2,6 +2,10 @@ Revision history for Perl extension SystemC::Netlist
 
 The contributors that suggested a given feature are shown in [].
 
+* SystemPerl 1.332 2009/10/22
+
+****	Fix tracing of little endian [0:15] bit vectors.
+
 * SystemPerl 1.331 2009/09/10
 
 ***	Traces are opened with O_NONBLOCK for faster writes. [Rodney Sinclair]
@@ -143,7 +147,7 @@ The contributors that suggested a given feature are shown in [].
 
 * SystemPerl 1.271 2006/7/12
 
-*****	Fix missing install of SystemC::Coverage::Item, rt20423.
+*****	Fix missing install of SystemC::Coverage::Item, bug111.
 
 * SystemPerl 1.270 2006/7/11
 
