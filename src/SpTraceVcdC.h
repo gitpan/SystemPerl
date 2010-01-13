@@ -3,7 +3,7 @@
 //
 // THIS MODULE IS PUBLICLY LICENSED
 //
-// Copyright 2001-2009 by Wilson Snyder.  This program is free software;
+// Copyright 2001-2010 by Wilson Snyder.  This program is free software;
 // you can redistribute it and/or modify it under the terms of either the GNU
 // Lesser General Public License Version 3 or the Perl Artistic License Version 2.0.
 //
@@ -35,7 +35,7 @@
 #include <map>
 using namespace std;
 
-#define SPTRACEVCDC_VERSION 1332	// Version number of this file AS_AN_INTEGER
+#define SPTRACEVCDC_VERSION 1333	// Version number of this file AS_AN_INTEGER
 
 class SpTraceVcd;
 class SpTraceCallInfo;

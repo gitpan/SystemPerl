@@ -2,6 +2,10 @@ Revision history for Perl extension SystemC::Netlist
 
 The contributors that suggested a given feature are shown in [].
 
+* SystemPerl 1.333 2010/01/12
+
+****	Fix expanding modules called from AUTOINOUTMODULEs, broke in 1.330.
+
 * SystemPerl 1.332 2009/10/22
 
 ****	Fix tracing of little endian [0:15] bit vectors.
@@ -503,7 +507,7 @@ DESCRIPTION: Documentation on change history for this package
 
 This uses outline mode in Emacs.  See C-h m [M-x describe-mode].
 
-Copyright 2001-2009 by Wilson Snyder.  This program is free software; you
+Copyright 2001-2010 by Wilson Snyder.  This program is free software; you
 can redistribute it and/or modify it under the terms of either the GNU
 Lesser General Public License Version 3 or the Perl Artistic License
 Version 2.0.

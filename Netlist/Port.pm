@@ -8,7 +8,7 @@ use Class::Struct;
 use Verilog::Netlist;
 use SystemC::Netlist;
 @ISA = qw(Verilog::Netlist::Port);
-$VERSION = '1.332';
+$VERSION = '1.333';
 use strict;
 
 ######################################################################
@@ -26,7 +26,8 @@ sub _decl_order {
 
 sub iotype {
     # Type including I/O direction
-    return "sc_".$_[0]->direction."<".($_[0]->net->sc_type || $_[0]->data_type)." >";
+    return "sc_".$_[0]->direction."<".(($_[0]->net && $_[0]->net->sc_type)
+				       || $_[0]->data_type)." >";
 }
 
 ######################################################################
@@ -72,7 +73,7 @@ SystemPerl is part of the L<http://www.veripool.org/> free SystemC software
 tool suite.  The latest version is available from CPAN and from
 L<http://www.veripool.org/systemperl>.
 
-Copyright 2001-2009 by Wilson Snyder.  This package is free software; you
+Copyright 2001-2010 by Wilson Snyder.  This package is free software; you
 can redistribute it and/or modify it under the terms of either the GNU
 Lesser General Public License Version 3 or the Perl Artistic License
 Version 2.0.

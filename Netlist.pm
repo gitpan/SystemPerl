@@ -15,7 +15,7 @@ use Verilog::Netlist::Subclass;
 use strict;
 use vars qw($Debug $Verbose $VERSION);
 
-$VERSION = '1.332';
+$VERSION = '1.333';
 
 ######################################################################
 #### Creation
@@ -142,15 +142,30 @@ sub add_coverpoint_page_name {
 
 sub autos {
     my $self = shift;
-    foreach my $modref ($self->modules) {
-	next if $modref->is_libcell();
-	$modref->autos1();
+
+    # Autos will load new modules, which we must auto in turn, so repeat until everybody's happy
+    my %did_autos;
+    while (1) {
+	my $did_one;
+	foreach my $modref ($self->modules) {
+	    next if $did_autos{$modref->name};
+	    next if $modref->is_libcell();
+	    $modref->autos1();
+	    $did_autos{$modref->name} = 1;
+	    $did_one = 1;
+	}
+	if ($did_one) {
+	    $self->link();  # Pick up pins autos1 created
+	} else {
+	    last;
+	}
     }
-    $self->link();  # Pick up pins autos1 created
+
     foreach my $modref ($self->modules) {
 	next if $modref->is_libcell();
 	$modref->autos2();
     }
+
     $self->link();
 }
 
@@ -381,7 +396,7 @@ SystemPerl is part of the L<http://www.veripool.org/> free SystemC software
 tool suite.  The latest version is available from CPAN and from
 L<http://www.veripool.org/systemperl>.
 
-Copyright 2001-2009 by Wilson Snyder.  This package is free software; you
+Copyright 2001-2010 by Wilson Snyder.  This package is free software; you
 can redistribute it and/or modify it under the terms of either the GNU
 Lesser General Public License Version 3 or the Perl Artistic License
 Version 2.0.
