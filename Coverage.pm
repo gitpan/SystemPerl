@@ -18,7 +18,7 @@ use vars qw($_Default_Self);
 ######################################################################
 #### Configuration Section
 
-$VERSION = '1.333';
+$VERSION = '1.334';
 
 use constant DEFAULT_FILENAME => 'logs/coverage.pl';
 

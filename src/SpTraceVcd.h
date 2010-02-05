@@ -20,6 +20,7 @@
 /// AUTHOR:  Wilson Snyder
 ///
 //=============================================================================
+// SPDIFF_OFF
 
 #ifndef _SPTRACEVCD_H_
 #define _SPTRACEVCD_H_ 1
@@ -46,10 +47,10 @@ public:
 };
 #endif
 
+// SPDIFF_ON
 //=============================================================================
 // SpTraceFile
-///  SystemPerl VCD Trace class
-////
+///
 /// This class is passed to the SystemC simulation kernel, just like a
 /// documented SystemC trace format.
 
@@ -97,8 +98,10 @@ private:
     virtual void set_time_unit( double v, sc_time_unit tu ) {}
 #endif
 
+// SPDIFF_OFF
 // Alias as docs mention SpTraceVcdFile to match SpTraceVcdCFile
 typedef SpTraceFile SpTraceVcdFile;
+// SPDIFF_ON
 
 //--------------------------------------------------
 # if (SYSTEMC_VERSION>=20050714)

@@ -15,7 +15,7 @@ use Verilog::Netlist::Subclass;
 use strict;
 use vars qw($Debug $Verbose $VERSION);
 
-$VERSION = '1.333';
+$VERSION = '1.334';
 
 ######################################################################
 #### Creation

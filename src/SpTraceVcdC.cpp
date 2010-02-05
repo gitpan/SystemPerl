@@ -20,6 +20,7 @@
 /// AUTHOR:  Wilson Snyder
 ///
 //=============================================================================
+// SPDIFF_OFF
 
 #include <ctime>
 #include <iostream>
@@ -41,8 +42,13 @@
 #include "SpCommon.h"
 #include "SpTraceVcdC.h"
 
-#ifndef O_LARGEFILE
+// SPDIFF_ON
+
+#ifndef O_LARGEFILE // For example on WIN32
 # define O_LARGEFILE 0
+#endif
+#ifndef O_NONBLOCK
+# define O_NONBLOCK 0
 #endif
 
 //=============================================================================
@@ -51,7 +57,7 @@
 vector<SpTraceVcd*>	SpTraceVcd::s_vcdVecp;	///< List of all created traces
 
 //=============================================================================
-// SpTraceCallback
+// SpTraceCallInfo
 /// Internal callback routines for each module being traced.
 ////
 /// Each SystemPerl module that wishes to be traced registers a set of
@@ -67,7 +73,8 @@ protected:
     void*		m_userthis;	///< Fake "this" for caller
     uint32_t		m_code;		///< Starting code number
     // CREATORS
-    SpTraceCallInfo (SpTraceCallback_t icb, SpTraceCallback_t fcb, SpTraceCallback_t changecb,
+    SpTraceCallInfo (SpTraceCallback_t icb, SpTraceCallback_t fcb,
+		     SpTraceCallback_t changecb,
 		     void* ut, uint32_t code)
 	: m_initcb(icb), m_fullcb(fcb), m_changecb(changecb), m_userthis(ut), m_code(code) {};
 };
@@ -80,12 +87,14 @@ protected:
 void SpTraceVcd::open (const char* filename) {
     if (isOpen()) return;
 
+    // SPDIFF_OFF
     // Assertions, as we cast enum to uint32_t pointers in AutoTrace.pm
     enum SpTraceVcd_enumtest { FOO = 1 };
     if (sizeof(SpTraceVcd_enumtest) != sizeof(uint32_t)) {
 	SP_ABORT("%Error: SpTraceVcd::open cast assumption violated\n");
     }
 
+    // SPDIFF_ON
     // Set member variables
     m_filename = filename;
     s_vcdVecp.push_back(this);
@@ -113,7 +122,7 @@ void SpTraceVcd::openNext (bool incFilename) {
     if (incFilename) {
 	// Find _0000.{ext} in filename
 	string name = m_filename;
-	int pos=name.rfind(".");
+	size_t pos=name.rfind(".");
 	if (pos>8 && 0==strncmp("_cat",name.c_str()+pos-8,4)
 	    && isdigit(name.c_str()[pos-4])
 	    && isdigit(name.c_str()[pos-3])
@@ -138,7 +147,8 @@ void SpTraceVcd::openNext (bool incFilename) {
     if (m_filename[0]=='|') {
 	assert(0);	// Not supported yet.
     } else {
-	m_fd = ::open (m_filename.c_str(), O_CREAT|O_WRONLY|O_TRUNC|O_LARGEFILE|O_NONBLOCK, 0666);
+	m_fd = ::open (m_filename.c_str(), O_CREAT|O_WRONLY|O_TRUNC|O_LARGEFILE|O_NONBLOCK
+		       , 0666);
 	if (m_fd<0) {
 	    // User code can check isOpen()
 	    m_isOpen = false;
@@ -204,7 +214,7 @@ void SpTraceVcd::printQuad (uint64_t n) {
 void SpTraceVcd::printTime (uint64_t timeui) {
     // VCD file format specification does not allow non-integers for timestamps
     // Dinotrace doesn't mind, but Cadence vvision seems to choke
-    if (timeui < m_timeLastDump) {
+    if (SP_UNLIKELY(timeui < m_timeLastDump)) {
 	timeui = m_timeLastDump;
 	static bool backTime = false;
 	if (!backTime) {
@@ -220,7 +230,7 @@ void SpTraceVcd::bufferFlush () {
     // We add output data to m_writep.
     // When it gets nearly full we dump it using this routine which calls write()
     // This is much faster than using buffered I/O
-    if (!isOpen()) return;
+    if (SP_UNLIKELY(!isOpen())) return;
     char* wp = m_wrBufp;
     while (1) {
 	size_t remaining = (m_writep - wp);
@@ -232,8 +242,9 @@ void SpTraceVcd::bufferFlush () {
 	    m_wroteBytes += got;
 	} else if (got < 0) {
 	    if (errno != EAGAIN && errno != EINTR) {
-		/* write failed, presume error (perhaps out of disk space) */
-		SP_ABORT("%Error: SpTraceVcd::bufferFlush: "<<strerror(errno)<<endl);
+		// write failed, presume error (perhaps out of disk space)
+		string msg = (string)"SpTraceVcd::bufferFlush: "+strerror(errno);
+		SP_ABORT("%Error: "+msg<<endl);
 		closeErr();
 		break;
 	    }
@@ -325,7 +336,7 @@ void SpTraceVcd::dumpHeader () {
     // We detect the spaces in module names to determine hierarchy.  This
     // allows signals to be declared without fixed ordering, which is
     // required as Verilog signals might be separately declared from
-    // SP_TRACE signals.
+    // "SP_TRACE" signals.
 
     // Print the signal names
     const char* lastName = "";
@@ -388,8 +399,8 @@ void SpTraceVcd::module (string name) {
     m_modName = name;
 }
 
-void SpTraceVcd::declare (uint32_t code, const char* name, int arraynum,
-			  bool tri, bool bussed, int msb, int lsb) {
+void SpTraceVcd::declare (uint32_t code, const char* name, const char* wirep,
+			  int arraynum, bool tri, bool bussed, int msb, int lsb) {
     if (!code) { SP_ABORT("%Error: internal trace problem, code 0 is illegal\n"); }
 
     int bits = ((msb>lsb)?(msb-lsb):(lsb-msb))+1;
@@ -429,9 +440,10 @@ void SpTraceVcd::declare (uint32_t code, const char* name, int arraynum,
     hiername += "\t"+basename;
 
     // Print reference
-    string decl = (m_evcd?"$var port ":"$var wire ");
+    string decl = "$var ";
+    if (m_evcd) decl += "port"; else decl += wirep;  // usually "wire"
     char buf [1000];
-    sprintf(buf, "%2d ", bits);
+    sprintf(buf, " %2d ", bits);
     decl += buf;
     if (m_evcd) {
 	sprintf(buf, "<%d", code);
@@ -455,21 +467,44 @@ void SpTraceVcd::declare (uint32_t code, const char* name, int arraynum,
 }
 
 void SpTraceVcd::declBit      (uint32_t code, const char* name, int arraynum)
-{  declare (code, name, arraynum, false, false, 0, 0); }
+{  declare (code, name, "wire", arraynum, false, false, 0, 0); }
 void SpTraceVcd::declBus      (uint32_t code, const char* name, int arraynum, int msb, int lsb)
-{  declare (code, name, arraynum, false, true, msb, lsb); }
+{  declare (code, name, "wire", arraynum, false, true, msb, lsb); }
 void SpTraceVcd::declQuad     (uint32_t code, const char* name, int arraynum, int msb, int lsb)
-{  declare (code, name, arraynum, false, true, msb, lsb); }
+{  declare (code, name, "wire", arraynum, false, true, msb, lsb); }
 void SpTraceVcd::declArray    (uint32_t code, const char* name, int arraynum, int msb, int lsb)
-{  declare (code, name, arraynum, false, true, msb, lsb); }
+{  declare (code, name, "wire", arraynum, false, true, msb, lsb); }
 void SpTraceVcd::declTriBit   (uint32_t code, const char* name, int arraynum)
-{  declare (code, name, arraynum, true, false, 0, 0); }
+{  declare (code, name, "wire", arraynum, true, false, 0, 0); }
 void SpTraceVcd::declTriBus   (uint32_t code, const char* name, int arraynum, int msb, int lsb)
-{  declare (code, name, arraynum, true, true, msb, lsb); }
+{  declare (code, name, "wire", arraynum, true, true, msb, lsb); }
 void SpTraceVcd::declTriQuad  (uint32_t code, const char* name, int arraynum, int msb, int lsb)
-{  declare (code, name, arraynum, true, true, msb, lsb); }
+{  declare (code, name, "wire", arraynum, true, true, msb, lsb); }
 void SpTraceVcd::declTriArray (uint32_t code, const char* name, int arraynum, int msb, int lsb)
-{  declare (code, name, arraynum, true, true, msb, lsb); }
+{  declare (code, name, "wire", arraynum, true, true, msb, lsb); }
+void SpTraceVcd::declFloat    (uint32_t code, const char* name, int arraynum)
+{  declare (code, name, "real", arraynum, false, false, 31, 0); }
+void SpTraceVcd::declDouble   (uint32_t code, const char* name, int arraynum)
+{  declare (code, name, "real", arraynum, false, false, 63, 0); }
+
+//=============================================================================
+
+void SpTraceVcd::fullDouble (uint32_t code, const double newval) {
+    (*((double*)&m_sigs_oldvalp[code])) = newval;
+    // Buffer can't overflow; we have at least bufferInsertSize() bytes (>>>16 bytes)
+    sprintf(m_writep, "r%.16g", newval);
+    m_writep += strlen(m_writep);
+    *m_writep++=' '; printCode(code); *m_writep++='\n';
+    bufferCheck();
+}
+void SpTraceVcd::fullFloat (uint32_t code, const float newval) {
+    (*((float*)&m_sigs_oldvalp[code])) = newval;
+    // Buffer can't overflow; we have at least bufferInsertSize() bytes (>>>16 bytes)
+    sprintf(m_writep, "r%.16g", (double)newval);
+    m_writep += strlen(m_writep);
+    *m_writep++=' '; printCode(code); *m_writep++='\n';
+    bufferCheck();
+}
 
 //=============================================================================
 // Callbacks
@@ -478,8 +513,9 @@ void SpTraceVcd::addCallback (
     SpTraceCallback_t initcb, SpTraceCallback_t fullcb, SpTraceCallback_t changecb,
     void* userthis)
 {
-    if (isOpen()) {
-	SP_ABORT("%Error: SpTraceVcd::"<<__FUNCTION__<<" called with already open file\n");
+    if (SP_UNLIKELY(isOpen())) {
+	string msg = (string)"Internal: "+__FILE__+"::"+__FUNCTION__+" called with already open file";
+	SP_ABORT("%Error: "+msg+"\n");
     }
     SpTraceCallInfo* vci = new SpTraceCallInfo(initcb, fullcb, changecb, userthis, nextCode());
     m_callbacks.push_back(vci);
@@ -499,12 +535,12 @@ void SpTraceVcd::dumpFull (uint64_t timeui) {
 
 void SpTraceVcd::dump (uint64_t timeui) {
     if (!isOpen()) return;
-    if (m_fullDump) {
+    if (SP_UNLIKELY(m_fullDump)) {
 	m_fullDump = false;	// No need for more full dumps
 	dumpFull(timeui);
 	return;
     }
-    if (m_rolloverMB && m_wroteBytes > this->m_rolloverMB) {
+    if (SP_UNLIKELY(m_rolloverMB && m_wroteBytes > this->m_rolloverMB)) {
 	openNext(true);
 	if (!isOpen()) return;
     }
@@ -539,12 +575,13 @@ void SpTraceVcd::flush_all() {
 //======================================================================
 //======================================================================
 
-#if SPTRACEVCD_TEST
+#ifdef SPTRACEVCD_TEST
 uint32_t v1, v2, s1, s2[3];
 uint32_t tri96[3];
 uint32_t tri96__tri[3];
 uint8_t ch;
 uint64_t timestamp = 1;
+double doub = 0;
 
 void vcdInit (SpTraceVcd* vcdp, void* userthis, uint32_t code) {
     vcdp->scopeEscape('.');
@@ -563,6 +600,8 @@ void vcdInit (SpTraceVcd* vcdp, void* userthis, uint32_t code) {
      vcdp->declTriBus   (0x12, "io5", -1,4,0);
      vcdp->declTriArray (0x16, "io96",-1,95,0);
     // Note need to add 6 for next code.
+     vcdp->declDouble   (0x1c, "doub",-1);
+    // Note need to add 2 for next code.
 }
 
 void vcdFull (SpTraceVcd* vcdp, void* userthis, uint32_t code) {
@@ -574,6 +613,7 @@ void vcdFull (SpTraceVcd* vcdp, void* userthis, uint32_t code) {
     vcdp->fullTriBit   (0x10, tri96[0]&1,    tri96__tri[0]&1);
     vcdp->fullTriBus   (0x12, tri96[0]&0x1f, tri96__tri[0]&0x1f,  5);
     vcdp->fullTriArray (0x16, tri96,         tri96__tri,          96);
+    vcdp->fullDouble(0x1c, doub);
 }
 
 void vcdChange (SpTraceVcd* vcdp, void* userthis, uint32_t code) {
@@ -585,6 +625,7 @@ void vcdChange (SpTraceVcd* vcdp, void* userthis, uint32_t code) {
     vcdp->chgTriBit   (0x10, tri96[0]&1,   tri96__tri[0]&1);
     vcdp->chgTriBus   (0x12, tri96[0]&0x1f, tri96__tri[0]&0x1f, 5);
     vcdp->chgTriArray (0x16, tri96,         tri96__tri,         96);
+    vcdp->chgDouble   (0x1c, doub);
 }
 
 main() {
@@ -595,6 +636,7 @@ main() {
     tri96[2] = tri96[1] = tri96[0] = 0;
     tri96__tri[2] = tri96__tri[1] = tri96__tri[0] = ~0;
     ch = 0;
+    doub = 0;
     {
 	SpTraceVcdCFile* vcdp = new SpTraceVcdCFile;
 	vcdp->spTrace()->addCallback (&vcdInit, &vcdFull, &vcdChange, 0);
@@ -604,16 +646,19 @@ main() {
 	v1 = 0xfff;
 	tri96[2] = 4; tri96[1] = 2; tri96[0] = 1;
 	tri96__tri[2] = tri96__tri[1] = tri96__tri[0] = ~0;  // Still tri
+	doub = 1.5;
 	vcdp->dump(timestamp++);
 	v2 = 0x1;
 	s2[1] = 2;
 	tri96__tri[2] = tri96__tri[1] = tri96__tri[0] = 0; // enable w/o data change
+	doub = -1.66e13;
 	vcdp->dump(timestamp++);
 	ch = 2;
 	tri96[2] = ~4; tri96[1] = ~2; tri96[0] = ~1;
+	doub = -3.33e-13;
 	vcdp->dump(timestamp++);
 	vcdp->dump(timestamp++);
-# if SPTRACEVCD_TEST_64BIT
+# ifdef SPTRACEVCD_TEST_64BIT
 	uint64_t bytesPerDump = 15ULL;
 	for (uint64_t i=0; i<((1ULL<<32) / bytesPerDump); i++) {
 	    v1 = i;

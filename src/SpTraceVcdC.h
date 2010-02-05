@@ -20,6 +20,7 @@
 /// AUTHOR:  Wilson Snyder
 ///
 //=============================================================================
+// SPDIFF_OFF
 
 #ifndef _SPTRACEVCDC_H_
 #define _SPTRACEVCDC_H_ 1
@@ -35,11 +36,12 @@
 #include <map>
 using namespace std;
 
-#define SPTRACEVCDC_VERSION 1333	// Version number of this file AS_AN_INTEGER
+#define SPTRACEVCDC_VERSION 1334	// Version number of this file AS_AN_INTEGER
 
 class SpTraceVcd;
 class SpTraceCallInfo;
 
+// SPDIFF_ON
 //=============================================================================
 // SpTraceVcdSig
 /// Internal data on one signal being traced.
@@ -90,12 +92,13 @@ private:
     NameMap*			m_namemapp;	///< List of names for the header
     static vector<SpTraceVcd*>	s_vcdVecp;	///< List of all created traces
 
-    size_t	bufferSize() { return 256*1024; }  // See below for slack calculation
+    inline size_t bufferSize() { return 256*1024; }  // See below for slack calculation
+    inline size_t bufferInsertSize() { return 16*1024; }
     void bufferFlush();
     void bufferCheck() {
 	// Flush the write buffer if there's not enough space left for new information
 	// We only call this once per vector, so we need enough slop for a very wide "b###" line
-	if (m_writep > (m_wrBufp+(bufferSize()-16*1024))) {
+	if (SP_UNLIKELY(m_writep > (m_wrBufp+(bufferSize()-bufferInsertSize())))) {
 	    bufferFlush();
 	}
     }
@@ -106,7 +109,8 @@ private:
     void printStr (const char* str);
     void printQuad (uint64_t n);
     void printTime (uint64_t timeui);
-    void declare (uint32_t code, const char* name, int arraynum, bool tri, bool bussed, int msb, int lsb);
+    void declare (uint32_t code, const char* name, const char* wirep,
+		  int arraynum, bool tri, bool bussed, int msb, int lsb);
 
     void dumpHeader();
     void dumpPrep (uint64_t timeui);
@@ -179,7 +183,8 @@ public:
     void dumpSeconds (double secs) { dump((uint64_t)(secs * m_timeRes)); }
 
     /// Inside dumping routines, declare callbacks for tracings
-    void addCallback (SpTraceCallback_t init, SpTraceCallback_t full, SpTraceCallback_t change,
+    void addCallback (SpTraceCallback_t init, SpTraceCallback_t full,
+		      SpTraceCallback_t change,
 		      void* userthis);
 
     /// Inside dumping routines, declare a module
@@ -193,6 +198,8 @@ public:
     void declTriBus   (uint32_t code, const char* name, int arraynum, int msb, int lsb);
     void declTriQuad  (uint32_t code, const char* name, int arraynum, int msb, int lsb);
     void declTriArray (uint32_t code, const char* name, int arraynum, int msb, int lsb);
+    void declDouble   (uint32_t code, const char* name, int arraynum);
+    void declFloat    (uint32_t code, const char* name, int arraynum);
     //	... other module_start for submodules (based on cell name)
 
     /// Inside dumping routines, dump one signal
@@ -275,6 +282,8 @@ public:
 	*m_writep++=' '; printCode(code); *m_writep++='\n';
 	bufferCheck();
     }
+    void fullDouble (uint32_t code, const double newval);
+    void fullFloat (uint32_t code, const float newval);
 
     /// Inside dumping routines, dump one signal as unknowns
     /// Presently this code doesn't change the oldval vector.
@@ -364,6 +373,16 @@ public:
 		fullTriArray (code,newvalp,newtrip,bits);
 		return;
 	    }
+	}
+    }
+    inline void chgDouble (uint32_t code, const double newval) {
+	if (SP_UNLIKELY((*((double*)&m_sigs_oldvalp[code])) != newval)) {
+	    fullDouble (code, newval);
+	}
+    }
+    inline void chgFloat (uint32_t code, const float newval) {
+	if (SP_UNLIKELY((*((float*)&m_sigs_oldvalp[code])) != newval)) {
+	    fullFloat (code, newval);
 	}
     }
 };

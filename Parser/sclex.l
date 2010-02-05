@@ -249,12 +249,12 @@ FLOATNUM	[0-9]+"."*[0-9]*[eE]-?[0-9]+
 void sclex_ppline (const char* line) {
     /* Passed string which looks like #line {##} "{filename}" */
     if (0==strncmp ("#line",line,5)) { line += 5; }
-    while (*line && isspace(*line)) line++;
+    while (*line && isspace((int)*line)) line++;
 
-    if (isdigit (*line)) {
+    if (isdigit ((int)*line)) {
 	scParserLex.lineno = atoi(line);
-	while (*line && isdigit(*line)) line++;
-	while (*line && isspace(*line)) line++;
+	while (*line && isdigit((int)*line)) line++;
+	while (*line && isspace((int)*line)) line++;
 	if (*line == '"') {
 	    char *cp;
 	    line++;

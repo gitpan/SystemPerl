@@ -2,6 +2,12 @@ Revision history for Perl extension SystemC::Netlist
 
 The contributors that suggested a given feature are shown in [].
 
+* SystemPerl 1.334 2009/02/05
+
+****	Add tracing doubles and floats to SpTraceVcdC.
+
+****	Fix MSVC++ 2008 compile issues, bug209.  [Amir Gonnen]
+
 * SystemPerl 1.333 2010/01/12
 
 ****	Fix expanding modules called from AUTOINOUTMODULEs, broke in 1.330.

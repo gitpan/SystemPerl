@@ -29,7 +29,7 @@
 #define _SYSTEMPERL_H_
 
 #ifdef _VERILATED_H_
-# error "You must include systemperl.h before verilator.h"
+# error "You must include systemperl.h before verilated.h"
 #endif
 
 /* Necessary includes */

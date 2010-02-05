@@ -17,12 +17,12 @@ BEGIN { require "t/test_utils.pl"; }
 our $Large_Temp_Dir = "/local/test_dir";
 
 print "Building example...\n";
-if ($Config{archname} !~ /linux/
-    || !$ENV{SYSTEMC}) {
-    print "Skipping: Harmless; Not linux with systemc installed\n";
-    skip("skip Harmless; Not linux or missing SystemC",1);
-    skip("skip Harmless; Not linux or missing SystemC",1);
-    skip("skip Harmless; Not linux or missing SystemC",1);
+if ($Config{archname} !~ /linux/) {
+    # Test doesn't need SystemC
+    print "Skipping: Harmless; Not linux\n";
+    skip("skip Harmless; Not linux",1);
+    skip("skip Harmless; Not linux",1);
+    skip("skip Harmless; Not linux",1);
 } else {
     run_system ("cd test_dir "
 		."&& g++ -ggdb -D_LARGEFILE64_SOURCE -DSPTRACEVCD_TEST ../src/SpTraceVcdC.cpp -o SpTraceVcdC "

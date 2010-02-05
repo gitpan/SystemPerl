@@ -25,12 +25,13 @@
 #define _SPCOMMON_H_ 1
 
 #include <sys/types.h>	// uint32_t
-#if defined(_WIN32) && !defined(__MINGW32__) && !defined(__CYGWIN__)
-typedef unsigned long uint32_t;
-typedef unsigned long long uint64_t;
+#if defined(_MSC_VER)
+typedef unsigned __int64 uint64_t;
+typedef unsigned __int32 uint32_t;
+#else
+#include <stdint.h>	// uint32_t
 #endif
 
-#include <stdint.h>	// uint32_t
 #include <cctype>
 #include <cstdlib>	// NULL
 
