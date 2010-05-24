@@ -64,6 +64,7 @@ t/00_pod.t
 t/01_manifest.t
 t/02_help.t
 t/03_spaces.t
+t/05_yaml.t
 t/10_template.in
 t/10_template.out
 t/10_template.t

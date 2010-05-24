@@ -2,7 +2,15 @@ Revision history for Perl extension SystemC::Netlist
 
 The contributors that suggested a given feature are shown in [].
 
-* SystemPerl 1.334 2009/02/05
+* SystemPerl 1.335 2010/05/24
+
+****	Fix make parallel builds, bug255. [Petr Pisar]
+
+****	Fix Pod::Usage dependency, rt51024.  [Andreas Koenig]
+
+****	Fix trace files with empty modules crashing some viewers.
+
+* SystemPerl 1.334 2010/02/05
 
 ****	Add tracing doubles and floats to SpTraceVcdC.
 

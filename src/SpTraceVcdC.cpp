@@ -160,6 +160,39 @@ void SpTraceVcd::openNext (bool incFilename) {
     m_wroteBytes = 0;
 }
 
+void SpTraceVcd::makeNameMap() {
+    // Take signal information from each module and build m_namemapp
+    m_namemapp = new NameMap;
+    for (uint32_t ent = 0; ent< m_callbacks.size(); ent++) {
+	SpTraceCallInfo *cip = m_callbacks[ent];
+	cip->m_code = nextCode();
+	(cip->m_initcb) (this, cip->m_userthis, cip->m_code);
+    }
+
+    // Though not speced, it's illegal to generate a vcd with signals
+    // not under any module - it crashes at least two viewers.
+    // If no scope was specified, prefix everything with a "top"
+    // This comes from user instantiations with no name - IE Vtop("").
+    bool nullScope = false;
+    for (NameMap::iterator it=m_namemapp->begin(); it!=m_namemapp->end(); ++it) {
+	const char* hiername = (*it).first.c_str();
+	if (hiername[0] == '\t') nullScope=true;
+    }
+    if (nullScope) {
+	NameMap* newmapp = new NameMap;
+	for (NameMap::iterator it=m_namemapp->begin(); it!=m_namemapp->end(); ++it) {
+	    const string& hiername = it->first;
+	    const string& decl     = it->second;
+	    string newname = string("top");
+	    if (hiername[0] != '\t') newname += ' ';
+	    newname += hiername;
+	    newmapp->insert(make_pair(newname,decl));
+	}
+	delete m_namemapp; m_namemapp=NULL;
+	m_namemapp = newmapp;
+    }
+}
+
 SpTraceVcd::~SpTraceVcd() {
     close();
     if (m_wrBufp) { delete[] m_wrBufp; m_wrBufp=NULL; }
@@ -233,10 +266,10 @@ void SpTraceVcd::bufferFlush () {
     if (SP_UNLIKELY(!isOpen())) return;
     char* wp = m_wrBufp;
     while (1) {
-	size_t remaining = (m_writep - wp);
+	ssize_t remaining = (m_writep - wp);
 	if (remaining==0) break;
 	errno = 0;
-	int got = write (m_fd, wp, remaining);
+	ssize_t got = write (m_fd, wp, remaining);
 	if (got>0) {
 	    wp += got;
 	    m_wroteBytes += got;
@@ -320,13 +353,7 @@ void SpTraceVcd::dumpHeader () {
     printStr(doubleToTimescale(m_timeRes).c_str());
     printStr(" $end\n");
 
-    // Take signal information from each module and build m_namemapp
-    m_namemapp = new NameMap;
-    for (uint32_t ent = 0; ent< m_callbacks.size(); ent++) {
-	SpTraceCallInfo *cip = m_callbacks[ent];
-	cip->m_code = nextCode();
-	(cip->m_initcb) (this, cip->m_userthis, cip->m_code);
-    }
+    makeNameMap();
 
     // Signal header
     assert (m_modDepth==0);
@@ -352,7 +379,7 @@ void SpTraceVcd::dumpHeader () {
 	// Skip common prefix, it must break at a space or tab
 	for (; *np && (*np == *lp); np++, lp++) {}
 	while (np!=hiername && *np && *np!=' ' && *np!='\t') { np--; lp--; }
-	//cout <<"hier "<<hiername<<endl<<"  lp "<<lp<<endl<<"  np "<<np<<endl;
+	//printf("hier %s\n  lp=%s\n  np=%s\n",hiername,lp,np);
 
 	// Any extra spaces in last name are scope ups we need to do
 	bool first = true;

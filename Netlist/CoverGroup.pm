@@ -9,7 +9,7 @@ use Verilog::Netlist;
 use Verilog::Netlist::Subclass;
 @ISA = qw(SystemC::Netlist::CoverGroup::Struct
 	  Verilog::Netlist::Subclass);
-$VERSION = '1.334';
+$VERSION = '1.335';
 use strict;
 
 structs('new',

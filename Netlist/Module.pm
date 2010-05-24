@@ -18,7 +18,7 @@ use SystemC::Netlist::CoverGroup;
 use SystemC::Netlist::CoverPoint;
 
 @ISA = qw(Verilog::Netlist::Module);
-$VERSION = '1.334';
+$VERSION = '1.335';
 use strict;
 
 # Some attributes we use:

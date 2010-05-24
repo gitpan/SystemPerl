@@ -6,7 +6,7 @@ package SystemC::Netlist::AutoTrace;
 use File::Basename;
 
 use SystemC::Netlist::Module;
-$VERSION = '1.334';
+$VERSION = '1.335';
 use strict;
 
 use vars qw ($Debug_Check_Code);

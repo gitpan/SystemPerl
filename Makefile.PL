@@ -65,7 +65,7 @@ WriteMakefile(
 	      ABSTRACT  => 'SystemC Netlist Utilities and Parsing',
 	      VERSION_FROM  => 'Netlist.pm',
 	      NO_META	=> 1,
-	      PREREQ_PM => {'Pod::Usage' => 0,
+	      PREREQ_PM => {'Pod::Usage' => 1.34,
 			    'Verilog::Getopt' => 2.211,
 			    'Verilog::Netlist' => 3.200,
 			},

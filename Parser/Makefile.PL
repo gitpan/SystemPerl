@@ -41,7 +41,9 @@ sclex.c: sclex_prefix.c
 	| sed "s/(void) *fwrite(\(.*\))/if (fwrite(\1)) {}/g" \
 	| sed "s/static \(int y*y*input\)/\1/g" > $@
 
-scgrammer.c scgrammer.h:	scgrammer.y scparse.h
+scgrammer.h:	scgrammer.c
+
+scgrammer.c:	scgrammer.y scparse.h
 	${YACC} ${YFLAGS} --debug --verbose -d -k $< -pscgrammer -o scgrammer.c
 	$(PERL) $(YACCFIX) < scgrammer.c > scgrammer_pretmp.c
 	mv scgrammer_pretmp.c scgrammer.c

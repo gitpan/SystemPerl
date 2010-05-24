@@ -36,7 +36,7 @@
 #include <map>
 using namespace std;
 
-#define SPTRACEVCDC_VERSION 1334	// Version number of this file AS_AN_INTEGER
+#define SPTRACEVCDC_VERSION 1335	// Version number of this file AS_AN_INTEGER
 
 class SpTraceVcd;
 class SpTraceCallInfo;
@@ -105,6 +105,7 @@ private:
     void closePrev();
     void closeErr();
     void openNext();
+    void makeNameMap();
     void printIndent (int levelchange);
     void printStr (const char* str);
     void printQuad (uint64_t n);
