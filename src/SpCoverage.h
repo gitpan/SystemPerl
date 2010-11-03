@@ -29,7 +29,7 @@
 #include <sstream>
 #include <string>
 
-#define SPCOVERAGE_VERSION 1335	// Version number of this file AS_AN_INTEGER
+#define SPCOVERAGE_VERSION 1336	// Version number of this file AS_AN_INTEGER
 using namespace std;
 
 //=============================================================================

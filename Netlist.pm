@@ -15,7 +15,7 @@ use Verilog::Netlist::Subclass;
 use strict;
 use vars qw($Debug $Verbose $VERSION);
 
-$VERSION = '1.335';
+$VERSION = '1.336';
 
 ######################################################################
 #### Creation
@@ -25,9 +25,11 @@ sub new {
     my $self = $class->SUPER::new
 	(sp_allow_output_tracing => undef,	# undef = set it automatically
 	 sp_trace_duplicates => 0,
+	 sp_netlist => 1,  # General flag for future feature tests
 	 sc_version => undef,
 	 ncsc => undef,
 	 lint_checking => 1,
+	 remove_defines_without_tick => 1,
 	 _enum_classes => {},
 	 _enums => {},
 	 _classes => {},
