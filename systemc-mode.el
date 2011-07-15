@@ -1,5 +1,5 @@
 ;; systemc-mode.el --- major mode for editing SystemC files
-;; $VERSION = '1.336';
+;; $VERSION = '1.337';
 
 ;; Author          : Wilson Snyder <wsnyder@wsnyder.org>
 ;; Keywords        : languages
@@ -26,7 +26,7 @@
 ;;
 ;; COPYING:
 ;;
-;; Copyright 2001-2010 by Wilson Snyder.  This program is free software;
+;; Copyright 2001-2011 by Wilson Snyder.  This program is free software;
 ;; you can redistribute it and/or modify it under the terms of either the GNU
 ;; Lesser General Public License Version 3 or the Perl Artistic License Version 2.0.
 ;;

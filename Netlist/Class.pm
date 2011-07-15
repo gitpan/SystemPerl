@@ -12,7 +12,7 @@ use SystemC::Template;
 use Verilog::Netlist::Subclass;
 @ISA = qw(SystemC::Netlist::Class::Struct
 	  Verilog::Netlist::Subclass);
-$VERSION = '1.336';
+$VERSION = '1.337';
 use strict;
 
 structs('new',
@@ -53,6 +53,14 @@ our %GenerateInfo
        nint16_t=>	[ msb=>15, lsb=>0, cast_type=>undef, ],
        nint32_t=>	[ msb=>31, lsb=>0, cast_type=>undef, ],
        nint64_t=>	[ msb=>63, lsb=>0, cast_type=>undef, ],
+       vluint8_t=>	[ msb=>7,  lsb=>0, cast_type=>undef, ],
+       vluint16_t=>	[ msb=>15, lsb=>0, cast_type=>undef, ],
+       vluint32_t=>	[ msb=>31, lsb=>0, cast_type=>undef, ],
+       vluint64_t=>	[ msb=>63, lsb=>0, cast_type=>undef, ],
+       vlsint8_t=>	[ msb=>7,  lsb=>0, cast_type=>undef, ],
+       vlsint16_t=>	[ msb=>15, lsb=>0, cast_type=>undef, ],
+       vlsint32_t=>	[ msb=>31, lsb=>0, cast_type=>undef, ],
+       vlsint64_t=>	[ msb=>63, lsb=>0, cast_type=>undef, ],
        );
 
 ######################################################################
@@ -189,7 +197,7 @@ SystemPerl is part of the L<http://www.veripool.org/> free SystemC software
 tool suite.  The latest version is available from CPAN and from
 L<http://www.veripool.org/systemperl>.
 
-Copyright 2001-2010 by Wilson Snyder.  This package is free software; you
+Copyright 2001-2011 by Wilson Snyder.  This package is free software; you
 can redistribute it and/or modify it under the terms of either the GNU
 Lesser General Public License Version 3 or the Perl Artistic License
 Version 2.0.

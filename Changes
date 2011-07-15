@@ -2,6 +2,10 @@ Revision history for Perl extension SystemC::Netlist
 
 The contributors that suggested a given feature are shown in [].
 
+* SystemPerl 1.337 2011/07/15
+
+****	Support vluint64_t in Verilator 3.814, bug368.  [Chandan Egbert]
+
 * SystemPerl 1.336 2010/11/03
 
 ****	Fix support for Verilog-Perl 3.305; removing defines, bug300.
@@ -525,7 +529,7 @@ DESCRIPTION: Documentation on change history for this package
 
 This uses outline mode in Emacs.  See C-h m [M-x describe-mode].
 
-Copyright 2001-2010 by Wilson Snyder.  This program is free software; you
+Copyright 2001-2011 by Wilson Snyder.  This program is free software; you
 can redistribute it and/or modify it under the terms of either the GNU
 Lesser General Public License Version 3 or the Perl Artistic License
 Version 2.0.
