@@ -1,5 +1,5 @@
 ;; systemc-mode.el --- major mode for editing SystemC files
-;; $VERSION = '1.337';
+;; $VERSION = '1.338';
 
 ;; Author          : Wilson Snyder <wsnyder@wsnyder.org>
 ;; Keywords        : languages

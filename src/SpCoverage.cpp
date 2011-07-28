@@ -25,9 +25,7 @@
 #include <cstdarg>
 #include <cstring>
 #include <cassert>
-#include "systemperl.h"
 #include "SpCoverage.h"
-#include "SpFunctor.h"
 
 #include <map>
 #include <deque>
@@ -488,14 +486,6 @@ void SpCoverage::_inserti (uint32_t* itemp) {
 void SpCoverage::_inserti (uint64_t* itemp) {
     SpCoverageImp::imp().inserti(new SpCoverItemSpec<uint64_t>(itemp));
 }
-void SpCoverage::_inserti (SpZeroed<uint32_t>* itemp) {
-    // We can ignore the fact that it is a pre-zeroed class; same layout as base type
-    _inserti((uint32_t*)itemp);
-}
-void SpCoverage::_inserti (SpZeroed<uint64_t>* itemp) {
-    // We can ignore the fact that it is a pre-zeroed class; same layout as base type
-    _inserti((uint64_t*)itemp);
-}
 void SpCoverage::_insertf (const char* filename, int lineno) {
     SpCoverageImp::imp().insertf(filename,lineno);
 }
@@ -541,8 +531,6 @@ void SpCoverage::_insertp (A(0), A(1),  K(2),int val2,  K(3),int val3,
 	     N(10),N(11),N(12),N(13),N(14),N(15),N(16),N(17),N(18),N(19),
 	     N(20),N(21),N(22),N(23),N(24),N(25),N(26),N(27),N(28),N(29));
 }
-//void SpCoverage::_insertp (A(0),  K(1),int val1,  K(2),int val2,
-//			   K(3),const string& val3,  A(4),A(5));
 #undef A
 #undef C
 #undef N

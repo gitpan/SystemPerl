@@ -9,7 +9,7 @@ use Verilog::Netlist;
 use Verilog::Netlist::Subclass;
 @ISA = qw(SystemC::Netlist::AutoCover::Struct
 	Verilog::Netlist::Subclass);
-$VERSION = '1.337';
+$VERSION = '1.338';
 use strict;
 
 structs('new',
@@ -101,8 +101,6 @@ sub _write_autocover_ctor {
     my $modref = shift;
     return if !$SystemC::Netlist::File::outputting;
     return if !$modref->autocover_max_id;
-    #$fileref->printf ("%sSpFunctorNamed::add(\"coverageWrite\",&%s::coverageWrite,this);\t// SP_AUTO_COVER declaration\n"
-    #		      ,$prefix,$modref->name);
 
     my $mod = $modref->name;
     $fileref->print("    // Auto Coverage\n");

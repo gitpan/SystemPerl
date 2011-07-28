@@ -560,7 +560,7 @@ coversample:    SP_COVER_SAMPLE '(' SYMBOL  ')' ';' { scparser_call(-1,"coversam
 
 traceable:	SP_TRACED declType SYMBOL vector ';'
 			{ scparser_call(4,"signal","sp_traced",$2,$3,$4);
-			  SCFree($2); SCFree($3); SCFree($4)}
+			  SCFree($2); SCFree($3); SCFree($4);}
 		| VL_SIG '(' SYMBOL vectorsE ',' negNum ',' negNum ')' ';'
 			{ scparser_call(6,"signal","sp_traced_vl","uint32_t",$3,$4,$6,$8);
 			  SCFree($3); SCFree($4); SCFree($6); SCFree($8);}

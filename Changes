@@ -2,6 +2,12 @@ Revision history for Perl extension SystemC::Netlist
 
 The contributors that suggested a given feature are shown in [].
 
+* SystemPerl 1.338 2011/07/28
+
+****	Support compiling SpCoverage without rest of SystemPerl.
+
+****	Fix warnings with Bison 2.5.
+
 * SystemPerl 1.337 2011/07/15
 
 ****	Support vluint64_t in Verilator 3.814, bug368.  [Chandan Egbert]

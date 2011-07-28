@@ -24,12 +24,13 @@
 #ifndef _SPCOVERAGE_H_
 #define _SPCOVERAGE_H_ 1
 
+// Note cannot include systemperl.h, or we won't work with non-SystemC compiles
 #include "SpCommon.h"
 #include <iostream>
 #include <sstream>
 #include <string>
 
-#define SPCOVERAGE_VERSION 1337	// Version number of this file AS_AN_INTEGER
+#define SPCOVERAGE_VERSION 1338	// Version number of this file AS_AN_INTEGER
 using namespace std;
 
 //=============================================================================
@@ -102,8 +103,9 @@ public:
     // _insert1: Remember item pointer with count.  (Not const, as may add zeroing function)
     static void _inserti (uint32_t* itemp);
     static void _inserti (uint64_t* itemp);
-    static void _inserti (SpZeroed<uint32_t>* itemp);
-    static void _inserti (SpZeroed<uint64_t>* itemp);
+    // _insert1 Zeroed: We can ignore the fact that it is a pre-zeroed class; same layout as base type
+    static void _inserti (SpZeroed<uint32_t>* itemp) { _inserti((uint32_t*)itemp); }
+    static void _inserti (SpZeroed<uint64_t>* itemp) { _inserti((uint64_t*)itemp); }
     // _insert2: Set default filename and line number
     static void _insertf (const char* filename, int lineno);
     // _insert3: Set parameters

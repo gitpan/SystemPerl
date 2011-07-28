@@ -9,7 +9,7 @@ use Pod::Usage;
 use strict;
 use vars qw ($Debug %Depend %Checked $VERSION);
 
-$VERSION = '1.337';
+$VERSION = '1.338';
 
 #======================================================================
 # main
