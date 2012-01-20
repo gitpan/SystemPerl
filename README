@@ -128,9 +128,14 @@ INSTALLATION
           cd SystemPerl*
 
     *   Make sure the "SYSTEMC" environment variable points to your SystemC
-        installed directory. If using bash, this would consist of the line
+        installed directory; or that "SYSTEMC_INCLUDE" points to the include
+        directory with systemc.h in it, and that "SYSTEMC_LIBDIR" points to
+        the directory with libsystemc.a in it. If using bash, this would
+        consist of the line
 
             export SYSTEMC=/path/to/systemc
+            export SYSTEMC_INCLUDE=/path/to/systemc/include   # with systemc.h
+            export SYSTEMC_LIBDIR=/path/to/systemc/lib    # with libsystemc.a
 
         in your "~/.bashrc" file.
 
@@ -177,7 +182,7 @@ DISTRIBUTION
     software tool suite. The latest version is available from CPAN and from
     <http://www.veripool.org/systemperl>.
 
-    Copyright 2001-2011 by Wilson Snyder. This package is free software; you
+    Copyright 2001-2012 by Wilson Snyder. This package is free software; you
     can redistribute it and/or modify it under the terms of either the GNU
     Lesser General Public License Version 3 or the Perl Artistic License
     Version 2.0.

@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 # DESCRIPTION: Perl ExtUtils: Type 'make test' to test this package
 #
-# Copyright 2001-2011 by Wilson Snyder.  This program is free software;
+# Copyright 2001-2012 by Wilson Snyder.  This program is free software;
 # you can redistribute it and/or modify it under the terms of either the GNU
 # Lesser General Public License Version 3 or the Perl Artistic License Version 2.0.
 
@@ -16,7 +16,7 @@ my @files = glob("src/*.h src/*.cpp");
 
 print "Test every file can get compiled independently\n";
 if ($Config{archname} !~ /linux/
-    || !$ENV{SYSTEMC}) {
+    || (!$ENV{SYSTEMC} && !$ENV{SYSTEMC_INCLUDE})) {
     skip("skip Harmless; Not linux or missing SystemC",1);
 } elsif (!$ENV{VERILATOR_AUTHOR_SITE}) {
     skip("author only test (harmless)",1);

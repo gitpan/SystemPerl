@@ -1,6 +1,6 @@
 # DESCRIPTION: Perl ExtUtils: Type 'perl Makefile.PL' to create a Makefile for this package
 #
-# Copyright 2001-2011 by Wilson Snyder.  This program is free software;
+# Copyright 2001-2012 by Wilson Snyder.  This program is free software;
 # you can redistribute it and/or modify it under the terms of either the GNU
 # Lesser General Public License Version 3 or the Perl Artistic License Version 2.0.
 
@@ -78,7 +78,7 @@ WriteMakefile(
 			},
 	      );
 
-if (!$ENV{SYSTEMC}) {
+if (!$ENV{SYSTEMC} && !$ENV{SYSTEMC_INCLUDE}) {
     warn "-Info: SystemC isn't in the environment, 'make test' will skip tests\n";
 }
 

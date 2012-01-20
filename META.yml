@@ -1,6 +1,6 @@
 --- #YAML:1.0
 name:         SystemPerl
-version:      1.338
+version:      1.340
 version_from: Netlist.pm
 abstract:     SystemC Netlist Utilities and Parsing
 license:      perl

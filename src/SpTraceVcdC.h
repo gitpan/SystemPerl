@@ -3,7 +3,7 @@
 //
 // THIS MODULE IS PUBLICLY LICENSED
 //
-// Copyright 2001-2011 by Wilson Snyder.  This program is free software;
+// Copyright 2001-2012 by Wilson Snyder.  This program is free software;
 // you can redistribute it and/or modify it under the terms of either the GNU
 // Lesser General Public License Version 3 or the Perl Artistic License Version 2.0.
 //
@@ -36,7 +36,7 @@
 #include <map>
 using namespace std;
 
-#define SPTRACEVCDC_VERSION 1338	// Version number of this file AS_AN_INTEGER
+#define SPTRACEVCDC_VERSION 1340	// Version number of this file AS_AN_INTEGER
 
 class SpTraceVcd;
 class SpTraceCallInfo;
@@ -92,8 +92,8 @@ private:
     NameMap*			m_namemapp;	///< List of names for the header
     static vector<SpTraceVcd*>	s_vcdVecp;	///< List of all created traces
 
-    inline size_t bufferSize() { return 256*1024; }  // See below for slack calculation
-    inline size_t bufferInsertSize() { return 16*1024; }
+    inline static size_t bufferSize() { return 256*1024; }  // See below for slack calculation
+    inline static size_t bufferInsertSize() { return 16*1024; }
     void bufferFlush();
     void bufferCheck() {
 	// Flush the write buffer if there's not enough space left for new information
@@ -116,6 +116,7 @@ private:
     void dumpHeader();
     void dumpPrep (uint64_t timeui);
     void dumpFull (uint64_t timeui);
+    // cppcheck-suppress functionConst
     void dumpDone ();
     inline void printCode (uint32_t code) {
 	if (code>=(94*94*94)) *m_writep++ = ((char)((code/94/94/94)%94+33));
@@ -123,7 +124,7 @@ private:
 	if (code>=(94))       *m_writep++ = ((char)((code/94)%94+33));
 	*m_writep++ = ((char)((code)%94+33));
     }
-    string stringCode (uint32_t code) {
+    static string stringCode (uint32_t code) {
 	string out;
 	if (code>=(94*94*94)) out += ((char)((code/94/94/94)%94+33));
 	if (code>=(94*94))    out += ((char)((code/94/94)%94+33));
@@ -147,6 +148,8 @@ public:
 	m_evcd = false;
 	m_scopeEscape = '.';  // Backward compatibility
 	m_wroteBytes = 0;
+	m_fd = 0;
+	m_fullDump = true;
     }
     ~SpTraceVcd();
 

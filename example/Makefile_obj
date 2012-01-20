@@ -3,7 +3,7 @@
 #
 # This is executed in the "test_dir", not in this directory
 #
-# Copyright 2001-2011 by Wilson Snyder.  This program is free software; you
+# Copyright 2001-2012 by Wilson Snyder.  This program is free software; you
 # can redistribute it and/or modify it under the terms of either the GNU
 # Lesser General Public License Version 3 or the Perl Artistic License
 # Version 2.0.
@@ -16,15 +16,17 @@ endif
 
 SYSTEMPERL = ..
 SYSTEMPERL_INCLUDE ?= $(SYSTEMPERL)/src
+SYSTEMC_INCLUDE ?= $(SYSTEMC)/include
+SYSTEMC_LIBDIR ?= $(SYSTEMC)/lib-$(SYSTEMC_ARCH)
 
 CC = g++
-INCDIR += -I. -I$(SYSTEMPERL_INCLUDE) -I$(SYSTEMC)/include -I../example
-LIBDIR += -L. -L$(SYSTEMPERL_INCLUDE) -L$(SYSTEMC)/lib-$(SYSTEMC_ARCH)
+INCDIR += -I. -I$(SYSTEMPERL_INCLUDE) -I$(SYSTEMC_INCLUDE) -I../example
+LIBDIR += -L. -L$(SYSTEMPERL_INCLUDE) -L$(SYSTEMC_LIBDIR)
 VPATH += ../example $(SYSTEMPERL_INCLUDE)
 MAKEFILES += ../example/Makefile_obj
 
 SC_LIBS = -lsystemc $(SYSTEMC_LIBS)
-ifneq ($(wildcard $(SYSTEMC)/lib-$(SYSTEMC_ARCH)/*numeric_bit*),)
+ifneq ($(wildcard $(SYSTEMC_LIBDIR)/*numeric_bit*),)
   # Systemc 1.2.1beta
   SC_LIBS   += -lnumeric_bit -lqt
 endif

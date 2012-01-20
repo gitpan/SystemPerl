@@ -15,7 +15,7 @@ use Verilog::Netlist::Subclass;
 use strict;
 use vars qw($Debug $Verbose $VERSION);
 
-$VERSION = '1.338';
+$VERSION = '1.340';
 
 ######################################################################
 #### Creation
@@ -68,9 +68,10 @@ sub sc_version {
     # Return version of SystemC in use
     if (!$self->{sc_version} && $ENV{SYSTEMC}) {
 	my $fh;
-	foreach my $fn ("$ENV{SYSTEMC}/include/sysc/kernel/sc_ver.h",
-			"$ENV{SYSTEMC}/include/systemc/kernel/sc_ver.h",
-			"$ENV{SYSTEMC}/include/sc_ver.h") {
+	my $inc = $ENV{SYSTEMC_INCLUDE} || $ENV{SYSTEMC}."/include";
+	foreach my $fn ("$inc/sysc/kernel/sc_ver.h",
+			"$inc/systemc/kernel/sc_ver.h",
+			"$inc/sc_ver.h") {
 	    $fh = IO::File->new("<$fn");
 	    last if $fh;
 	}
@@ -94,6 +95,10 @@ sub sc_numeric_version {
 	my $scv = $self->sc_version;
 	if (!$scv) { # Indeterminate
 	    $self->{sc_numeric_version} = undef;
+	} elsif ($scv > 20110000) {  # 2.3.0
+	    $self->{sc_numeric_version} = 2.300;
+	} elsif ($scv > 20070000) {  # 2.2.0
+	    $self->{sc_numeric_version} = 2.200;
 	} elsif ($scv > 20050700) {  # 2.1.v1
 	    $self->{sc_numeric_version} = 2.110;
 	} elsif ($scv > 20041000) {  # 2.1.oct_12_2004.beta
@@ -398,7 +403,7 @@ SystemPerl is part of the L<http://www.veripool.org/> free SystemC software
 tool suite.  The latest version is available from CPAN and from
 L<http://www.veripool.org/systemperl>.
 
-Copyright 2001-2011 by Wilson Snyder.  This package is free software; you
+Copyright 2001-2012 by Wilson Snyder.  This package is free software; you
 can redistribute it and/or modify it under the terms of either the GNU
 Lesser General Public License Version 3 or the Perl Artistic License
 Version 2.0.

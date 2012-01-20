@@ -3,7 +3,7 @@
 //
 // THIS MODULE IS PUBLICLY LICENSED
 //
-// Copyright 2001-2011 by Wilson Snyder.  This program is free software;
+// Copyright 2001-2012 by Wilson Snyder.  This program is free software;
 // you can redistribute it and/or modify it under the terms of either the GNU
 // Lesser General Public License Version 3 or the Perl Artistic License Version 2.0.
 //
@@ -95,6 +95,8 @@ private:
 #ifdef NC_SYSTEMC
     // Cadence Incisive has these as abstract functions so we must create them
     virtual void set_time_unit( int exponent10_seconds ) {} // deprecated
+#endif
+#if defined(NC_SYSTEMC) || (SYSTEMC_VERSION>=20111100)
     virtual void set_time_unit( double v, sc_time_unit tu ) {}
 #endif
 
