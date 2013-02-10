@@ -1,9 +1,9 @@
-// -*- SystemC -*-
+// -*- mode: C++; c-file-style: "cc-mode" -*-
 //=============================================================================
 //
 // THIS MODULE IS PUBLICLY LICENSED
 //
-// Copyright 2001-2012 by Wilson Snyder.  This program is free software;
+// Copyright 2001-2013 by Wilson Snyder.  This program is free software;
 // you can redistribute it and/or modify it under the terms of either the GNU
 // Lesser General Public License Version 3 or the Perl Artistic License Version 2.0.
 //
@@ -30,7 +30,7 @@
 #include <sstream>
 #include <string>
 
-#define SPCOVERAGE_VERSION 1340	// Version number of this file AS_AN_INTEGER
+#define SPCOVERAGE_VERSION 1341	// Version number of this file AS_AN_INTEGER
 using namespace std;
 
 //=============================================================================

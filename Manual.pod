@@ -197,10 +197,13 @@ in your C<~/.bashrc> file.
 
 =item
 
-Optionally add a C<SYSTEMPERL_INCLUDE> environment variable if for
-some reason you wish to relocate the include files.  For example
-distributions often want to relocate the SystemPerl includes into the
-standard system include directory.
+Optionally add a C<SYSTEMPERL_INCLUDE> environment variable if for some
+reason you wish to relocate the include files (the files under the kit's
+src directory).  For example distributions often want to relocate the
+SystemPerl includes into the standard system include directory.  Note that
+these files are not installed with C<make install> (as Perl doesn't provide
+a standard way to install includes), which is why SYSTEMPERL or
+SYSTEMPERL_INCLUDE must point to them.
 
 =back
 
@@ -210,7 +213,7 @@ SystemPerl is part of the L<http://www.veripool.org/> free SystemC software
 tool suite.  The latest version is available from CPAN and from
 L<http://www.veripool.org/systemperl>.
 
-Copyright 2001-2012 by Wilson Snyder.  This package is free software; you
+Copyright 2001-2013 by Wilson Snyder.  This package is free software; you
 can redistribute it and/or modify it under the terms of either the GNU
 Lesser General Public License Version 3 or the Perl Artistic License
 Version 2.0.

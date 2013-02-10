@@ -24,7 +24,7 @@ use vars qw ($Debug $VERSION $opt_makedeps $Opt_Lint $Exit_Status %Error_Unlink)
 
 $Opt_Lint = 1;
 
-$VERSION = '1.340';
+$VERSION = '1.341';
 
 #======================================================================
 # main
@@ -165,7 +165,7 @@ $nl->exit_if_error();
 
 sub usage {
     print "Version $VERSION\n";
-    pod2usage(-verbose=>2, -exitval=>2, -output=>\*STDOUT);
+    pod2usage(-verbose=>2, -exitval=>2, -output=>\*STDOUT, -noperldoc=>1);
     exit (1);
 }
 
@@ -462,7 +462,7 @@ SystemPerl is part of the L<http://www.veripool.org/> free SystemC software
 tool suite.  The latest version is available from CPAN and from
 L<http://www.veripool.org/systemperl>.
 
-Copyright 2001-2012 by Wilson Snyder.  This package is free software; you
+Copyright 2001-2013 by Wilson Snyder.  This package is free software; you
 can redistribute it and/or modify it under the terms of either the GNU
 Lesser General Public License Version 3 or the Perl Artistic License Version 2.0.
 

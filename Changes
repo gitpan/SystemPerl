@@ -2,6 +2,13 @@ Revision history for Perl extension SystemC::Netlist
 
 The contributors that suggested a given feature are shown in [].
 
+* SystemPerl 1.341 2013/02/10
+
+***	Fix cpan-testers' tests on systems without perldoc.
+
+***	Fix cppcheck warning.
+
+
 * SystemPerl 1.340 2012/01/19
 
 ***	Support SystemC 2.3.0 prerelease.
@@ -605,7 +612,7 @@ DESCRIPTION: Documentation on change history for this package
 
 This uses outline mode in Emacs.  See C-h m [M-x describe-mode].
 
-Copyright 2001-2012 by Wilson Snyder.  This program is free software; you
+Copyright 2001-2013 by Wilson Snyder.  This program is free software; you
 can redistribute it and/or modify it under the terms of either the GNU
 Lesser General Public License Version 3 or the Perl Artistic License
 Version 2.0.

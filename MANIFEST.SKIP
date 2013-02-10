@@ -19,3 +19,4 @@ sclite/lib-.*
 ^test_scl/
 /test_scl/
 \.svn/
+^(.*/)?MYMETA\..*$
