@@ -3,7 +3,7 @@
 //
 // THIS MODULE IS PUBLICLY LICENSED
 //
-// Copyright 2001-2013 by Wilson Snyder.  This program is free software;
+// Copyright 2001-2014 by Wilson Snyder.  This program is free software;
 // you can redistribute it and/or modify it under the terms of either the GNU
 // Lesser General Public License Version 3 or the Perl Artistic License Version 2.0.
 //
@@ -163,6 +163,8 @@ void SpTraceVcd::openNext (bool incFilename) {
 
 void SpTraceVcd::makeNameMap() {
     // Take signal information from each module and build m_namemapp
+    deleteNameMap();
+    m_nextCode = 1;
     m_namemapp = new NameMap;
     for (uint32_t ent = 0; ent< m_callbacks.size(); ent++) {
 	SpTraceCallInfo *cip = m_callbacks[ent];
@@ -176,8 +178,8 @@ void SpTraceVcd::makeNameMap() {
     // This comes from user instantiations with no name - IE Vtop("").
     bool nullScope = false;
     for (NameMap::iterator it=m_namemapp->begin(); it!=m_namemapp->end(); ++it) {
-	const char* hiername = (*it).first.c_str();
-	if (hiername[0] == '\t') nullScope=true;
+	const string& hiername = it->first;
+	if (hiername.size() >= 1 && hiername[0] == '\t') nullScope=true;
     }
     if (nullScope) {
 	NameMap* newmapp = new NameMap;
@@ -189,15 +191,20 @@ void SpTraceVcd::makeNameMap() {
 	    newname += hiername;
 	    newmapp->insert(make_pair(newname,decl));
 	}
-	delete m_namemapp; m_namemapp=NULL;
+	deleteNameMap();
 	m_namemapp = newmapp;
     }
+}
+
+void SpTraceVcd::deleteNameMap() {
+    if (m_namemapp) { delete m_namemapp; m_namemapp=NULL; }
 }
 
 SpTraceVcd::~SpTraceVcd() {
     close();
     if (m_wrBufp) { delete[] m_wrBufp; m_wrBufp=NULL; }
     if (m_sigs_oldvalp) { delete[] m_sigs_oldvalp; m_sigs_oldvalp=NULL; }
+    deleteNameMap();
     // Remove from list of traces
     vector<SpTraceVcd*>::iterator pos = find(s_vcdVecp.begin(), s_vcdVecp.end(), this);
     if (pos != s_vcdVecp.end()) { s_vcdVecp.erase(pos); }
@@ -351,7 +358,8 @@ void SpTraceVcd::dumpHeader () {
     printStr("$date "); printStr(ctime(&time_str)); printStr(" $end\n");
 
     printStr("$timescale ");
-    printStr(doubleToTimescale(m_timeRes).c_str());
+    const string& timeResStr = doubleToTimescale(m_timeRes);
+    printStr(timeResStr.c_str());
     printStr(" $end\n");
 
     makeNameMap();
@@ -369,10 +377,11 @@ void SpTraceVcd::dumpHeader () {
     // Print the signal names
     const char* lastName = "";
     for (NameMap::iterator it=m_namemapp->begin(); it!=m_namemapp->end(); ++it) {
-	const char* hiername = (*it).first.c_str();
-	const char* decl     = (*it).second.c_str();
+	const string& hiernamestr = it->first;
+	const string& decl = it->second;
 
 	// Determine difference between the old and new names
+	const char* hiername = hiernamestr.c_str();
 	const char* lp = lastName;
 	const char* np = hiername;
 	lastName = hiername;
@@ -407,7 +416,7 @@ void SpTraceVcd::dumpHeader () {
 	}
 
 	printIndent(0);
-	printStr(decl);
+	printStr(decl.c_str());
     }
 
     while (m_modDepth>1) {
@@ -420,7 +429,7 @@ void SpTraceVcd::dumpHeader () {
     assert (m_modDepth==0);
 
     // Reclaim storage
-    delete m_namemapp;
+    deleteNameMap();
 }
 
 void SpTraceVcd::module (string name) {

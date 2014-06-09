@@ -3,7 +3,7 @@
 //
 // THIS MODULE IS PUBLICLY LICENSED
 //
-// Copyright 2001-2013 by Wilson Snyder.  This program is free software;
+// Copyright 2001-2014 by Wilson Snyder.  This program is free software;
 // you can redistribute it and/or modify it under the terms of either the GNU
 // Lesser General Public License Version 3 or the Perl Artistic License Version 2.0.
 //
@@ -36,7 +36,7 @@
 #include <map>
 using namespace std;
 
-#define SPTRACEVCDC_VERSION 1341	// Version number of this file AS_AN_INTEGER
+#define SPTRACEVCDC_VERSION 1342	// Version number of this file AS_AN_INTEGER
 
 class SpTraceVcd;
 class SpTraceCallInfo;
@@ -63,7 +63,8 @@ typedef void (*SpTraceCallback_t)(SpTraceVcd* vcdp, void* userthis, uint32_t cod
 
 //=============================================================================
 // SpTraceVcd
-/// Create a SystemPerl VCD dump
+/// Base class to create a Verilator VCD dump
+/// This is an internally used class - see SpTraceVcdCFile for what to call from applications
 
 class SpTraceVcd {
 private:
@@ -106,6 +107,7 @@ private:
     void closeErr();
     void openNext();
     void makeNameMap();
+    void deleteNameMap();
     void printIndent (int levelchange);
     void printStr (const char* str);
     void printQuad (uint64_t n);
@@ -406,8 +408,12 @@ public:
     bool isOpen() const { return m_sptrace.isOpen(); }
     // METHODS
     /// Open a new VCD file
+    /// This includes a complete header dump each time it is called,
+    /// just as if this object was deleted and reconstructed.
     void open (const char* filename) { m_sptrace.open(filename); }
     /// Continue a VCD dump by rotating to a new file name
+    /// The header is only in the first file created, this allows
+    /// "cat" to be used to combine the header plus any number of data files.
     void openNext (bool incFilename=true) { m_sptrace.openNext(incFilename); }
     /// Set size in megabytes after which new file should be created
     void rolloverMB(size_t rolloverMB) { m_sptrace.rolloverMB(rolloverMB); };
