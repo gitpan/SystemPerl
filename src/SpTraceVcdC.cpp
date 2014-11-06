@@ -267,6 +267,20 @@ void SpTraceVcd::printTime (uint64_t timeui) {
     printQuad(timeui);
 }
 
+void SpTraceVcd::bufferResize(uint64_t minsize) {
+    // minsize is size of largest write.  We buffer at least 8 times as much data,
+    // writing when we are 3/4 full (with thus 2*minsize remaining free)
+    if (SP_UNLIKELY(minsize > m_wrChunkSize)) {
+	char* oldbufp = m_wrBufp;
+	m_wrChunkSize = minsize*2;
+	m_wrBufp = new char [m_wrChunkSize * 8];
+	memcpy(m_wrBufp, oldbufp, m_writep - oldbufp);
+        m_writep = m_wrBufp + (m_writep - oldbufp);
+	m_wrFlushp = m_wrBufp + m_wrChunkSize * 6;
+	delete oldbufp; oldbufp=NULL;
+    }
+}
+
 void SpTraceVcd::bufferFlush () {
     // We add output data to m_writep.
     // When it gets nearly full we dump it using this routine which calls write()
@@ -450,6 +464,9 @@ void SpTraceVcd::declare (uint32_t code, const char* name, const char* wirep,
 	m_sigs.reserve(m_nextCode*2);	// Power-of-2 allocation speeds things up
     }
 
+    // Make sure write buffer is large enough (one character per bit), plus header
+    bufferResize(bits+1024);
+
     // Save declaration info
     SpTraceVcdSig sig = SpTraceVcdSig(code, bits);
     m_sigs.push_back(sig);
@@ -528,7 +545,7 @@ void SpTraceVcd::declDouble   (uint32_t code, const char* name, int arraynum)
 
 void SpTraceVcd::fullDouble (uint32_t code, const double newval) {
     (*((double*)&m_sigs_oldvalp[code])) = newval;
-    // Buffer can't overflow; we have at least bufferInsertSize() bytes (>>>16 bytes)
+    // Buffer can't overflow before sprintf; we sized during declaration
     sprintf(m_writep, "r%.16g", newval);
     m_writep += strlen(m_writep);
     *m_writep++=' '; printCode(code); *m_writep++='\n';
@@ -536,7 +553,7 @@ void SpTraceVcd::fullDouble (uint32_t code, const double newval) {
 }
 void SpTraceVcd::fullFloat (uint32_t code, const float newval) {
     (*((float*)&m_sigs_oldvalp[code])) = newval;
-    // Buffer can't overflow; we have at least bufferInsertSize() bytes (>>>16 bytes)
+    // Buffer can't overflow before sprintf; we sized during declaration
     sprintf(m_writep, "r%.16g", (double)newval);
     m_writep += strlen(m_writep);
     *m_writep++=' '; printCode(code); *m_writep++='\n';

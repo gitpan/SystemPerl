@@ -8,7 +8,7 @@ use Class::Struct;
 use Verilog::Netlist;
 use SystemC::Netlist;
 @ISA = qw(Verilog::Netlist::Net);
-$VERSION = '1.342';
+$VERSION = '1.344';
 use strict;
 
 ######################################################################

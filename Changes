@@ -2,6 +2,11 @@ Revision history for Perl extension SystemC::Netlist
 
 The contributors that suggested a given feature are shown in [].
 
+* SystemPerl 1.344 2014/11/05
+
+****	Fix trace overflow on huge arrays, bug834. [Geoff Barrett]
+
+
 * SystemPerl 1.342 2014/06/08
 
 ****	Fix string corruption, bug780. [Derek Lockhart]

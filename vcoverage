@@ -33,7 +33,7 @@ use vars qw ($Debug
 
 #@Opt_Write_Params  # Set by some wrapper scripts
 
-$VERSION = '1.342';
+$VERSION = '1.344';
 
 #######################################################################
 # main

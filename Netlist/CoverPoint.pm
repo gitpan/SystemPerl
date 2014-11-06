@@ -11,7 +11,7 @@ use Verilog::Netlist;
 use Verilog::Netlist::Subclass;
 @ISA = qw(SystemC::Netlist::CoverPoint::Struct
 	  Verilog::Netlist::Subclass);
-$VERSION = '1.342';
+$VERSION = '1.344';
 use strict;
 
 # allow 64-bit values without bonking
